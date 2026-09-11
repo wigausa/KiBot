@@ -1,0 +1,16 @@
+// Escala de spacing — DESIGN.md sección 1. Usar SIEMPRE estos tokens para
+// padding, margin, gap, etc. Nunca un valor arbitrario (ej. 13px).
+
+:root {
+  --widex-spacing-0: 2px;
+  --widex-spacing-1: 4px;
+  --widex-spacing-2: 8px;
+  --widex-spacing-3: 12px;
+  --widex-spacing-4: 16px;
+  --widex-spacing-5: 20px;
+  --widex-spacing-6: 24px;
+  --widex-spacing-7: 32px;
+  --widex-spacing-8: 40px;
+  --widex-spacing-9: 48px;
+  --widex-spacing-10: 56px;
+}

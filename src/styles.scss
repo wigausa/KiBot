@@ -1,1 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
+@use "styles/tokens";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--widex-page);
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+}

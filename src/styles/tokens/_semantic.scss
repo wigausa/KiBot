@@ -1,0 +1,50 @@
+// ---------------------------------------------------------------------------
+// Tokens semánticos — light / dark (DESIGN.md sección 6)
+// Estos son los ÚNICOS tokens de color que deben usarse en componentes de
+// pantalla. La paleta cruda (_colors.scss) solo existe para construir estos.
+//
+// Modo por defecto: sigue prefers-color-scheme cuando no hay [data-theme]
+// explícito en <html>. ThemeService (src/app/core/theme) escribe
+// [data-theme="light"|"dark"] para forzar un modo o "system" para volver
+// a seguir el sistema operativo.
+// ---------------------------------------------------------------------------
+
+:root {
+  --widex-page: var(--widex-color-neutral-100); // #F2F2F2 — fondo de pantalla
+  --widex-surface: var(--widex-color-neutral-white); // #FFFFFF — cards, sheets
+  --widex-surface-variant: var(--widex-color-neutral-100); // #F2F2F2 — superficie anidada
+  --widex-line: var(--widex-color-neutral-200); // #E3E3E3 — dividers, bordes
+  --widex-fg: var(--widex-color-neutral-500); // #03030B — texto principal
+  --widex-accent: var(--widex-color-primary-base); // #E190FF — acento de marca
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --widex-page: var(--widex-color-neutral-500); // #03030B
+    --widex-surface: var(--widex-color-tertiary-500); // #0E0A34
+    --widex-surface-variant: var(--widex-color-tertiary-400); // #140E40
+    --widex-line: rgb(255 255 255 / 10%); // White @ 10%
+    --widex-fg: var(--widex-color-neutral-white); // #FFFFFF
+    --widex-accent: var(--widex-color-primary-100); // #E8ACFF
+  }
+}
+
+:root[data-theme="dark"] {
+  --widex-page: var(--widex-color-neutral-500);
+  --widex-surface: var(--widex-color-tertiary-500);
+  --widex-surface-variant: var(--widex-color-tertiary-400);
+  --widex-line: rgb(255 255 255 / 10%);
+  --widex-fg: var(--widex-color-neutral-white);
+  --widex-accent: var(--widex-color-primary-100);
+}
+
+// Colores de estado — NO cambian entre claro/oscuro (DESIGN.md sección 6).
+// Ajustar únicamente el contraste de texto sobre ellos según fondo.
+:root {
+  --widex-error: var(--widex-color-error-base);
+  --widex-error-strong: var(--widex-color-error-200);
+  --widex-success: var(--widex-color-success-base);
+  --widex-success-strong: var(--widex-color-success-200);
+  --widex-warning: var(--widex-color-warning-base);
+  --widex-warning-strong: var(--widex-color-warning-200);
+}

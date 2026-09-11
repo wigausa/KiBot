@@ -1,0 +1,54 @@
+// ---------------------------------------------------------------------------
+// Paleta cruda — Witag Design System (ver DESIGN.md secciones 4 y 6)
+// No usar estos valores directamente en componentes: usar los tokens
+// semánticos definidos en _theme.scss (--widex-page, --widex-surface, etc.)
+// ---------------------------------------------------------------------------
+
+:root {
+  // Primary (Magenta/Violeta)
+  --widex-color-primary-base: #e190ff;
+  --widex-color-primary-alpha-50: rgb(217 116 255 / 50%); // corregido: D974FF @ 50% (ver nota DESIGN.md)
+  --widex-color-primary-100: #e8acff;
+  --widex-color-primary-200: #d974ff;
+  --widex-color-primary-400: #ae5dcc;
+  --widex-color-primary-500: #824699;
+
+  // Secondary (Azul)
+  --widex-color-secondary-base: #29abe2;
+  --widex-color-secondary-50: #7fcdee;
+  --widex-color-secondary-100: #54bce8;
+  --widex-color-secondary-200: #29abe2;
+  --widex-color-secondary-400: #2189b5;
+  --widex-color-secondary-500: #196788;
+
+  // Tertiary (Índigo oscuro)
+  --widex-color-tertiary-base: #1b1451;
+  --widex-color-tertiary-50: #3d30a0;
+  --widex-color-tertiary-100: #2b2277;
+  --widex-color-tertiary-200: #1b1451;
+  --widex-color-tertiary-400: #140e40;
+  --widex-color-tertiary-500: #0e0a34;
+
+  // Neutral
+  --widex-color-neutral-white: #ffffff;
+  --widex-color-neutral-100: #f2f2f2;
+  --widex-color-neutral-200: #e3e3e3;
+  --widex-color-neutral-300: #cecece;
+  --widex-color-neutral-400: #b3b3b3;
+  --widex-color-neutral-500: #03030b;
+
+  // Error
+  --widex-color-error-base: #e21e1e;
+  --widex-color-error-100: #e84b4b;
+  --widex-color-error-200: #b51818;
+
+  // Success
+  --widex-color-success-base: #3ab674;
+  --widex-color-success-100: #61c590;
+  --widex-color-success-200: #236d46;
+
+  // Warning
+  --widex-color-warning-base: #fdb712;
+  --widex-color-warning-100: #fdc541;
+  --widex-color-warning-200: #996b00;
+}
