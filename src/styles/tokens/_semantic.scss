@@ -16,6 +16,11 @@
   --widex-line: var(--widex-color-neutral-200); // #E3E3E3 — dividers, bordes
   --widex-fg: var(--widex-color-neutral-500); // #03030B — texto principal
   --widex-accent: var(--widex-color-primary-base); // #E190FF — acento de marca
+  // `accent` es un tono pastel pensado para fondos/washes: como TEXTO o ícono
+  // sobre superficie clara no llega a AA (#E190FF sobre #FFF ≈ 1.7:1). Para
+  // esos casos existe `accent-strong` (Primary 500 en claro, Primary 100 en
+  // oscuro). Ver DESIGN.md sección 10, gap de contraste del acento.
+  --widex-accent-strong: var(--widex-color-primary-500); // #824699
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,6 +31,7 @@
     --widex-line: rgb(255 255 255 / 10%); // White @ 10%
     --widex-fg: var(--widex-color-neutral-white); // #FFFFFF
     --widex-accent: var(--widex-color-primary-100); // #E8ACFF
+    --widex-accent-strong: var(--widex-color-primary-100);
   }
 }
 
@@ -36,6 +42,7 @@
   --widex-line: rgb(255 255 255 / 10%);
   --widex-fg: var(--widex-color-neutral-white);
   --widex-accent: var(--widex-color-primary-100);
+  --widex-accent-strong: var(--widex-color-primary-100);
 }
 
 // Colores de estado — NO cambian entre claro/oscuro (DESIGN.md sección 6).
@@ -47,4 +54,62 @@
   --widex-success-strong: var(--widex-color-success-200);
   --widex-warning: var(--widex-color-warning-base);
   --widex-warning-strong: var(--widex-color-warning-200);
+}
+
+// ---------------------------------------------------------------------------
+// Extensión semántica — texto secundario e identidad de marca.
+//
+// `--widex-fg-muted` no está en la tabla de DESIGN.md sección 6: se DERIVA de
+// `--widex-fg` sobre la superficie (nunca es un HEX nuevo), porque
+// `neutral-400` no alcanza contraste AA como texto secundario sobre blanco.
+//
+// Los tokens `--widex-brand-*` existen para el logo y el spinner de Witag, que
+// son elementos de identidad y por definición usan los colores de marca en
+// ambos modos (equivalen a `fgBrand` / `accent` / `aqua` del tema Android).
+// No usarlos para chrome de UI: para eso está `--widex-accent`.
+// ---------------------------------------------------------------------------
+
+:root {
+  --widex-fg-muted: color-mix(in srgb, var(--widex-fg) 62%, var(--widex-surface));
+
+  --widex-brand-ink: var(--widex-color-tertiary-base); // #1B1451
+  // Contenido sobre el gradiente de marca: blanco en ambos modos, porque el
+  // gradiente siempre es Tertiary oscuro.
+  --widex-on-brand: var(--widex-color-neutral-white);
+  --widex-brand-magenta: var(--widex-color-primary-200); // #D974FF
+  --widex-brand-aqua: var(--widex-color-secondary-base); // #29ABE2
+
+  // Gradiente de marca (equivale a `witagGradients.brand` de Android):
+  // diagonal sobre los tonos de Tertiary. Solo para superficies de identidad
+  // (splash/boot), nunca como fondo de pantallas de trabajo.
+  --widex-brand-gradient: linear-gradient(
+    135deg,
+    var(--widex-color-tertiary-base) 0%,
+    var(--widex-color-tertiary-100) 52%,
+    var(--widex-color-tertiary-50) 100%
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --widex-fg-muted: rgb(255 255 255 / 60%);
+    --widex-brand-ink: var(--widex-color-neutral-white);
+    --widex-brand-gradient: linear-gradient(
+      135deg,
+      var(--widex-color-tertiary-500) 0%,
+      var(--widex-color-tertiary-400) 52%,
+      var(--widex-color-tertiary-base) 100%
+    );
+  }
+}
+
+:root[data-theme="dark"] {
+  --widex-fg-muted: rgb(255 255 255 / 60%);
+  --widex-brand-ink: var(--widex-color-neutral-white);
+  --widex-brand-gradient: linear-gradient(
+    135deg,
+    var(--widex-color-tertiary-500) 0%,
+    var(--widex-color-tertiary-400) 52%,
+    var(--widex-color-tertiary-base) 100%
+  );
 }

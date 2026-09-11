@@ -1,14 +1,16 @@
 // Tipografía — DESIGN.md sección 5.
-// Sin tipografía de marca declarada en el archivo fuente -> stack de sistema.
-// Si Wiga define una fuente propia, reemplazar --widex-font-family aquí
-// (y solo aquí) y todo el sistema hereda el cambio.
+// Tipografía de marca: Poppins, la misma que usa WitagFrontend. Se declara en
+// `src/styles/_fonts.scss` (auto-hospedada en public/fonts) y se referencia
+// solo desde aquí: cambiar --widex-font-family en este punto y todo el sistema
+// hereda el cambio. El stack de sistema queda como respaldo si el woff2 no
+// carga.
 //
 // Tamaños expresados en rem (base 16px) para respetar el zoom/font-size del
 // usuario; el sp de Android indicado en DESIGN.md se mapea 1:1 a rem (16sp = 1rem).
 
 :root {
-  --widex-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --widex-font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
   --widex-font-weight-light: 300;
   --widex-font-weight-regular: 400;

@@ -1,11 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+// Estilos globales de WiDex. Los tokens del design system entran solo por aquí.
+@use "styles/fonts";
 @use "styles/tokens";
 
 html,
 body {
+  height: 100%;
   margin: 0;
   padding: 0;
   background: var(--widex-page);
   color: var(--widex-fg);
   font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

@@ -160,11 +160,19 @@ Escala base 4/8 con dos pasos extra pequeños. Usar SIEMPRE `var(--widex-spacing
 
 ## 5. Tipografía
 
-No se especifica una tipografía de marca en el archivo fuente (sin `font family` declarada) →
-**usar el stack de sistema** (`var(--widex-font-family)`) hasta que Wiga defina una tipografía
-propia. Si existe una fuente de marca, agregarla **únicamente** en
-`src/styles/tokens/_typography.scss` (`--widex-font-family`) — todo el resto del sistema la
-hereda automáticamente.
+**Tipografía de marca: Poppins**, la misma que usa WitagFrontend (`src/global.scss`). Se usa
+siempre vía `var(--widex-font-family)`; nunca declarar `font-family: "Poppins"` en un
+componente. Si algún día cambia, se toca **únicamente** `--widex-font-family` en
+`src/styles/tokens/_typography.scss` y todo el sistema lo hereda.
+
+Está **auto-hospedada** en `public/fonts/` y declarada en `src/styles/_fonts.scss` (subsets
+latin y latin-ext, pesos 300/400/700, ~39 KB en total). WitagFrontend la carga desde el CDN de
+Google; WiDex no puede, porque corre en la pantalla del robot y un arranque sin red dejaría
+toda la UI en la tipografía de respaldo. `src/index.html` precarga los pesos 400 y 700 del
+subset latin, que son los que se ven en el primer render.
+
+Solo existen esos tres pesos: si un diseño pide otro, descargar el woff2 correspondiente — no
+sintetizar el peso con `font-weight`.
 
 | Estilo | Weight | Size | Mixin SCSS | Uso sugerido |
 |---|---|---|---|---|
@@ -199,6 +207,25 @@ Estos son los tokens que **sí** deben usarse directamente en pantallas y compon
 | `--widex-line` | `#E3E3E3` | `White @ 10%` | dividers, bordes |
 | `--widex-fg` (foreground/texto) | `#03030B` | `#FFFFFF` | texto principal |
 | `--widex-accent` | `#E190FF` | `#E8ACFF` | acento de marca, links, iconos activos |
+
+### 6.1 Extensiones añadidas en WiDex
+
+Estos tokens no venían del PDF original; se agregaron al implementar el shell y el Inicio
+(fase 1) y viven en `src/styles/tokens/_semantic.scss`. Ninguno introduce un HEX nuevo: todos
+se construyen sobre la paleta cruda o se derivan de un token existente.
+
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `--widex-fg-muted` | `fg @ 62%` sobre surface | `White @ 60%` | texto secundario. `neutral-400` no llega a AA sobre blanco |
+| `--widex-accent-strong` | `#824699` (Primary 500) | `#E8ACFF` (Primary 100) | acento como **texto/ícono**: `--widex-accent` en claro da 2.18:1 y falla AA |
+| `--widex-brand-ink` | `#1B1451` | `#FFFFFF` | trazo del logo/spinner de marca |
+| `--widex-brand-magenta` | `#D974FF` | igual | arco medio del spinner |
+| `--widex-brand-aqua` | `#29ABE2` | igual | arco interno del spinner |
+| `--widex-brand-gradient` | diagonal Tertiary base→100→50 | diagonal Tertiary 500→400→base | superficies de identidad (cortina de arranque). No usar como fondo de pantallas de trabajo |
+| `--widex-on-brand` | `#FFFFFF` | `#FFFFFF` | contenido sobre `--widex-brand-gradient` |
+
+Regla: `--widex-accent` es para fondos/washes; para texto o íconos sobre superficie clara usar
+`--widex-accent-strong`.
 
 Colores de estado (`--widex-error`, `--widex-success`, `--widex-warning`) usan las mismas
 variantes Base/100/200 en ambos modos — no cambian entre claro/oscuro; solo ajustar el
@@ -313,18 +340,26 @@ gap al usuario o usar el token más cercano y dejarlo explícito en el PR/commit
 - **Elevación / sombras.** No existe una escala de `box-shadow` (`--widex-elevation-*`). Hoy el
   único caso de sombra observado en Android (`Theme.kt`) viene de los defaults de Material3, no
   de un token propio de Witag — pendiente de definir si WiDex necesita una escala explícita.
-- **Motion / transiciones.** Sin tokens de duración (`--widex-motion-fast`, etc.) ni easing
-  estándar. Cualquier `transition` hoy es una decisión ad-hoc del componente.
-- **Tipografía de marca.** `--widex-font-family` usa el stack de sistema porque Wiga no ha
-  definido una tipografía propia (ver sección 5) — pendiente de decisión de marca.
-- **Contraste de `--widex-accent` en modo oscuro sin confirmar.** `#E8ACFF` sobre `#0E0A34` es
+- ~~**Motion / transiciones.**~~ **Cerrado.** `src/styles/tokens/_motion.scss` define
+  `--widex-motion-fast|base|slow|pulse|curtain` y `--widex-ease-standard|linear|settle`,
+  portados 1:1 de `WitagMotion` (WitagAndroid, `presentation/theme/Brand.kt`), más un bloque
+  `prefers-reduced-motion` que colapsa las duraciones decorativas. No usar duraciones ni
+  curvas fuera de esos tokens.
+- ~~**Tipografía de marca.**~~ **Cerrado.** Poppins, auto-hospedada en `public/fonts/` y
+  declarada en `src/styles/_fonts.scss` — misma tipografía que WitagFrontend (ver sección 5).
+  El stack de sistema queda solo como respaldo si el woff2 no carga.
+- **Contraste de `--widex-accent`.** En **claro** ya está medido y NO sirve como texto
+  (`#E190FF` sobre `#FFFFFF` = 2.18:1): por eso existe `--widex-accent-strong`. En oscuro: `#E8ACFF` sobre `#0E0A34` es
   la combinación que el agente `a11y-contrast-checker` marca como la más crítica a verificar —
   no asumir que pasa AA sin correr el agente.
 - **Breakpoints / grid responsive.** No hay una escala oficial de breakpoints ni de columnas de
   grid — cada feature define su propio layout responsive por ahora.
 - **Iconografía.** No hay una librería de íconos elegida (Material Symbols, Lucide, custom
   SVG...) ni un tamaño estándar más allá de la mención genérica a "íconos estándar
-  16/20/24px" en las skills de auditoría.
+  16/20/24px" en las skills de auditoría. Provisional: `WidexIcon`
+  (`src/app/shared/ui/widex-icon/`) dibuja SVG inline propio con `currentColor` y tamaño por
+  `--widex-icon-size`, para no depender de una webfont externa en la pantalla del robot (puede
+  arrancar sin red). Migrar a la librería oficial cuando se decida.
 - **Componentes reales aún no implementados.** `WidexButton`, `WidexCard`, `WidexLoadingIndicator`,
   `WidexErrorState` etc. están documentados como *patrón* en la skill `widex-component`, pero
   todavía no existen como archivos en `src/app/shared/components/` — créalos la primera vez que

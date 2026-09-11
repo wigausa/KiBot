@@ -1,0 +1,197 @@
+// Anchos del riel: son dimensiones de layout, no spacing, por eso viven como
+// custom properties locales del shell y no en la escala de tokens.
+:host {
+  --widex-sidebar-collapsed: 76px;
+  --widex-sidebar-expanded: 248px;
+
+  display: block;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--widex-sidebar-collapsed) 1fr;
+  height: 100%;
+  background: var(--widex-page);
+  transition: grid-template-columns var(--widex-motion-slow) var(--widex-ease-standard);
+}
+
+.shell--expanded {
+  grid-template-columns: var(--widex-sidebar-expanded) 1fr;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--widex-surface);
+  border-right: var(--widex-stroke-0) solid var(--widex-line);
+}
+
+.sidebar__top {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
+  padding: var(--widex-spacing-2) var(--widex-spacing-3);
+  border-bottom: var(--widex-stroke-0) solid var(--widex-line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: var(--widex-spacing-1);
+  border: none;
+  border-radius: var(--widex-radius-6);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--widex-motion-fast) var(--widex-ease-standard);
+}
+
+.brand:hover {
+  background: var(--widex-surface-variant);
+}
+
+.sidebar__nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--widex-spacing-3) var(--widex-spacing-3) var(--widex-spacing-2);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--widex-spacing-3);
+  // 36 de ícono + 8 de padding arriba y abajo.
+  min-height: 52px;
+  padding: var(--widex-spacing-2) var(--widex-spacing-3);
+  border-radius: var(--widex-radius-6);
+  color: var(--widex-fg);
+  font-size: var(--widex-font-size-body);
+  font-weight: var(--widex-font-weight-regular);
+  text-decoration: none;
+  transition:
+    background var(--widex-motion-fast) var(--widex-ease-standard),
+    color var(--widex-motion-fast) var(--widex-ease-standard);
+}
+
+.nav__item:hover {
+  background: var(--widex-surface-variant);
+}
+
+.nav__item--active {
+  background: color-mix(in srgb, var(--widex-accent) 22%, transparent);
+  color: var(--widex-accent-strong);
+  font-weight: var(--widex-font-weight-bold);
+}
+
+.nav__icon {
+  --widex-icon-size: 36px;
+
+  flex-shrink: 0;
+}
+
+.nav__label {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-2);
+  padding: var(--widex-spacing-3);
+  border-top: var(--widex-stroke-0) solid var(--widex-line);
+}
+
+.robot {
+  display: flex;
+  align-items: center;
+  gap: var(--widex-spacing-2);
+  padding: var(--widex-spacing-2);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface-variant);
+}
+
+.robot__avatar {
+  --widex-icon-size: 20px;
+
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--widex-radius-5);
+  // El gradiente de marca es oscuro en ambos modos, por eso el ícono va en
+  // `on-brand` y no en `fg` (que se invertiría en oscuro).
+  background: var(--widex-brand-gradient);
+  color: var(--widex-on-brand);
+}
+
+.robot__details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.robot__name {
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  color: var(--widex-fg);
+  white-space: nowrap;
+}
+
+.robot__meta {
+  font-size: var(--widex-font-size-subtitle);
+  color: var(--widex-fg-muted);
+  white-space: nowrap;
+}
+
+// ── Estado comprimido ──────────────────────────────────────────────────────
+// Solo íconos: las etiquetas colapsan a 0 en vez de ocultarse de golpe, para
+// que la transición de ancho del riel no corte el texto.
+.shell:not(.shell--expanded) {
+  .nav__item {
+    justify-content: center;
+    gap: 0;
+    padding-inline: var(--widex-spacing-2);
+  }
+
+  .nav__label {
+    width: 0;
+    opacity: 0;
+  }
+
+  .sidebar__footer {
+    align-items: center;
+    padding-inline: var(--widex-spacing-2);
+  }
+
+  .robot {
+    background: transparent;
+    padding: 0;
+  }
+
+  .robot__details {
+    display: none;
+  }
+}
+
+.content {
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+}

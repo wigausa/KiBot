@@ -1,0 +1,16 @@
+<section class="home" [class.home--revealed]="revealed()">
+  <div class="home__halo" aria-hidden="true"></div>
+
+  <div class="home__content">
+    <p class="home__eyebrow">WIGA · WITAG ROBOT AUTÓNOMO</p>
+    <witag-logo class="home__logo" variant="full" [width]="380" [priority]="true" alt="Witag" />
+    <h1 class="home__title">Widex</h1>
+    <p class="home__subtitle">Plataforma de administración del robot</p>
+  </div>
+</section>
+
+@if (booting()) {
+  <div class="curtain" [class.curtain--up]="revealed()" aria-live="polite">
+    <widex-loader [size]="132" label="Iniciando Widex…" markTone="on-brand" />
+  </div>
+}

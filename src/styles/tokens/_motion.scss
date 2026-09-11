@@ -1,0 +1,32 @@
+// ---------------------------------------------------------------------------
+// Motion — cierra el gap "Motion / transiciones" de DESIGN.md sección 10.
+// Los valores son el puerto 1:1 de `WitagMotion` (WitagAndroid,
+// presentation/theme/Brand.kt) para que web y Android se muevan igual.
+//
+// Usar SIEMPRE estos tokens en `transition` y `animation`; nunca duraciones ni
+// curvas ad-hoc. Si un componente necesita una duración que no está aquí,
+// señalar el gap antes de inventar el valor.
+// ---------------------------------------------------------------------------
+
+:root {
+  --widex-motion-fast: 120ms; // hover, press, cambios de color
+  --widex-motion-base: 260ms; // entradas/salidas de elementos
+  --widex-motion-slow: 480ms; // transiciones de layout (sidebar)
+  --widex-motion-pulse: 1600ms; // loops de respiración/spinner
+  --widex-motion-curtain: 1000ms; // reveal de splash / boot
+
+  --widex-ease-standard: cubic-bezier(0.4, 0, 0.2, 1); // FastOutSlowIn
+  --widex-ease-linear: linear;
+  --widex-ease-settle: cubic-bezier(0.2, 0.9, 0.2, 1.1); // overshoot suave
+}
+
+// Accesibilidad: con "reducir movimiento" activo, las animaciones decorativas
+// se colapsan a un cambio instantáneo (los componentes leen estos tokens).
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --widex-motion-fast: 1ms;
+    --widex-motion-base: 1ms;
+    --widex-motion-slow: 1ms;
+    --widex-motion-curtain: 1ms;
+  }
+}

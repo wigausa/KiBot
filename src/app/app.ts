@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AppBootService } from './core/boot/app-boot.service';
 import { ThemeService } from './core/theme/theme.service';
 
 @Component({
@@ -14,5 +15,7 @@ export class App {
   // data-theme en <html> antes del primer render.
   private readonly themeService = inject(ThemeService);
 
-  protected readonly title = signal('WiDex');
+  // Instanciado aquí para que registre la URL inicial antes de que el router
+  // navegue; de eso depende si el Inicio muestra la cortina de arranque.
+  private readonly bootService = inject(AppBootService);
 }
