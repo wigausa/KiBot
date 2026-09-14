@@ -1,0 +1,379 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-6);
+  max-width: 760px;
+  padding: var(--widex-spacing-7) var(--widex-spacing-6);
+}
+
+// ── Encabezado ───────────────────────────────────────────────────────────
+.control__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-1);
+}
+
+.control__eyebrow {
+  margin: 0;
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--widex-accent-strong);
+}
+
+.control__title {
+  margin: 0;
+  font-size: var(--widex-font-size-heading2);
+  font-weight: var(--widex-font-weight-bold);
+  color: var(--widex-fg);
+}
+
+// Hecho fijo del robot (a qué inventario pertenece), no una acción: se separa
+// del selector de zona para no mezclar "dónde vive" con "a dónde lo mando".
+.control__assignment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--widex-spacing-1);
+  align-self: flex-start;
+  margin-top: var(--widex-spacing-1);
+  padding: var(--widex-spacing-1) var(--widex-spacing-3);
+  border-radius: var(--widex-radius-3);
+  background: var(--widex-surface-variant);
+  color: var(--widex-fg-muted);
+  font-size: var(--widex-font-size-subtitle);
+
+  strong {
+    color: var(--widex-fg);
+    font-weight: var(--widex-font-weight-bold);
+  }
+
+  widex-icon {
+    --widex-icon-size: 16px;
+  }
+}
+
+// ── Bloques con label tipo "eyebrow" (zona / etiquetas) ───────────────────
+.control__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-3);
+}
+
+.control__label {
+  margin: 0;
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--widex-fg-muted);
+}
+
+.control__hint {
+  margin: 0;
+  font-size: var(--widex-font-size-subtitle);
+  color: var(--widex-fg-muted);
+}
+
+// ── Buscador de zonas ──────────────────────────────────────────────────────
+.zone-search {
+  display: flex;
+  align-items: center;
+  gap: var(--widex-spacing-2);
+  padding: var(--widex-spacing-2) var(--widex-spacing-3);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-5);
+  background: var(--widex-surface);
+  color: var(--widex-fg-muted);
+
+  widex-icon {
+    --widex-icon-size: 18px;
+
+    flex-shrink: 0;
+  }
+}
+
+.zone-search:focus-within {
+  border-color: var(--widex-accent-strong);
+}
+
+.zone-search__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-body);
+}
+
+.zone-search__input:focus {
+  outline: none;
+}
+
+// ── Selector de zona (single-select, NO es un filtro) ─────────────────────
+.zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--widex-spacing-2);
+}
+
+.zone {
+  padding: var(--widex-spacing-2) var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-full);
+  background: var(--widex-surface);
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-regular);
+  cursor: pointer;
+  transition:
+    background var(--widex-motion-fast) var(--widex-ease-standard),
+    border-color var(--widex-motion-fast) var(--widex-ease-standard),
+    color var(--widex-motion-fast) var(--widex-ease-standard);
+}
+
+.zone:hover:not(:disabled) {
+  border-color: var(--widex-accent-strong);
+  background: color-mix(in srgb, var(--widex-accent) 14%, var(--widex-surface));
+}
+
+.zone--selected {
+  border-color: var(--widex-accent-strong);
+  background: color-mix(in srgb, var(--widex-accent) 22%, var(--widex-surface));
+  color: var(--widex-accent-strong);
+  font-weight: var(--widex-font-weight-bold);
+}
+
+.zone:disabled {
+  cursor: not-allowed;
+}
+
+.zone:disabled:not(.zone--selected) {
+  opacity: 0.45;
+}
+
+// ── Tarjeta de progreso ────────────────────────────────────────────────────
+.progress-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-3);
+  padding: var(--widex-spacing-6);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-7);
+  background: var(--widex-surface);
+}
+
+.progress-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--widex-spacing-3);
+}
+
+.progress-card__zone {
+  font-size: var(--widex-font-size-body);
+  font-weight: var(--widex-font-weight-bold);
+  color: var(--widex-fg);
+}
+
+.status {
+  padding: var(--widex-spacing-0) var(--widex-spacing-3);
+  border-radius: var(--widex-radius-3);
+  background: var(--widex-surface-variant);
+  color: var(--widex-fg-muted);
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  white-space: nowrap;
+}
+
+.status--running {
+  background: color-mix(in srgb, var(--widex-success) 18%, transparent);
+  color: var(--widex-success-strong);
+}
+
+.status--paused {
+  background: color-mix(in srgb, var(--widex-warning) 22%, transparent);
+  color: var(--widex-warning-strong);
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: var(--widex-radius-full);
+  background: var(--widex-surface-variant);
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--widex-accent-strong);
+  transition: width var(--widex-motion-base) var(--widex-ease-standard);
+}
+
+.progress-card__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--widex-font-size-subtitle);
+  color: var(--widex-fg-muted);
+}
+
+// ── Acciones: iniciar / pausar / detener ──────────────────────────────────
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--widex-spacing-3);
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--widex-spacing-1);
+  padding: var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  cursor: pointer;
+  transition:
+    background var(--widex-motion-fast) var(--widex-ease-standard),
+    opacity var(--widex-motion-fast) var(--widex-ease-standard);
+}
+
+.action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.action--primary {
+  border-color: transparent;
+  background: var(--widex-success);
+  color: var(--widex-color-neutral-white);
+}
+
+.action--primary:hover:not(:disabled) {
+  background: var(--widex-success-strong);
+}
+
+.action--danger {
+  border-color: color-mix(in srgb, var(--widex-error) 40%, transparent);
+  color: var(--widex-error);
+}
+
+.action--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--widex-error) 10%, transparent);
+}
+
+.action:not(.action--primary):not(.action--danger):hover:not(:disabled) {
+  background: var(--widex-surface-variant);
+}
+
+// ── Volver a estación de carga ─────────────────────────────────────────────
+.return {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--widex-spacing-2);
+  padding: var(--widex-spacing-3);
+  border: var(--widex-stroke-0) dashed var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: transparent;
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-body);
+  font-weight: var(--widex-font-weight-bold);
+  cursor: pointer;
+  transition: background var(--widex-motion-fast) var(--widex-ease-standard);
+}
+
+.return:hover {
+  background: var(--widex-surface-variant);
+}
+
+// ── Etiquetas a ignorar ────────────────────────────────────────────────────
+.tag-form {
+  display: flex;
+  gap: var(--widex-spacing-2);
+}
+
+.tag-form__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--widex-spacing-2) var(--widex-spacing-3);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-5);
+  background: var(--widex-surface);
+  color: var(--widex-fg);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-body);
+}
+
+.tag-form__input:focus-visible {
+  outline: var(--widex-stroke-1) solid var(--widex-accent-strong);
+  outline-offset: 1px;
+}
+
+.tag-form__submit {
+  padding: var(--widex-spacing-2) var(--widex-spacing-4);
+  border: none;
+  border-radius: var(--widex-radius-5);
+  background: var(--widex-accent-strong);
+  color: var(--widex-color-neutral-white);
+  font-family: var(--widex-font-family);
+  font-size: var(--widex-font-size-subtitle);
+  font-weight: var(--widex-font-weight-bold);
+  cursor: pointer;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--widex-spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-list__empty {
+  margin: 0;
+  font-size: var(--widex-font-size-subtitle);
+  color: var(--widex-fg-muted);
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--widex-spacing-1);
+  padding: var(--widex-spacing-1) var(--widex-spacing-2);
+  border-radius: var(--widex-radius-1);
+  background: var(--widex-surface-variant);
+  color: var(--widex-fg);
+  font-size: var(--widex-font-size-subtitle);
+}
+
+.tag-chip__remove {
+  --widex-icon-size: 14px;
+
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--widex-fg-muted);
+  cursor: pointer;
+}
+
+.tag-chip__remove:hover {
+  color: var(--widex-error);
+}

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { InventoryService } from '../../inventory/inventory.service';
 import { WIDEX_NAV_ITEMS } from '../../navigation/nav-items';
 import { WidexIcon } from '../../../shared/ui/widex-icon/widex-icon';
 import { WitagLogo } from '../../../shared/ui/witag-logo/witag-logo';
@@ -23,8 +24,11 @@ const SIDEBAR_STORAGE_KEY = 'widex-sidebar-expanded';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Shell {
+  private readonly inventory = inject(InventoryService);
+
   protected readonly navItems = WIDEX_NAV_ITEMS;
   protected readonly expanded = signal(this.readStoredExpanded());
+  protected readonly inventoryName = computed(() => this.inventory.currentInventory().name);
 
   protected toggleSidebar(): void {
     this.expanded.update((value) => !value);

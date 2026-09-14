@@ -1,0 +1,137 @@
+<section class="control">
+  <header class="control__header">
+    <p class="control__eyebrow">MÓDULO DE CONTROL</p>
+    <h1 class="control__title">Control y filtro del recorrido</h1>
+    <p class="control__assignment">
+      <widex-icon name="zones" />
+      Robot asignado a <strong>{{ inventoryName() }}</strong>
+    </p>
+  </header>
+
+  <section class="control__block">
+    <h2 id="tags-heading" class="control__label">Etiquetas a ignorar</h2>
+    <p class="control__hint">
+      Se siguen leyendo, pero no se envían mientras estén en esta lista. Aplica solo a este
+      recorrido.
+    </p>
+
+    <div class="tag-form">
+      <input
+        type="text"
+        class="tag-form__input"
+        placeholder="Código de la etiqueta (EPC)"
+        aria-labelledby="tags-heading"
+        [formControl]="tagControl"
+        (keydown.enter)="addIgnoredTag()"
+      />
+      <button type="button" class="tag-form__submit" (click)="addIgnoredTag()">Agregar</button>
+    </div>
+
+    @if (ignoredTags().length) {
+      <ul class="tag-list">
+        @for (tag of ignoredTags(); track tag) {
+          <li class="tag-chip">
+            <span>{{ tag }}</span>
+            <button
+              type="button"
+              class="tag-chip__remove"
+              [attr.aria-label]="'Quitar ' + tag + ' de la lista de ignoradas'"
+              (click)="removeIgnoredTag(tag)"
+            >
+              <widex-icon name="close" />
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="tag-list__empty">No hay etiquetas ignoradas en este recorrido.</p>
+    }
+  </section>
+
+  <section class="control__block">
+    <h2 id="zone-heading" class="control__label">Enviar el robot a</h2>
+
+    <div class="zone-search">
+      <widex-icon name="search" />
+      <input
+        type="text"
+        class="zone-search__input"
+        placeholder="Buscar zona…"
+        aria-label="Buscar zona"
+        [formControl]="zoneQuery"
+      />
+    </div>
+
+    <div class="zones" role="radiogroup" aria-labelledby="zone-heading">
+      @for (zone of filteredZones(); track zone.id) {
+        <button
+          type="button"
+          class="zone"
+          role="radio"
+          [attr.aria-checked]="selectedZoneId() === zone.id"
+          [class.zone--selected]="selectedZoneId() === zone.id"
+          [disabled]="!isIdle()"
+          (click)="selectZone(zone.id)"
+        >
+          {{ zone.label }}
+        </button>
+      } @empty {
+        <p class="control__hint">Ninguna zona coincide con "{{ zoneQuery.value }}".</p>
+      }
+    </div>
+
+    @if (isIdle() && selectedZoneId() === null) {
+      <p class="control__hint">Elige una zona para poder iniciar el recorrido.</p>
+    }
+  </section>
+
+  <section class="progress-card" aria-live="polite">
+    <div class="progress-card__top">
+      <span class="progress-card__zone">{{ selectedZoneLabel() ?? 'Sin zona asignada' }}</span>
+      <span [class]="'status status--' + state()">{{ statusLabel() }}</span>
+    </div>
+
+    <div
+      class="progress-bar"
+      role="progressbar"
+      aria-label="Progreso del recorrido"
+      [attr.aria-valuenow]="progressPercent()"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="progress-bar__fill" [style.width.%]="progressPercent()"></div>
+    </div>
+
+    <div class="progress-card__bottom">
+      <span>{{ elapsedLabel() }}</span>
+      <span>{{ progressPercent() }}%</span>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button
+      type="button"
+      class="action action--primary"
+      [disabled]="primaryDisabled()"
+      (click)="onPrimaryAction()"
+    >
+      <widex-icon name="play" />
+      {{ primaryLabel() }}
+    </button>
+
+    <button type="button" class="action" [disabled]="!isRunning()" (click)="pause()">
+      <widex-icon name="pause" />
+      Pausar
+    </button>
+
+    <button type="button" class="action action--danger" [disabled]="isIdle()" (click)="stop()">
+      <widex-icon name="stop" />
+      Detener
+    </button>
+  </div>
+
+  <button type="button" class="return" (click)="returnToChargingStation()">
+    <widex-icon name="home" />
+    Volver a estación de carga
+  </button>
+</section>

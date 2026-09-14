@@ -29,7 +29,11 @@ export type WidexIconName =
   | 'chevron-right'
   | 'sun'
   | 'moon'
-  | 'robot';
+  | 'robot'
+  | 'play'
+  | 'pause'
+  | 'stop'
+  | 'close';
 
 @Component({
   selector: 'widex-icon',
@@ -137,6 +141,27 @@ export type WidexIconName =
 
         @case ('chevron-right') {
           <path d="m9.8 6 6 6-6 6" />
+        }
+
+        <!-- Iniciar/reanudar recorrido. -->
+        @case ('play') {
+          <path d="M8.4 6.4v11.2l9.2-5.6z" fill="currentColor" stroke="none" />
+        }
+
+        <!-- Pausar recorrido. -->
+        @case ('pause') {
+          <rect x="6.8" y="5.6" width="3.4" height="12.8" rx="0.8" fill="currentColor" stroke="none" />
+          <rect x="13.8" y="5.6" width="3.4" height="12.8" rx="0.8" fill="currentColor" stroke="none" />
+        }
+
+        <!-- Detener recorrido. -->
+        @case ('stop') {
+          <rect x="6.4" y="6.4" width="11.2" height="11.2" rx="1.6" fill="currentColor" stroke="none" />
+        }
+
+        <!-- Quitar una etiqueta de la lista de ignoradas. -->
+        @case ('close') {
+          <path d="M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6" />
         }
       }
     </svg>

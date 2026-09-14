@@ -26,7 +26,11 @@ export const routes: Routes = [
         title: 'Inicio · Widex',
         loadComponent: () => import('./features/home/home').then((m) => m.Home)
       },
-      placeholder('control', 'Control y filtro del recorrido', 'control'),
+      {
+        path: 'control',
+        title: 'Control y filtro del recorrido · Widex',
+        loadComponent: () => import('./features/control/control').then((m) => m.Control)
+      },
       placeholder('buscar', 'Búsqueda de cajas leídas', 'search'),
       placeholder('ubicacion', 'Ubicación en tiempo real', 'location'),
       placeholder('estado', 'Estado del equipo y alertas', 'status'),
