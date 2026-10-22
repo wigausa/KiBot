@@ -1,0 +1,139 @@
+<section class="control">
+  <header class="control__cabecera">
+    <h1>Control del recorrido</h1>
+    <p class="control__nota">
+      Elige el inventario, el robot y las zonas que va a recorrer. Al iniciar, el cliente recibe el aviso de arranque.
+    </p>
+  </header>
+
+  @switch (store.inventarios().status) {
+    @case ('loading') {
+      <widex-loading-indicator label="Cargando inventarios" />
+    }
+    @case ('error') {
+      @if (store.inventarios(); as e) {
+        @if (e.status === 'error') {
+          <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+    }
+    @case ('ready') {
+      <div class="tarjeta">
+        <label class="campo">
+          <span class="campo__etiqueta">Inventario</span>
+          <select class="campo__control" (change)="alElegirInventario($event)" [disabled]="store.abierto() !== null">
+            <option value="" [selected]="store.inventarioId() === null">Elige un inventario abierto</option>
+            @if (store.inventarios(); as lista) {
+              @if (lista.status === 'ready') {
+                @for (inv of lista.value; track inv._id) {
+                  <option [value]="inv._id" [selected]="inv._id === store.inventarioId()">{{ inv.Name }}</option>
+                }
+              }
+            }
+          </select>
+        </label>
+
+        @if (store.inventarioId() !== null) {
+          @if (store.robots().length === 0) {
+            <p class="aviso">Este inventario no tiene ningún robot asignado.</p>
+          } @else {
+            <label class="campo">
+              <span class="campo__etiqueta">Robot</span>
+              <select class="campo__control" (change)="alElegirRobot($event)" [disabled]="store.abierto() !== null">
+                <option value="" [selected]="store.robotId() === null">Elige un robot</option>
+                @for (robot of store.robots(); track robot.IdDevice) {
+                  <option [value]="robot.IdDevice" [selected]="robot.IdDevice === store.robotId()">{{ robot.Name }}</option>
+                }
+              </select>
+            </label>
+          }
+        }
+
+        @if (store.robotId() !== null) {
+          <fieldset class="zonas" [disabled]="store.abierto() !== null">
+            <legend class="campo__etiqueta">Zonas que va a recorrer</legend>
+            @for (zona of store.zonas(); track zona.IdZone) {
+              <label class="zona">
+                <input
+                  type="checkbox"
+                  [checked]="store.zonasMarcadas().has(zona.IdZone)"
+                  (change)="store.alternarZona(zona.IdZone)"
+                />
+                <span>{{ zona.Name }}</span>
+              </label>
+            }
+          </fieldset>
+        }
+
+        @if (store.recorrido().status === 'loading') {
+          <widex-loading-indicator [size]="32" label="Consultando el recorrido" />
+        }
+
+        <div class="acciones">
+          @if (store.abierto() === null) {
+            <widex-button [disabled]="!store.puedeIniciar()" [busy]="store.ocupado()" (pressed)="store.iniciar()">
+              Iniciar recorrido
+            </widex-button>
+          } @else {
+            <widex-button variant="outline" tone="error" [busy]="store.ocupado()" (pressed)="store.cerrar()">
+              Cerrar recorrido
+            </widex-button>
+          }
+        </div>
+
+        @if (store.accion(); as a) {
+          @if (a.status === 'error') {
+            <widex-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
+          }
+        }
+      </div>
+
+      @if (store.recorrido(); as r) {
+        @if (r.status === 'ready' && r.value; as run) {
+          <div class="tarjeta estado" aria-live="polite">
+            <div class="estado__fila">
+              <span class="insignia" [class.insignia--activa]="run.Status === 'OPEN'">
+                {{ run.Status === 'OPEN' ? 'Recorriendo' : 'Terminado' }}
+              </span>
+              @if (run.StartedAt) {
+                <span class="dato">Inició {{ run.StartedAt | date: 'short' }}</span>
+              }
+              @if (run.Status !== 'OPEN') {
+                <span class="dato">
+                  Cerrado{{ run.Reason ? ' (' + run.Reason + ')' : '' }}. La ubicación de las cajas estará lista en unos minutos.
+                </span>
+              }
+            </div>
+
+            @if (store.progreso(); as p) {
+              <dl class="cifras">
+                <div>
+                  <dt>Lecturas</dt>
+                  <dd>{{ p.Readings | number }}</dd>
+                </div>
+                <div>
+                  <dt>Última lectura</dt>
+                  <dd>{{ p.LastReadAt ? (p.LastReadAt | date: 'mediumTime') : '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Caras recorridas</dt>
+                  <dd>{{ p.CoveredSides }} de {{ p.TotalSides }}</dd>
+                </div>
+              </dl>
+              <div
+                class="barra"
+                role="progressbar"
+                [attr.aria-valuenow]="avance() | number: '1.0-0'"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Caras recorridas"
+              >
+                <div class="barra__relleno" [style.width.%]="avance()"></div>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  }
+</section>

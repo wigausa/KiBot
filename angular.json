@@ -44,7 +44,13 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -61,7 +67,8 @@
               "buildTarget": "WiDex:build:production"
             },
             "development": {
-              "buildTarget": "WiDex:build:development"
+              "buildTarget": "WiDex:build:development",
+              "proxyConfig": "proxy.local.conf.js"
             }
           },
           "defaultConfiguration": "development"
@@ -87,5 +94,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

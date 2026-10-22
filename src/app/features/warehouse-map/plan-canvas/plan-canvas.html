@@ -1,0 +1,270 @@
+<div class="lienzo">
+  @if (editable()) {
+    <div class="paleta" role="toolbar" aria-label="Piezas del plano">
+      <span class="paleta__titulo">Arrastra al plano:</span>
+
+      <button
+        type="button"
+        class="pieza"
+        [class.pieza--activa]="arrastrando() === 'pasillo'"
+        (pointerdown)="empezar('pasillo', $event)"
+      >
+        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
+          <rect class="figura__calzada" x="4" y="2" width="16" height="40" rx="1" />
+          <line class="figura__eje" x1="12" y1="3" x2="12" y2="41" />
+        </svg>
+        <span class="pieza__texto">
+          Pasillo
+          <small>{{ anchoPasilloTexto() }} de ancho</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="pieza"
+        [class.pieza--activa]="arrastrando() === 'bloque'"
+        (pointerdown)="empezar('bloque', $event)"
+      >
+        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
+          @for (fila of [0, 1, 2, 3, 4, 5]; track fila) {
+            <rect class="figura__celda" x="3" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
+            <rect class="figura__celda" x="12.5" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
+          }
+        </svg>
+        <span class="pieza__texto">
+          Bloque
+          <small>{{ anchoBloqueTexto() }}, dos filas</small>
+        </span>
+      </button>
+
+      <div class="largos" role="group" aria-label="Segmentos del bloque">
+        @for (largo of largos; track largo) {
+          <button
+            type="button"
+            class="largo"
+            [class.largo--activo]="largo === largoElegido()"
+            (click)="elegirLargo(largo)"
+          >
+            {{ largo }}
+          </button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="pieza"
+        [class.pieza--activa]="arrastrando() === 'muro'"
+        (pointerdown)="empezar('muro', $event)"
+      >
+        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
+          <rect class="figura__muro" x="9" y="2" width="6" height="40" rx="0.5" />
+          @for (raya of [0, 1, 2, 3, 4]; track raya) {
+            <line class="figura__junta" x1="9" [attr.y1]="10 + raya * 8" x2="15" [attr.y2]="10 + raya * 8" />
+          }
+        </svg>
+        <span class="pieza__texto">
+          Muro
+          <small>a un lado del recinto</small>
+        </span>
+      </button>
+    </div>
+  }
+
+  <svg
+    #lienzo
+    class="lienzo__svg"
+    [class.lienzo__svg--arrastrando]="arrastrando() !== null"
+    [attr.viewBox]="viewBox()"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    aria-label="Plano de la bodega"
+  >
+    <g class="ejes" [attr.stroke-width]="trazo() * 1.6">
+      @for (x of marcasX(); track x) {
+        <line [attr.x1]="x" [attr.y1]="yDe(plano().Z)" [attr.x2]="x" [attr.y2]="yDe(plano().Z + plano().Depth)" />
+      }
+      @for (z of marcasZ(); track z) {
+        <line [attr.x1]="plano().X" [attr.y1]="yDe(z)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(z)" />
+      }
+    </g>
+
+    <g class="marco" [attr.stroke-width]="trazo() * 2.5">
+      <line class="marco__anclaje" [attr.x1]="plano().X" [attr.y1]="yDe(0)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(0)" />
+      @if (marco().dosTramos) {
+        <line class="marco__transversal" [attr.x1]="plano().X" [attr.y1]="yDe(marco().finInferior)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(marco().finInferior)" />
+        <line class="marco__transversal" [attr.x1]="plano().X" [attr.y1]="yDe(marco().inicioSuperior)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(marco().inicioSuperior)" />
+      }
+      <line class="marco__anclaje" [attr.x1]="plano().X" [attr.y1]="yDe(marco().total)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(marco().total)" />
+
+      <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(0) - trazo() * 10" [attr.font-size]="tamanoDeAncla()">.1</text>
+      @if (marco().dosTramos) {
+        <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(marco().medio) + tamanoDeAncla() / 3" [attr.font-size]="tamanoDeAncla()">.2</text>
+      }
+      <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(marco().total) + tamanoDeAncla()" [attr.font-size]="tamanoDeAncla()">.3</text>
+    </g>
+
+    <rect
+      class="inventario"
+      [attr.x]="map().Inventory.X"
+      [attr.y]="yDe(map().Inventory.Z, map().Inventory.Depth)"
+      [attr.width]="map().Inventory.Width"
+      [attr.height]="map().Inventory.Depth"
+      [attr.stroke-width]="trazo() * 2"
+    />
+
+    @for (pasillo of pasillosDibujables(); track pasillo.id) {
+      <g class="calle">
+        <rect
+          class="calle__calzada"
+          [attr.x]="pasillo.x"
+          [attr.y]="yDe(pasillo.z, pasillo.fondo)"
+          [attr.width]="pasillo.ancho"
+          [attr.height]="pasillo.fondo"
+        />
+        <line
+          class="calle__eje"
+          [attr.x1]="pasillo.centro"
+          [attr.y1]="yDe(pasillo.z)"
+          [attr.x2]="pasillo.centro"
+          [attr.y2]="yDe(pasillo.z + pasillo.fondo)"
+          [attr.stroke-width]="trazo() * 3"
+          [attr.stroke-dasharray]="rayaDelEje()"
+        />
+      </g>
+    }
+
+    @for (celda of celdas(); track celda.id) {
+      <rect
+        class="celda"
+        [class.celda--huerfana]="celda.huerfana"
+        [class.celda--resaltada]="celda.resaltada"
+        [class.celda--apagada]="hayResaltado() && !celda.resaltada"
+        [attr.x]="celda.x"
+        [attr.y]="yDe(celda.z, celda.fondo)"
+        [attr.width]="celda.ancho"
+        [attr.height]="celda.fondo"
+        [attr.stroke-width]="trazo() * 1.2"
+      />
+    }
+
+    @for (bloque of bloques(); track bloque.id) {
+      <rect
+        class="bloque-zona"
+        [class.bloque-zona--activa]="bloque.id === bloqueActivo()"
+        [attr.x]="bloque.x"
+        [attr.y]="yDe(map().Inventory.Z, map().Inventory.Depth)"
+        [attr.width]="bloque.ancho"
+        [attr.height]="map().Inventory.Depth"
+        [attr.stroke-width]="trazo() * 2"
+        (click)="seleccionarBloque(bloque.id)"
+      />
+    }
+
+    @for (muro of muros(); track muro.WallId) {
+      <rect
+        class="muro"
+        [attr.x]="muro.X - muro.Length / 2"
+        [attr.y]="yDe(muro.Z, muro.Thickness) + muro.Thickness / 2"
+        [attr.width]="muro.Length"
+        [attr.height]="muro.Thickness"
+        [attr.transform]="transformacion(muro)"
+      />
+    }
+
+    @for (ancla of anclas(); track ancla.id) {
+      <circle
+        class="ancla"
+        [class.ancla--transversal]="ancla.ordinal === 2"
+        [attr.cx]="ancla.x"
+        [attr.cy]="yDe(ancla.z)"
+        [attr.r]="trazo() * 4"
+      />
+    }
+
+    @for (etiqueta of numeros(); track etiqueta.id) {
+      <text
+        class="numero"
+        [attr.x]="etiqueta.x"
+        [attr.y]="yDe(etiqueta.z) + trazo() * 22"
+        [attr.font-size]="plano().Width / 90"
+        text-anchor="middle"
+        paint-order="stroke fill"
+        [attr.stroke-width]="trazo() * 4"
+      >
+        {{ etiqueta.numero }}
+      </text>
+    }
+
+    @for (hueco of huecos(); track hueco.id) {
+      <g class="hueco" [class.hueco--activo]="hueco.id === huecoActivo()">
+        <rect
+          [attr.x]="hueco.x"
+          [attr.y]="yDe(hueco.z, hueco.fondo)"
+          [attr.width]="hueco.ancho"
+          [attr.height]="hueco.fondo"
+          [attr.stroke-width]="trazo() * 3"
+        />
+      </g>
+    }
+  </svg>
+
+  @if (editable()) {
+    <div class="controles">
+      @if (sinPasillos()) {
+        <span class="pista">Arrastra una pieza al tramo de arriba o al de abajo para empezar.</span>
+      } @else if (bloqueSeleccionado(); as bloque) {
+        <span class="seleccion">{{ bloque.etiqueta }}</span>
+
+        <span class="tramo">
+          abajo
+          @for (largo of largos; track largo) {
+            <button
+              type="button"
+              class="largo"
+              [class.largo--activo]="bloque.inferior === largo"
+              (click)="ponerLargo(bloque, 'inferior', largo)"
+            >
+              {{ largo }}
+            </button>
+          }
+          @if (bloque.inferior > 0) {
+            <button type="button" class="largo largo--quitar" (click)="quitarTramo(bloque, 'inferior')">
+              sin tramo
+            </button>
+          }
+        </span>
+
+        <span class="tramo">
+          arriba
+          @for (largo of largos; track largo) {
+            <button
+              type="button"
+              class="largo"
+              [class.largo--activo]="bloque.superior === largo"
+              (click)="ponerLargo(bloque, 'superior', largo)"
+            >
+              {{ largo }}
+            </button>
+          }
+          @if (bloque.superior > 0) {
+            <button type="button" class="largo largo--quitar" (click)="quitarTramo(bloque, 'superior')">
+              sin tramo
+            </button>
+          }
+        </span>
+      } @else {
+        <span class="pista">Pulsa un bloque para cambiar sus tramos.</span>
+      }
+
+      @if (pasilloExtremo('max'); as ultimo) {
+        <button type="button" class="quitar" (click)="quitarPasillo(ultimo)">
+          Quitar pasillo {{ ultimo }}
+        </button>
+      }
+
+      @for (muro of muros(); track muro.WallId; let i = $index) {
+        <button type="button" class="quitar" (click)="quitarMuro(i)">Quitar {{ muro.Name }}</button>
+      }
+    </div>
+  }
+</div>

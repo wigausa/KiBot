@@ -1,0 +1,314 @@
+:host {
+  display: block;
+}
+
+.lienzo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-3);
+  // Arrastrar una pieza no debe ir seleccionando el texto que pille por el camino.
+  user-select: none;
+}
+
+.lienzo__svg {
+  width: 100%;
+  // Alto fijo para que la pantalla no salte de tamano al previsualizar un plano mas grande.
+  height: clamp(240px, 42vh, 520px);
+  background: var(--widex-surface-variant);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+}
+
+// La cuadricula tiene que verse: es la referencia de escala del plano.
+.ejes line {
+  stroke: var(--widex-fg-muted);
+  opacity: 0.45;
+}
+
+.inventario {
+  fill: none;
+  stroke: var(--widex-line);
+  stroke-dasharray: 1 0.6;
+}
+
+// Cada celda por separado: un bloque son DOS filas espalda contra espalda, y verlo importa.
+.celda {
+  fill: var(--widex-accent);
+  stroke: var(--widex-accent-strong);
+  opacity: 0.85;
+}
+
+// Una celda a la que no llega ningun pasillo: el robot no podra nombrar lo que haya ahi.
+.celda--huerfana {
+  fill: var(--widex-warning);
+  stroke: var(--widex-warning-strong);
+}
+
+// Buscar caja (B12): con alguna cara senalada, el resto se atenua para que se vea donde mirar,
+// sin borrarlo: las estanterias tienen que seguir viendose para orientarse.
+.celda--apagada {
+  opacity: 0.3;
+}
+
+.celda--resaltada {
+  fill: var(--widex-accent-strong);
+  stroke: var(--widex-accent-strong);
+  opacity: 1;
+}
+
+// El pasillo, como una calle: calzada mas oscura y linea de eje discontinua.
+.calle__calzada {
+  fill: var(--widex-page);
+  opacity: 0.85;
+}
+
+.calle__eje {
+  stroke: var(--widex-warning);
+  stroke-linecap: round;
+}
+
+// El marco de anclas: las tres alturas que definen los tramos.
+.marco__anclaje {
+  stroke: var(--widex-accent-strong);
+  opacity: 0.8;
+}
+
+.marco__transversal {
+  stroke: var(--widex-fg-muted);
+  opacity: 0.6;
+  stroke-dasharray: 0.9 0.6;
+}
+
+.marco__nota {
+  fill: var(--widex-accent-strong);
+  font-weight: var(--widex-font-weight-bold);
+}
+
+.ancla {
+  fill: var(--widex-fg-muted);
+}
+
+// El .2 es la transversal, el unico de los tres que cae en medio del pasillo.
+.ancla--transversal {
+  fill: var(--widex-accent-strong);
+}
+
+.numero {
+  fill: var(--widex-fg);
+  stroke: var(--widex-page);
+  font-weight: var(--widex-font-weight-bold);
+  cursor: pointer;
+}
+
+.numero--activo {
+  fill: var(--widex-accent-strong);
+}
+
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--widex-spacing-3);
+}
+
+.controles button {
+  padding: var(--widex-spacing-1) var(--widex-spacing-5);
+  border: var(--widex-stroke-0) solid var(--widex-accent-strong);
+  border-radius: var(--widex-radius-6);
+  background: transparent;
+  color: var(--widex-accent-strong);
+  font: inherit;
+  font-size: var(--widex-font-size-caption);
+  cursor: pointer;
+}
+
+.controles .quitar {
+  border-color: var(--widex-error-strong);
+  color: var(--widex-error-strong);
+}
+
+.seleccion,
+.pista {
+  font-size: var(--widex-font-size-caption);
+  color: var(--widex-fg-muted);
+}
+
+.seleccion {
+  color: var(--widex-fg);
+  font-weight: var(--widex-font-weight-bold);
+}
+
+// --- la paleta -----------------------------------------------------------------------------
+
+.paleta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--widex-spacing-3);
+}
+
+.paleta__titulo {
+  font-size: var(--widex-font-size-caption);
+  color: var(--widex-fg-muted);
+}
+
+.pieza {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--widex-spacing-3);
+  padding: var(--widex-spacing-2) var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+  color: var(--widex-fg);
+  font: inherit;
+  font-size: var(--widex-font-size-caption);
+  // Es lo que se arrastra: el cursor lo dice antes de que nadie lo intente.
+  cursor: grab;
+  touch-action: none;
+
+  small {
+    display: block;
+    color: var(--widex-fg-muted);
+  }
+}
+
+// La figura dice QUE es cada pieza antes de leer su nombre: un pasillo por el que se pasa, un
+// bloque de dos filas de celdas, un muro.
+.figura {
+  width: 18px;
+  height: 33px;
+  flex: none;
+  overflow: visible;
+}
+
+.pieza__texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.figura__calzada {
+  fill: var(--widex-page);
+  stroke: var(--widex-line);
+  stroke-width: 1;
+}
+
+.figura__eje {
+  stroke: var(--widex-warning);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3;
+  stroke-linecap: round;
+}
+
+.figura__celda {
+  fill: var(--widex-accent);
+  stroke: var(--widex-accent-strong);
+  stroke-width: 0.6;
+}
+
+.figura__muro {
+  fill: var(--widex-fg-muted);
+}
+
+.figura__junta {
+  stroke: var(--widex-page);
+  stroke-width: 1;
+}
+
+.pieza--activa {
+  cursor: grabbing;
+  border-color: var(--widex-accent-strong);
+  color: var(--widex-accent-strong);
+}
+
+// --- lo que se dibuja encima del plano ------------------------------------------------------
+
+.lienzo__svg--arrastrando {
+  cursor: grabbing;
+}
+
+.muro {
+  fill: var(--widex-fg);
+  opacity: 0.7;
+}
+
+.bloque-zona {
+  fill: transparent;
+  stroke: transparent;
+  cursor: pointer;
+}
+
+.bloque-zona--activa {
+  stroke: var(--widex-accent-strong);
+  stroke-dasharray: 0.6 0.4;
+}
+
+.hueco rect {
+  fill: var(--widex-accent);
+  fill-opacity: 0.12;
+  stroke: var(--widex-accent-strong);
+  stroke-dasharray: 0.8 0.5;
+}
+
+.hueco--activo rect {
+  fill-opacity: 0.35;
+  stroke-dasharray: none;
+}
+
+.campo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--widex-spacing-2);
+  font-size: var(--widex-font-size-caption);
+  color: var(--widex-fg-muted);
+
+  input {
+    width: 4rem;
+    padding: var(--widex-spacing-1) var(--widex-spacing-2);
+    border: var(--widex-stroke-0) solid var(--widex-line);
+    border-radius: var(--widex-radius-6);
+    background: var(--widex-surface);
+    color: var(--widex-fg);
+    font: inherit;
+    font-size: var(--widex-font-size-caption);
+  }
+}
+
+// --- los largos de tramo ---------------------------------------------------------------------
+
+.largos {
+  display: inline-flex;
+  gap: var(--widex-spacing-1);
+}
+
+.largo {
+  padding: var(--widex-spacing-1) var(--widex-spacing-3);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+  color: var(--widex-fg-muted);
+  font: inherit;
+  font-size: var(--widex-font-size-caption);
+  cursor: pointer;
+}
+
+.largo--activo {
+  border-color: var(--widex-accent-strong);
+  color: var(--widex-accent-strong);
+  font-weight: var(--widex-font-weight-bold);
+}
+
+.largo--quitar {
+  border-color: var(--widex-error);
+  color: var(--widex-error-strong);
+}
+
+.tramo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--widex-spacing-1);
+  font-size: var(--widex-font-size-caption);
+  color: var(--widex-fg-muted);
+}

@@ -18,5 +18,6 @@ export const WIDEX_NAV_ITEMS: readonly WidexNavItem[] = [
   { path: 'buscar', label: 'Buscar', icon: 'search' },
   { path: 'ubicacion', label: 'Ubicación', icon: 'location' },
   { path: 'estado', label: 'Estado', icon: 'status' },
-  { path: 'zonas', label: 'Zonas', icon: 'zones' }
+  { path: 'zonas', label: 'Zonas', icon: 'zones' },
+  { path: 'mapa', label: 'Mapa', icon: 'map' }
 ];

@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "start:local": "ng serve --host 0.0.0.0 --port 8101 --poll 2000 --live-reload --proxy-config proxy.local.conf.js"
   },
   "prettier": {
     "printWidth": 100,

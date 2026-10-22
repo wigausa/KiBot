@@ -1,0 +1,230 @@
+.mapa {
+  min-height: 100%;
+  // El shell ya pinta --widex-page y ya scrollea; aqui solo hace falta el encuadre.
+  padding-inline: var(--widex-spacing-7);
+  padding-block: var(--widex-spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-6);
+}
+
+.mapa__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--widex-spacing-4);
+
+  h1 {
+    margin: 0;
+    font-size: var(--widex-font-size-heading3);
+    font-weight: var(--widex-font-weight-bold);
+    color: var(--widex-fg);
+  }
+}
+
+.mapa__nota {
+  margin: var(--widex-spacing-1) 0 0;
+  font-size: var(--widex-font-size-body);
+  color: var(--widex-fg-muted);
+}
+
+.modos {
+  display: inline-flex;
+  padding: var(--widex-spacing-0);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+
+  button {
+    padding: var(--widex-spacing-2) var(--widex-spacing-6);
+    border: none;
+    border-radius: var(--widex-radius-5, var(--widex-radius-6));
+    background: transparent;
+    color: var(--widex-fg-muted);
+    font: inherit;
+    font-size: var(--widex-font-size-body);
+    cursor: pointer;
+  }
+
+  button.activo {
+    background: var(--widex-accent-strong);
+    color: var(--widex-on-brand);
+    font-weight: var(--widex-font-weight-bold);
+  }
+}
+
+.mapa__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 24rem);
+  gap: var(--widex-spacing-6);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .mapa__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-2);
+}
+
+.editor__titulo {
+  font-size: var(--widex-font-size-caption);
+  font-weight: var(--widex-font-weight-bold);
+  color: var(--widex-fg-muted);
+}
+
+.editor__texto {
+  // HUECO DE DESIGN.md (Known Gaps): no hay tokens de foco ni de borde en error para inputs.
+  // Se usa lo mas cercano que existe y queda anotado.
+  min-height: clamp(240px, 42vh, 520px);
+  padding: var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+  color: var(--widex-fg);
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  font-size: var(--widex-font-size-caption);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.vacio {
+  margin: 0;
+  padding: var(--widex-spacing-7);
+  border: var(--widex-stroke-0) dashed var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  color: var(--widex-fg-muted);
+  font-size: var(--widex-font-size-body);
+  text-align: center;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-4);
+  // Sin esto una celda de grid no baja de su contenido y un texto largo ensancha la pagina.
+  min-width: 0;
+}
+
+.panel__acciones {
+  display: flex;
+  gap: var(--widex-spacing-3);
+}
+
+.resumen {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--widex-spacing-3);
+  padding: var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+
+  dt {
+    font-size: var(--widex-font-size-caption);
+    color: var(--widex-fg-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--widex-font-size-subtitle);
+    font-weight: var(--widex-font-weight-bold);
+    color: var(--widex-fg);
+  }
+
+  .alarma dd {
+    color: var(--widex-warning-strong);
+  }
+}
+
+.lista {
+  padding: var(--widex-spacing-4);
+  border-radius: var(--widex-radius-6);
+  border: var(--widex-stroke-0) solid var(--widex-line);
+  background: var(--widex-surface);
+
+  h2 {
+    margin: 0 0 var(--widex-spacing-2);
+    font-size: var(--widex-font-size-caption);
+    font-weight: var(--widex-font-weight-bold);
+  }
+
+  ul {
+    margin: 0;
+    padding-inline-start: var(--widex-spacing-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--widex-spacing-1);
+    font-size: var(--widex-font-size-caption);
+    color: var(--widex-fg-muted);
+  }
+}
+
+.lista--error {
+  border-color: var(--widex-error);
+
+  h2 {
+    color: var(--widex-error-strong);
+  }
+}
+
+.lista--aviso {
+  border-color: var(--widex-warning);
+
+  h2 {
+    color: var(--widex-warning-strong);
+  }
+}
+
+.guardado {
+  margin: 0;
+  padding: var(--widex-spacing-4);
+  border: var(--widex-stroke-0) solid var(--widex-success);
+  border-radius: var(--widex-radius-6);
+  background: var(--widex-surface);
+  color: var(--widex-success-strong);
+  font-size: var(--widex-font-size-body);
+}
+
+.dibujo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-4);
+  min-width: 0;
+}
+
+.datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--widex-spacing-4);
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widex-spacing-1);
+  flex: 1 1 14rem;
+  font-size: var(--widex-font-size-caption);
+  color: var(--widex-fg-muted);
+
+  input {
+    padding: var(--widex-spacing-2) var(--widex-spacing-3);
+    border: var(--widex-stroke-0) solid var(--widex-line);
+    border-radius: var(--widex-radius-6);
+    background: var(--widex-surface);
+    color: var(--widex-fg);
+    font: inherit;
+    font-size: var(--widex-font-size-body);
+  }
+}
+
+.dato--corto {
+  flex: 0 1 8rem;
+}

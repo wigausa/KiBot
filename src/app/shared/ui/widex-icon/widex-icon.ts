@@ -26,6 +26,7 @@ export type WidexIconName =
   | 'location'
   | 'status'
   | 'zones'
+  | 'map'
   | 'chevron-right'
   | 'sun'
   | 'moon'
@@ -111,6 +112,18 @@ export type WidexIconName =
             fill="currentColor"
             stroke="none"
           />
+        }
+
+        <!-- Mapa: la rejilla de la bodega. Dos pasillos verticales entre tres bloques de
+             estanteria, que es exactamente lo que describe el plano. -->
+        @case ('map') {
+          <rect x="2.8" y="4" width="18.4" height="16" rx="1" />
+          <g fill="currentColor" stroke="none">
+            <rect x="4.8" y="6.2" width="2.6" height="11.6" rx="0.4" />
+            <rect x="10.7" y="6.2" width="2.6" height="11.6" rx="0.4" />
+            <rect x="16.6" y="6.2" width="2.6" height="11.6" rx="0.4" />
+          </g>
+          <path d="M9.05 6.2v11.6M14.95 6.2v11.6" stroke-dasharray="2 1.6" />
         }
 
         <!-- Identidad del robot en el footer del sidebar. -->

@@ -1,0 +1,138 @@
+<section class="buscar">
+  <header class="buscar__cabecera">
+    <h1>Buscar caja</h1>
+    <p class="buscar__nota">
+      Por el código USDA que lleva impreso o por su EPC. Solo cuando el recorrido del robot ha terminado.
+    </p>
+  </header>
+
+  @switch (store.inventarios().status) {
+    @case ('loading') {
+      <widex-loading-indicator label="Cargando inventarios" />
+    }
+    @case ('error') {
+      @if (store.inventarios(); as e) {
+        @if (e.status === 'error') {
+          <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+    }
+    @case ('ready') {
+      <form class="tarjeta" (submit)="alBuscar($event)">
+        <label class="campo">
+          <span class="campo__etiqueta">Inventario</span>
+          <select class="campo__control" (change)="alElegirInventario($event)">
+            <option value="" [selected]="store.inventarioId() === null">Elige un inventario</option>
+            @if (store.inventarios(); as lista) {
+              @if (lista.status === 'ready') {
+                @for (inv of lista.value; track inv._id) {
+                  <option [value]="inv._id" [selected]="inv._id === store.inventarioId()">{{ inv.Name }}</option>
+                }
+              }
+            }
+          </select>
+        </label>
+
+        @if (store.inventarioId() !== null) {
+          @switch (store.estado().status) {
+            @case ('loading') {
+              <widex-loading-indicator [size]="32" label="Comprobando el recorrido" />
+            }
+            @case ('error') {
+              @if (store.estado(); as e) {
+                @if (e.status === 'error') {
+                  <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.consultarEstado()" />
+                }
+              }
+            }
+            @case ('ready') {
+              @if (!store.habilitado()) {
+                <!-- La regla: sin el recorrido terminado y calculado no se busca. Lo dice el backend. -->
+                <div class="bloqueo" role="status">
+                  @if (store.estado(); as e) {
+                    @if (e.status === 'ready') {
+                      <p>{{ e.value.Message }}</p>
+                    }
+                  }
+                  <widex-button variant="outline" size="small" (pressed)="store.consultarEstado()">
+                    Comprobar de nuevo
+                  </widex-button>
+                </div>
+              }
+
+              <div class="busqueda">
+                <label class="campo busqueda__campo">
+                  <span class="campo__etiqueta">Código USDA o EPC</span>
+                  <input
+                    class="campo__control"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="HA0DJ2"
+                    [value]="store.codigo()"
+                    [disabled]="!store.habilitado()"
+                    (input)="alEscribir($event)"
+                  />
+                </label>
+                <widex-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.resultado().status === 'loading'">
+                  Buscar
+                </widex-button>
+              </div>
+            }
+          }
+        }
+      </form>
+
+      @if (store.resultado(); as r) {
+        @if (r.status === 'error') {
+          <widex-error-state [message]="r.message" [details]="r.details" [showRetry]="false" />
+        }
+        @if (r.status === 'ready') {
+          <div class="tarjeta" aria-live="polite">
+            <p class="codigo">
+              {{ r.value.Usda ?? r.value.Code }}
+              <span class="codigo__epc">EPC {{ r.value.Epc }}</span>
+            </p>
+
+            @if (r.value.Locations.length === 0) {
+              <p class="sin-ver">El robot no leyó esta caja en este inventario.</p>
+            }
+
+            @for (l of r.value.Locations; track l.IdDevice) {
+              <div class="ubicacion">
+                @if (l.Status === 'RESOLVED') {
+                  <p class="ubicacion__sitio">
+                    Pasillo {{ l.Aisle }}, lado {{ l.Side }}, tramo {{ minusculas(l.Tramo) }}, segmento {{ l.Segment }}
+                  </p>
+                  <p class="ubicacion__certeza">Confianza {{ l.Confidence | percent: '1.0-0' }} · {{ l.Readings }} lecturas</p>
+                } @else {
+                  <p class="ubicacion__sitio">El robot no pudo decidir: está en una de estas</p>
+                  <ul class="candidatas">
+                    @for (c of l.Candidates; track c.RackId + c.Side) {
+                      <li>{{ c.Address ?? c.RackId + ' · ' + c.Side }} <span class="dato">({{ c.Readings }} lecturas)</span></li>
+                    }
+                  </ul>
+                }
+                <p class="dato">Calculado {{ l.ResolvedAt | date: 'short' }}</p>
+              </div>
+            }
+          </div>
+
+          @if (store.mapa(); as m) {
+            @if (m.status === 'loading') {
+              <widex-loading-indicator [size]="32" label="Cargando el plano" />
+            }
+            @if (m.status === 'error') {
+              <widex-error-state [message]="m.message" [details]="m.details" [showRetry]="false" />
+            }
+            @if (m.status === 'ready' && rejilla(); as rejilla) {
+              <div class="tarjeta plano">
+                <plan-canvas [map]="m.value" [rejilla]="rejilla" [editable]="false" [resaltadas]="store.resaltadas()" />
+              </div>
+            }
+          }
+        }
+      }
+    }
+  }
+</section>

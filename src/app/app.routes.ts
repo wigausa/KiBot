@@ -26,11 +26,29 @@ export const routes: Routes = [
         title: 'Inicio · Widex',
         loadComponent: () => import('./features/home/home').then((m) => m.Home)
       },
-      placeholder('control', 'Control y filtro del recorrido', 'control'),
-      placeholder('buscar', 'Búsqueda de cajas leídas', 'search'),
+      {
+        path: 'control',
+        title: 'Control del recorrido · Widex',
+        data: { title: 'Control', icon: 'control' },
+        loadComponent: () =>
+          import('./features/robot-control/robot-control').then((m) => m.RobotControl)
+      },
+      {
+        path: 'buscar',
+        title: 'Buscar caja · Widex',
+        data: { title: 'Buscar', icon: 'search' },
+        loadComponent: () => import('./features/box-search/box-search').then((m) => m.BoxSearch)
+      },
       placeholder('ubicacion', 'Ubicación en tiempo real', 'location'),
       placeholder('estado', 'Estado del equipo y alertas', 'status'),
-      placeholder('zonas', 'Configuración de zonas', 'zones')
+      placeholder('zonas', 'Configuración de zonas', 'zones'),
+      {
+        path: 'mapa',
+        title: 'Plano de bodega · Widex',
+        data: { title: 'Mapa', icon: 'map' },
+        loadComponent: () =>
+          import('./features/warehouse-map/warehouse-map').then((m) => m.WarehouseMap)
+      }
     ]
   },
   { path: '**', redirectTo: '' }

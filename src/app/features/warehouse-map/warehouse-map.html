@@ -1,0 +1,169 @@
+<section class="mapa">
+  <header class="mapa__cabecera">
+    <div>
+      <h1>Plano de bodega</h1>
+      <p class="mapa__nota">
+        Dibújalo o pégalo como JSON. Son dos formas de tocar el mismo plano.
+      </p>
+    </div>
+
+    <div class="modos" role="tablist" aria-label="Forma de editar el plano">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="modo() === 'lienzo'"
+        [class.activo]="modo() === 'lienzo'"
+        (click)="cambiarModo('lienzo')"
+      >
+        Lienzo
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="modo() === 'texto'"
+        [class.activo]="modo() === 'texto'"
+        (click)="cambiarModo('texto')"
+      >
+        Texto
+      </button>
+    </div>
+  </header>
+
+  <div class="mapa__cuerpo">
+    @if (modo() === 'texto') {
+      <!-- Siempre montado: si se tapara al previsualizar, desapareceria el texto recien escrito. -->
+      <label class="editor">
+        <span class="editor__titulo">El plano, en JSON</span>
+        <textarea
+          class="editor__texto"
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          placeholder='{ "nombre": "7000 Logistics", "companyId": 2, ... }'
+          [value]="store.texto()"
+          (input)="alEscribir($event)"
+        ></textarea>
+      </label>
+    } @else {
+      <div class="dibujo">
+        <div class="datos">
+          <label class="dato">
+            <span>Nombre</span>
+            <input
+              type="text"
+              [value]="datoDel('nombre')"
+              (change)="cambiarDato('nombre', $any($event.target).value)"
+            />
+          </label>
+          <label class="dato dato--corto">
+            <span>Compañía</span>
+            <input
+              type="number"
+              min="1"
+              [value]="datoDel('companyId')"
+              (change)="cambiarDato('companyId', $any($event.target).value)"
+            />
+          </label>
+          <label class="dato">
+            <span>El punto 0,0, descrito</span>
+            <input
+              type="text"
+              [value]="datoDel('origen')"
+              (change)="cambiarDato('origen', $any($event.target).value)"
+            />
+          </label>
+        </div>
+
+        @if (enBlanco()) {
+          <p class="vacio">
+            El plano está vacío. Arrastra cualquier pieza al centro para empezar — o pega un JSON
+            en el modo texto, si ya lo tienes escrito.
+          </p>
+        }
+
+        <plan-canvas [map]="lienzo()" [rejilla]="rejilla()" (accion)="alActuar($event)" />
+      </div>
+    }
+
+    <aside class="panel">
+      <div class="panel__acciones">
+        <widex-button
+          variant="outline"
+          [busy]="store.cargando()"
+          (pressed)="store.previsualizar()"
+        >
+          Previsualizar
+        </widex-button>
+
+        <widex-button
+          [disabled]="!store.puedeGuardar()"
+          [busy]="store.guardando()"
+          (pressed)="store.guardar()"
+        >
+          Guardar
+        </widex-button>
+      </div>
+
+      @if (store.cargando()) {
+        <widex-loading-indicator [size]="48" label="Expandiendo el plano" />
+      } @else if (store.preview(); as estado) {
+        @if (estado.status === 'error') {
+          <widex-error-state
+            [message]="estado.message"
+            [details]="estado.details"
+            (retry)="store.previsualizar()"
+          />
+        } @else if (estado.status === 'ready') {
+          @if (store.resumen(); as resumen) {
+            <dl class="resumen">
+              <div><dt>Pasillos</dt><dd>{{ resumen.Aisles }}</dd></div>
+              <div><dt>Estanterías</dt><dd>{{ resumen.Racks }}</dd></div>
+              <div><dt>Caras</dt><dd>{{ resumen.Faces }}</dd></div>
+              <div [class.alarma]="resumen.FacesWithoutAisle > 0">
+                <dt>Sin pasillo</dt><dd>{{ resumen.FacesWithoutAisle }}</dd>
+              </div>
+            </dl>
+          }
+
+          <!-- Errores y avisos, separados: un aviso no impide guardar y un error si. -->
+          @if (store.erroresDelPlano().length > 0) {
+            <div class="lista lista--error">
+              <h2>Hay que arreglar esto antes de guardar</h2>
+              <ul>
+                @for (error of store.erroresDelPlano(); track error) {
+                  <li>{{ error }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          @if (store.avisos().length > 0) {
+            <div class="lista lista--aviso">
+              <h2>Conviene mirarlo, pero se puede guardar</h2>
+              <ul>
+                @for (aviso of store.avisos(); track aviso) {
+                  <li>{{ aviso }}</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      }
+
+      @if (store.guardado(); as guardado) {
+        @if (guardado.status === 'error') {
+          <widex-error-state
+            [message]="guardado.message"
+            [details]="guardado.details"
+            [showRetry]="false"
+          />
+        } @else if (guardado.status === 'ready') {
+          <p class="guardado">
+            Guardado como <strong>{{ guardado.value.MapId }}</strong>, versión
+            {{ guardado.value.Version }}.
+          </p>
+        }
+      }
+    </aside>
+  </div>
+</section>
