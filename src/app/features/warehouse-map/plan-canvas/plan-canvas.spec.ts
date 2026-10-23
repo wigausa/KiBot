@@ -5,7 +5,7 @@ import { WarehouseMap, WarehouseRackFace } from '../warehouse-map.models';
 import { PlanCanvas, PlanCanvasAction } from './plan-canvas';
 
 function cara(side: string, gridSide: string, aisleId: string, segment: number): WarehouseRackFace {
-  return { Side: side, X: 0, Z: 0, AisleId: aisleId, GridSide: gridSide, Tramo: 'INFERIOR', Segment: segment };
+  return { Side: side, X: 0, Y: 0, AisleId: aisleId, GridSide: gridSide, Tramo: 'INFERIOR', Segment: segment };
 }
 
 /** Dos pasillos y un bloque de dos segmentos entre ellos. */
@@ -16,40 +16,40 @@ function mapa(): WarehouseMap {
     CompanyId: 1,
     Version: 1,
     Unit: 'meter',
-    Origin: { Description: 'esquina', X: 0, Z: 0 },
-    Plane: { X: -2, Z: -2, Width: 10, Depth: 10 },
-    Inventory: { X: 0, Z: 0, Width: 6, Depth: 6 },
+    Origin: { Description: 'esquina', X: 0, Y: 0 },
+    Plane: { X: -2, Y: -2, Width: 10, Depth: 10 },
+    Inventory: { X: 0, Y: 0, Width: 6, Depth: 6 },
     ResolvedWith: { ShelvingWidth: 1, ShelvingSlotSpacing: 1.3, FaceOffset: 0.5, GridSize: 4 },
     Walls: [],
     Aisles: [
       {
         AisleId: 'P1', Name: 'Pasillo 1', Number: 1,
-        X: 1, Z: 2.6, Length: 5.2, Width: 1.6, Rotation: 90,
+        X: 1, Y: 2.6, Length: 5.2, Width: 1.6, Rotation: 90,
         Anchors: [
-          { Ordinal: 1, X: 1, Z: 0 },
-          { Ordinal: 2, X: 1, Z: 2.6 },
-          { Ordinal: 3, X: 1, Z: 5.2 }
+          { Ordinal: 1, X: 1, Y: 0 },
+          { Ordinal: 2, X: 1, Y: 2.6 },
+          { Ordinal: 3, X: 1, Y: 5.2 }
         ]
       },
       {
         AisleId: 'P2', Name: 'Pasillo 2', Number: 2,
-        X: 3.6, Z: 2.6, Length: 5.2, Width: 1.6, Rotation: 90,
+        X: 3.6, Y: 2.6, Length: 5.2, Width: 1.6, Rotation: 90,
         Anchors: [
-          { Ordinal: 1, X: 3.6, Z: 0 },
-          { Ordinal: 2, X: 3.6, Z: 2.6 },
-          { Ordinal: 3, X: 3.6, Z: 5.2 }
+          { Ordinal: 1, X: 3.6, Y: 0 },
+          { Ordinal: 2, X: 3.6, Y: 2.6 },
+          { Ordinal: 3, X: 3.6, Y: 5.2 }
         ]
       }
     ],
     ShelvingUnits: [
       {
         RackId: 'B1-2-I01', Name: '', Length: 1.3, Levels: 4, Slots: 1,
-        CenterX: 2.3, CenterZ: 0.65,
+        CenterX: 2.3, CenterY: 0.65,
         Faces: [cara('left', 'A', 'P1', 1), cara('right', 'B', 'P2', 1)]
       },
       {
         RackId: 'B1-2-I02', Name: '', Length: 1.3, Levels: 4, Slots: 1,
-        CenterX: 2.3, CenterZ: 1.95,
+        CenterX: 2.3, CenterY: 1.95,
         Faces: [cara('left', 'A', 'P1', 2), cara('right', 'B', 'P2', 2)]
       }
     ]
@@ -114,7 +114,7 @@ describe('PlanCanvas', () => {
     expect(Number(celda.getAttribute('x'))).toBeCloseTo(1.8, 6);
   });
 
-  it('dibuja con la Z hacia arriba, como se lee el plano', () => {
+  it('dibuja con la Y hacia arriba, como se lee el plano', () => {
     // En SVG la Y crece hacia abajo. Sin espejar, el tramo INFERIOR -el del extremo .1- saldría
     // arriba del todo y el plano se leería del revés. Con tramos simétricos no se nota; en cuanto
     // uno tiene 13 segmentos y el otro 8, sí.
@@ -122,7 +122,7 @@ describe('PlanCanvas', () => {
     // la primera celda de un segmento con la del siguiente.
     const ys = [...svg.querySelectorAll('rect.celda')].map((r) => Number(r.getAttribute('y')));
 
-    // El primer segmento es el de Z menor, así que tiene que quedar MÁS ABAJO en pantalla.
+    // El primer segmento es el de Y menor, así que tiene que quedar MÁS ABAJO en pantalla.
     expect(ys[0]).toBeGreaterThan(ys[2]);
   });
 
@@ -139,7 +139,7 @@ describe('PlanCanvas', () => {
   it('dibuja los muros que trae el mapa', async () => {
     const con = mapa();
     con.Walls = [
-      { WallId: 'M01', Name: 'Muro 1', X: 3, Z: 0, Length: 6, Rotation: 0, Thickness: 0.2 }
+      { WallId: 'M01', Name: 'Muro 1', X: 3, Y: 0, Length: 6, Rotation: 0, Thickness: 0.2 }
     ];
     fixture.componentRef.setInput('map', con);
     await fixture.whenStable();

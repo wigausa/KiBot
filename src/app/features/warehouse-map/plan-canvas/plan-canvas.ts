@@ -56,7 +56,7 @@ export interface RejillaDelPlano {
 interface Hueco {
   readonly id: string;
   readonly x: number;
-  readonly z: number;
+  readonly y: number;
   readonly ancho: number;
   readonly fondo: number;
   readonly accion: PlanCanvasAction;
@@ -167,14 +167,14 @@ export class PlanCanvas {
 
   protected readonly viewBox = computed(() => {
     const p = this.plano();
-    return `${p.X} ${p.Z} ${p.Width} ${p.Depth}`;
+    return `${p.X} ${p.Y} ${p.Width} ${p.Depth}`;
   });
 
-  private readonly espejoZ = computed(() => 2 * this.plano().Z + this.plano().Depth);
+  private readonly espejoY = computed(() => 2 * this.plano().Y + this.plano().Depth);
 
-  /** De una Z del plano a la Y de la pantalla. <c>alto</c> es el de la figura que se dibuja. */
-  protected yDe(z: number, alto = 0): number {
-    return this.espejoZ() - z - alto;
+  /** De una Y del plano a la Y de la pantalla. <c>alto</c> es el de la figura que se dibuja. */
+  protected yDe(y: number, alto = 0): number {
+    return this.espejoY() - y - alto;
   }
 
   protected readonly trazo = computed(() => Math.max(this.plano().Width, this.plano().Depth) / 900);
@@ -206,7 +206,7 @@ export class PlanCanvas {
       id: a.AisleId,
       centro: a.X,
       x: a.X - a.Width / 2,
-      z: a.Z - a.Length / 2,
+      y: a.Y - a.Length / 2,
       ancho: a.Width,
       fondo: a.Length
     }))
@@ -225,7 +225,7 @@ export class PlanCanvas {
       u.Faces.map((f) => ({
         id: `${u.RackId}-${f.Side}`,
         x: f.Side === 'left' ? u.CenterX - ancho : u.CenterX,
-        z: u.CenterZ - u.Length / 2,
+        y: u.CenterY - u.Length / 2,
         ancho,
         fondo: u.Length,
         huerfana: f.AisleId === null,
@@ -247,7 +247,7 @@ export class PlanCanvas {
       // El tramo se deduce de DÓNDE está, no de lo que diga su cara: una estantería sin pasillo al
       // lado no tiene dirección todavía —ni tramo ni lado— y aun así hay que saber en qué mitad
       // está para poder añadirle la otra.
-      if (unidad.CenterZ < m.inicioSuperior) actual.inferior++;
+      if (unidad.CenterY < m.inicioSuperior) actual.inferior++;
       else actual.superior++;
 
       porX.set(clave, actual);
@@ -292,17 +292,17 @@ export class PlanCanvas {
 
   protected readonly anclas = computed(() =>
     this.pasillos().flatMap((a) =>
-      a.Anchors.map((p) => ({ id: `${a.AisleId}.${p.Ordinal}`, x: p.X, z: p.Z, ordinal: p.Ordinal }))
+      a.Anchors.map((p) => ({ id: `${a.AisleId}.${p.Ordinal}`, x: p.X, y: p.Y, ordinal: p.Ordinal }))
     )
   );
 
   protected readonly marcasX = computed(() => this.marcas(this.plano().X, this.plano().Width));
-  protected readonly marcasZ = computed(() => this.marcas(this.plano().Z, this.plano().Depth));
+  protected readonly marcasY = computed(() => this.marcas(this.plano().Y, this.plano().Depth));
 
   protected readonly numeros = computed(() =>
     this.pasillos()
       .filter((a) => a.Number !== null)
-      .map((a) => ({ id: a.AisleId, numero: a.Number as number, x: a.X, z: a.Z - a.Length / 2 }))
+      .map((a) => ({ id: a.AisleId, numero: a.Number as number, x: a.X, y: a.Y - a.Length / 2 }))
   );
 
   // --- los huecos donde encaja lo que arrastras -----------------------------------------------
@@ -328,8 +328,8 @@ export class PlanCanvas {
     const grosor = Math.max(inv.Width, inv.Depth) / 25;
 
     const extremos: Hueco[] = [
-      { id: 'norte', x: inv.X, z: inv.Z + inv.Depth - grosor, ancho: inv.Width, fondo: grosor, accion: { tipo: 'anadir-muro', lado: 'norte' } },
-      { id: 'sur', x: inv.X, z: inv.Z, ancho: inv.Width, fondo: grosor, accion: { tipo: 'anadir-muro', lado: 'sur' } }
+      { id: 'norte', x: inv.X, y: inv.Y + inv.Depth - grosor, ancho: inv.Width, fondo: grosor, accion: { tipo: 'anadir-muro', lado: 'norte' } },
+      { id: 'sur', x: inv.X, y: inv.Y, ancho: inv.Width, fondo: grosor, accion: { tipo: 'anadir-muro', lado: 'sur' } }
     ];
 
     const lados: Lado[] = ['oeste', 'este'];
@@ -341,7 +341,7 @@ export class PlanCanvas {
         ...lados.map((lado) => ({
           id: lado,
           x: xDe(lado),
-          z: 0,
+          y: 0,
           ancho: grosor,
           fondo: m.total,
           accion: { tipo: 'anadir-muro' as const, lado }
@@ -355,7 +355,7 @@ export class PlanCanvas {
         {
           id: `${lado}-inferior`,
           x: xDe(lado),
-          z: 0,
+          y: 0,
           ancho: grosor,
           fondo: m.finInferior,
           accion: { tipo: 'anadir-muro' as const, lado, tramo: 'inferior' as const }
@@ -363,7 +363,7 @@ export class PlanCanvas {
         {
           id: `${lado}-superior`,
           x: xDe(lado),
-          z: m.inicioSuperior,
+          y: m.inicioSuperior,
           ancho: grosor,
           fondo: m.total - m.inicioSuperior,
           accion: { tipo: 'anadir-muro' as const, lado, tramo: 'superior' as const }
@@ -386,7 +386,7 @@ export class PlanCanvas {
 
     const porTramo = (id: string, x: number, extremo: Extremo): Hueco[] => {
       if (!m.dosTramos) {
-        return [{ id, x, z: 0, ancho, fondo: m.total, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'ambos' } }];
+        return [{ id, x, y: 0, ancho, fondo: m.total, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'ambos' } }];
       }
 
       // La franja del medio, sobre la transversal, es la del pasillo completo: es donde está el
@@ -394,9 +394,9 @@ export class PlanCanvas {
       const margen = (m.inicioSuperior - m.finInferior) / 2;
 
       return [
-        { id: `${id}-inferior`, x, z: 0, ancho, fondo: m.finInferior - margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'inferior' } },
-        { id: `${id}-ambos`, x, z: m.finInferior - margen, ancho, fondo: (m.inicioSuperior - m.finInferior) + 2 * margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'ambos' } },
-        { id: `${id}-superior`, x, z: m.inicioSuperior + margen, ancho, fondo: m.total - m.inicioSuperior - margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'superior' } }
+        { id: `${id}-inferior`, x, y: 0, ancho, fondo: m.finInferior - margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'inferior' } },
+        { id: `${id}-ambos`, x, y: m.finInferior - margen, ancho, fondo: (m.inicioSuperior - m.finInferior) + 2 * margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'ambos' } },
+        { id: `${id}-superior`, x, y: m.inicioSuperior + margen, ancho, fondo: m.total - m.inicioSuperior - margen, accion: { tipo: 'anadir-pasillo', extremo, tramos: 'superior' } }
       ];
     };
 
@@ -446,13 +446,13 @@ export class PlanCanvas {
     return this.pasillos()
       .filter((a) => a.Number !== null && a.Length < m.total - 0.01)
       .map((a) => {
-        const suInicio = a.Z - a.Length / 2;
+        const suInicio = a.Y - a.Length / 2;
         const leFaltaArriba = suInicio < m.finInferior + 0.01;
 
         return {
           id: `completar-${a.Number}`,
           x: a.X - ancho / 2,
-          z: leFaltaArriba ? m.inicioSuperior : 0,
+          y: leFaltaArriba ? m.inicioSuperior : 0,
           ancho,
           fondo: leFaltaArriba ? m.total - m.inicioSuperior : m.finInferior,
           accion: { tipo: 'completar-pasillo', numero: a.Number as number }
@@ -478,7 +478,7 @@ export class PlanCanvas {
       {
         id: `${id}-inferior`,
         x,
-        z: 0,
+        y: 0,
         ancho,
         fondo: m.finInferior,
         accion: {
@@ -491,7 +491,7 @@ export class PlanCanvas {
       {
         id: `${id}-superior`,
         x,
-        z: m.inicioSuperior,
+        y: m.inicioSuperior,
         ancho,
         fondo: m.total - m.inicioSuperior,
         accion: {
@@ -578,21 +578,21 @@ export class PlanCanvas {
    * <c>preserveAspectRatio</c> el SVG deja franjas muertas a los lados, y medir sobre el rectángulo
    * las cuenta como área útil.</p>
    */
-  private enMetros(evento: PointerEvent): { x: number; z: number } | null {
+  private enMetros(evento: PointerEvent): { x: number; y: number } | null {
     const svg = this.svg()?.nativeElement;
     const ctm = svg?.getScreenCTM();
     if (!svg || !ctm) return null;
 
     const punto = new DOMPoint(evento.clientX, evento.clientY).matrixTransform(ctm.inverse());
-    return { x: punto.x, z: this.espejoZ() - punto.y };
+    return { x: punto.x, y: this.espejoY() - punto.y };
   }
 
   /** El hueco bajo el cursor; si no hay ninguno, el más cercano dentro de medio paso. */
-  private huecoBajo(punto: { x: number; z: number }): Hueco | null {
+  private huecoBajo(punto: { x: number; y: number }): Hueco | null {
     const huecos = this.huecos();
 
     const dentro = huecos.find(
-      (h) => punto.x >= h.x && punto.x <= h.x + h.ancho && punto.z >= h.z && punto.z <= h.z + h.fondo
+      (h) => punto.x >= h.x && punto.x <= h.x + h.ancho && punto.y >= h.y && punto.y <= h.y + h.fondo
     );
     if (dentro !== undefined) return dentro;
 
@@ -602,8 +602,8 @@ export class PlanCanvas {
 
     for (const h of huecos) {
       const dx = Math.max(h.x - punto.x, 0, punto.x - (h.x + h.ancho));
-      const dz = Math.max(h.z - punto.z, 0, punto.z - (h.z + h.fondo));
-      const d = Math.hypot(dx, dz);
+      const dy = Math.max(h.y - punto.y, 0, punto.y - (h.y + h.fondo));
+      const d = Math.hypot(dx, dy);
       if (d < menor && d <= alcance) {
         menor = d;
         mejor = h;
@@ -655,9 +655,9 @@ export class PlanCanvas {
     return cual === 'min' ? Math.min(...numeros) : Math.max(...numeros);
   }
 
-  /** Al dibujar con la Z hacia arriba, un ángulo del plano gira al revés en pantalla. */
-  protected transformacion(muro: { X: number; Z: number; Rotation: number }): string {
-    return `rotate(${-muro.Rotation} ${muro.X} ${this.yDe(muro.Z)})`;
+  /** Al dibujar con la Y hacia arriba, un ángulo del plano gira al revés en pantalla. */
+  protected transformacion(muro: { X: number; Y: number; Rotation: number }): string {
+    return `rotate(${-muro.Rotation} ${muro.X} ${this.yDe(muro.Y)})`;
   }
 
   private marcas(inicio: number, extension: number): number[] {

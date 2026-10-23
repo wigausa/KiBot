@@ -42,7 +42,7 @@ export interface PlanMuro {
 export interface PlanOrigen {
   descripcion: string;
   x: number;
-  z: number;
+  y: number;
 }
 
 /** Las medidas de la bodega, en metros. Son pocas porque un cooler de racks es regular. */
@@ -146,12 +146,12 @@ export interface WarehouseMap {
   ResolvedWith: WarehouseLayoutConstants;
 }
 
-/** Un muro ya resuelto: centro, largo y ángulo. 0 grados corre sobre X y 90 sobre Z. */
+/** Un muro ya resuelto: centro, largo y ángulo. 0 grados corre sobre X y 90 sobre Y. */
 export interface WarehouseWall {
   WallId: string;
   Name: string;
   X: number;
-  Z: number;
+  Y: number;
   Length: number;
   Rotation: number;
   Thickness: number;
@@ -160,12 +160,12 @@ export interface WarehouseWall {
 export interface WarehouseOrigin {
   Description: string;
   X: number;
-  Z: number;
+  Y: number;
 }
 
 export interface WarehouseRect {
   X: number;
-  Z: number;
+  Y: number;
   Width: number;
   Depth: number;
 }
@@ -176,7 +176,7 @@ export interface WarehouseAisle {
   /** El número impreso en el plano. Es con lo que el operario nombra el sitio. */
   Number: number | null;
   X: number;
-  Z: number;
+  Y: number;
   Length: number;
   Width: number;
   Rotation: number;
@@ -187,7 +187,7 @@ export interface WarehouseAisle {
 export interface WarehouseAnchor {
   Ordinal: number;
   X: number;
-  Z: number;
+  Y: number;
 }
 
 export interface WarehouseShelvingUnit {
@@ -197,7 +197,7 @@ export interface WarehouseShelvingUnit {
   Levels: number;
   Slots: number;
   CenterX: number;
-  CenterZ: number;
+  CenterY: number;
   Faces: WarehouseRackFace[];
 }
 
@@ -205,7 +205,7 @@ export interface WarehouseRackFace {
   /** `left` o `right`: el vocabulario del robot, relativo a su marcha. */
   Side: string;
   X: number;
-  Z: number;
+  Y: number;
   AisleId: string | null;
   /** `A` o `B`, absoluto en el mapa. `A` es el lado del pasillo de numeración menor. */
   GridSide: string | null;

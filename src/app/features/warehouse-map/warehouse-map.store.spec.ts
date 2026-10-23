@@ -52,8 +52,8 @@ function respuestaValida(valid = true, errors: string[] = [], warnings: string[]
       Racks: 832,
       Faces: 1664,
       FacesWithoutAisle: 0,
-      Plane: { X: 0, Z: 0, Width: 90, Depth: 40 },
-      Inventory: { X: 0, Z: 0, Width: 86, Depth: 36 }
+      Plane: { X: 0, Y: 0, Width: 90, Depth: 40 },
+      Inventory: { X: 0, Y: 0, Width: 86, Depth: 36 }
     },
     Map: { Aisles: [], ShelvingUnits: [] } as unknown as PlanPreview['Map']
   };

@@ -49,7 +49,7 @@ function planoEnBlanco(): WarehousePlan {
   return {
     nombre: 'Bodega sin nombre',
     companyId: 1,
-    origen: { descripcion: 'PENDIENTE DE CONFIRMAR EN SITIO', x: 0, z: 0 },
+    origen: { descripcion: 'PENDIENTE DE CONFIRMAR EN SITIO', x: 0, y: 0 },
     medidas: { ...MEDIDAS_POR_DEFECTO },
     pasillos: [],
     bloques: { inferior: 13, superior: 13 }
@@ -126,9 +126,9 @@ export class WarehouseMap {
 
     return {
       MapId: '', Name: '', CompanyId: 0, Version: 0, Unit: 'meter',
-      Origin: { Description: '', X: 0, Z: 0 },
-      Plane: { X: -margen, Z: -margen, Width: ancho + 2 * margen, Depth: alto + 2 * margen },
-      Inventory: { X: 0, Z: 0, Width: ancho, Depth: alto },
+      Origin: { Description: '', X: 0, Y: 0 },
+      Plane: { X: -margen, Y: -margen, Width: ancho + 2 * margen, Depth: alto + 2 * margen },
+      Inventory: { X: 0, Y: 0, Width: ancho, Depth: alto },
       Aisles: [], ShelvingUnits: [], Walls: [],
       ResolvedWith: {
         ShelvingWidth: m.anchoBloque,

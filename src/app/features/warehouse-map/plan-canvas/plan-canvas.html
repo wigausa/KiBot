@@ -81,10 +81,10 @@
   >
     <g class="ejes" [attr.stroke-width]="trazo() * 1.6">
       @for (x of marcasX(); track x) {
-        <line [attr.x1]="x" [attr.y1]="yDe(plano().Z)" [attr.x2]="x" [attr.y2]="yDe(plano().Z + plano().Depth)" />
+        <line [attr.x1]="x" [attr.y1]="yDe(plano().Y)" [attr.x2]="x" [attr.y2]="yDe(plano().Y + plano().Depth)" />
       }
-      @for (z of marcasZ(); track z) {
-        <line [attr.x1]="plano().X" [attr.y1]="yDe(z)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(z)" />
+      @for (y of marcasY(); track y) {
+        <line [attr.x1]="plano().X" [attr.y1]="yDe(y)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(y)" />
       }
     </g>
 
@@ -106,7 +106,7 @@
     <rect
       class="inventario"
       [attr.x]="map().Inventory.X"
-      [attr.y]="yDe(map().Inventory.Z, map().Inventory.Depth)"
+      [attr.y]="yDe(map().Inventory.Y, map().Inventory.Depth)"
       [attr.width]="map().Inventory.Width"
       [attr.height]="map().Inventory.Depth"
       [attr.stroke-width]="trazo() * 2"
@@ -117,16 +117,16 @@
         <rect
           class="calle__calzada"
           [attr.x]="pasillo.x"
-          [attr.y]="yDe(pasillo.z, pasillo.fondo)"
+          [attr.y]="yDe(pasillo.y, pasillo.fondo)"
           [attr.width]="pasillo.ancho"
           [attr.height]="pasillo.fondo"
         />
         <line
           class="calle__eje"
           [attr.x1]="pasillo.centro"
-          [attr.y1]="yDe(pasillo.z)"
+          [attr.y1]="yDe(pasillo.y)"
           [attr.x2]="pasillo.centro"
-          [attr.y2]="yDe(pasillo.z + pasillo.fondo)"
+          [attr.y2]="yDe(pasillo.y + pasillo.fondo)"
           [attr.stroke-width]="trazo() * 3"
           [attr.stroke-dasharray]="rayaDelEje()"
         />
@@ -140,7 +140,7 @@
         [class.celda--resaltada]="celda.resaltada"
         [class.celda--apagada]="hayResaltado() && !celda.resaltada"
         [attr.x]="celda.x"
-        [attr.y]="yDe(celda.z, celda.fondo)"
+        [attr.y]="yDe(celda.y, celda.fondo)"
         [attr.width]="celda.ancho"
         [attr.height]="celda.fondo"
         [attr.stroke-width]="trazo() * 1.2"
@@ -152,7 +152,7 @@
         class="bloque-zona"
         [class.bloque-zona--activa]="bloque.id === bloqueActivo()"
         [attr.x]="bloque.x"
-        [attr.y]="yDe(map().Inventory.Z, map().Inventory.Depth)"
+        [attr.y]="yDe(map().Inventory.Y, map().Inventory.Depth)"
         [attr.width]="bloque.ancho"
         [attr.height]="map().Inventory.Depth"
         [attr.stroke-width]="trazo() * 2"
@@ -164,7 +164,7 @@
       <rect
         class="muro"
         [attr.x]="muro.X - muro.Length / 2"
-        [attr.y]="yDe(muro.Z, muro.Thickness) + muro.Thickness / 2"
+        [attr.y]="yDe(muro.Y, muro.Thickness) + muro.Thickness / 2"
         [attr.width]="muro.Length"
         [attr.height]="muro.Thickness"
         [attr.transform]="transformacion(muro)"
@@ -176,7 +176,7 @@
         class="ancla"
         [class.ancla--transversal]="ancla.ordinal === 2"
         [attr.cx]="ancla.x"
-        [attr.cy]="yDe(ancla.z)"
+        [attr.cy]="yDe(ancla.y)"
         [attr.r]="trazo() * 4"
       />
     }
@@ -185,7 +185,7 @@
       <text
         class="numero"
         [attr.x]="etiqueta.x"
-        [attr.y]="yDe(etiqueta.z) + trazo() * 22"
+        [attr.y]="yDe(etiqueta.y) + trazo() * 22"
         [attr.font-size]="plano().Width / 90"
         text-anchor="middle"
         paint-order="stroke fill"
@@ -199,7 +199,7 @@
       <g class="hueco" [class.hueco--activo]="hueco.id === huecoActivo()">
         <rect
           [attr.x]="hueco.x"
-          [attr.y]="yDe(hueco.z, hueco.fondo)"
+          [attr.y]="yDe(hueco.y, hueco.fondo)"
           [attr.width]="hueco.ancho"
           [attr.height]="hueco.fondo"
           [attr.stroke-width]="trazo() * 3"
