@@ -5,7 +5,7 @@ import { InjectionToken } from '@angular/core';
  * De dónde salen las credenciales que el interceptor pone en cada petición a la API.
  *
  * <p>Existe para que el interceptor **no sepa cómo autenticamos**. Hoy hay una implementación de
- * desarrollo; cuando WiDex tenga su registro en B2C habrá otra con MSAL, y cambiar de una a otra es
+ * desarrollo; cuando KiBot tenga su registro en B2C habrá otra con MSAL, y cambiar de una a otra es
  * cambiar una línea de providers en `app.config.ts`. Ningún servicio, store ni pantalla se entera.</p>
  */
 export interface ApiCredentials {

@@ -8,14 +8,14 @@ import { errorEncubierto } from './api-error';
 /**
  * Lo que se espera antes de dar una petición por perdida.
  *
- * <p>No hay reintento, y es a propósito: casi todo lo que WiDex manda a esta API <b>escribe</b>
+ * <p>No hay reintento, y es a propósito: casi todo lo que KiBot manda a esta API <b>escribe</b>
  * —abrir un recorrido, guardar un plano—. Reintentar un POST que quizá sí llegó crearía dos. Un
  * fallo se cuenta y lo repite quien decida repetirlo.</p>
  */
 export const TIEMPO_LIMITE_MS = 25_000;
 
 /**
- * Todo lo que WiDex le pide a la API pasa por aquí: credenciales, errores encubiertos y rechazos de
+ * Todo lo que KiBot le pide a la API pasa por aquí: credenciales, errores encubiertos y rechazos de
  * identidad.
  *
  * <p>Es la única pieza de la capa de red con lógica de verdad, y <b>no cambia cuando entre

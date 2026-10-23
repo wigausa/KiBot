@@ -1,8 +1,8 @@
 // Anchos del riel: son dimensiones de layout, no spacing, por eso viven como
 // custom properties locales del shell y no en la escala de tokens.
 :host {
-  --widex-sidebar-collapsed: 76px;
-  --widex-sidebar-expanded: 248px;
+  --kibot-sidebar-collapsed: 76px;
+  --kibot-sidebar-expanded: 248px;
 
   display: block;
   height: 100dvh;
@@ -11,30 +11,30 @@
 
 .shell {
   display: grid;
-  grid-template-columns: var(--widex-sidebar-collapsed) 1fr;
+  grid-template-columns: var(--kibot-sidebar-collapsed) 1fr;
   height: 100%;
-  background: var(--widex-page);
-  transition: grid-template-columns var(--widex-motion-slow) var(--widex-ease-standard);
+  background: var(--kibot-page);
+  transition: grid-template-columns var(--kibot-motion-slow) var(--kibot-ease-standard);
 }
 
 .shell--expanded {
-  grid-template-columns: var(--widex-sidebar-expanded) 1fr;
+  grid-template-columns: var(--kibot-sidebar-expanded) 1fr;
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--widex-surface);
-  border-right: var(--widex-stroke-0) solid var(--widex-line);
+  background: var(--kibot-surface);
+  border-right: var(--kibot-stroke-0) solid var(--kibot-line);
 }
 
 .sidebar__top {
   display: flex;
   align-items: center;
   min-height: 72px;
-  padding: var(--widex-spacing-2) var(--widex-spacing-3);
-  border-bottom: var(--widex-stroke-0) solid var(--widex-line);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border-bottom: var(--kibot-stroke-0) solid var(--kibot-line);
 }
 
 .brand {
@@ -43,29 +43,29 @@
   justify-content: center;
   width: 100%;
   min-height: 52px;
-  padding: var(--widex-spacing-1);
+  padding: var(--kibot-spacing-1);
   border: none;
-  border-radius: var(--widex-radius-6);
+  border-radius: var(--kibot-radius-6);
   background: transparent;
   cursor: pointer;
-  transition: background var(--widex-motion-fast) var(--widex-ease-standard);
+  transition: background var(--kibot-motion-fast) var(--kibot-ease-standard);
 }
 
 .brand:hover {
-  background: var(--widex-surface-variant);
+  background: var(--kibot-surface-variant);
 }
 
 .sidebar__nav {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--widex-spacing-3) var(--widex-spacing-3) var(--widex-spacing-2);
+  padding: var(--kibot-spacing-3) var(--kibot-spacing-3) var(--kibot-spacing-2);
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: var(--widex-spacing-1);
+  gap: var(--kibot-spacing-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -74,32 +74,32 @@
 .nav__item {
   display: flex;
   align-items: center;
-  gap: var(--widex-spacing-3);
+  gap: var(--kibot-spacing-3);
   // 36 de ícono + 8 de padding arriba y abajo.
   min-height: 52px;
-  padding: var(--widex-spacing-2) var(--widex-spacing-3);
-  border-radius: var(--widex-radius-6);
-  color: var(--widex-fg);
-  font-size: var(--widex-font-size-body);
-  font-weight: var(--widex-font-weight-regular);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border-radius: var(--kibot-radius-6);
+  color: var(--kibot-fg);
+  font-size: var(--kibot-font-size-body);
+  font-weight: var(--kibot-font-weight-regular);
   text-decoration: none;
   transition:
-    background var(--widex-motion-fast) var(--widex-ease-standard),
-    color var(--widex-motion-fast) var(--widex-ease-standard);
+    background var(--kibot-motion-fast) var(--kibot-ease-standard),
+    color var(--kibot-motion-fast) var(--kibot-ease-standard);
 }
 
 .nav__item:hover {
-  background: var(--widex-surface-variant);
+  background: var(--kibot-surface-variant);
 }
 
 .nav__item--active {
-  background: color-mix(in srgb, var(--widex-accent) 22%, transparent);
-  color: var(--widex-accent-strong);
-  font-weight: var(--widex-font-weight-bold);
+  background: color-mix(in srgb, var(--kibot-accent) 22%, transparent);
+  color: var(--kibot-accent-strong);
+  font-weight: var(--kibot-font-weight-bold);
 }
 
 .nav__icon {
-  --widex-icon-size: 36px;
+  --kibot-icon-size: 36px;
 
   flex-shrink: 0;
 }
@@ -112,33 +112,33 @@
 .sidebar__footer {
   display: flex;
   flex-direction: column;
-  gap: var(--widex-spacing-2);
-  padding: var(--widex-spacing-3);
-  border-top: var(--widex-stroke-0) solid var(--widex-line);
+  gap: var(--kibot-spacing-2);
+  padding: var(--kibot-spacing-3);
+  border-top: var(--kibot-stroke-0) solid var(--kibot-line);
 }
 
 .robot {
   display: flex;
   align-items: center;
-  gap: var(--widex-spacing-2);
-  padding: var(--widex-spacing-2);
-  border-radius: var(--widex-radius-6);
-  background: var(--widex-surface-variant);
+  gap: var(--kibot-spacing-2);
+  padding: var(--kibot-spacing-2);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface-variant);
 }
 
 .robot__avatar {
-  --widex-icon-size: 20px;
+  --kibot-icon-size: 20px;
 
   display: grid;
   place-items: center;
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border-radius: var(--widex-radius-5);
+  border-radius: var(--kibot-radius-5);
   // El gradiente de marca es oscuro en ambos modos, por eso el ícono va en
   // `on-brand` y no en `fg` (que se invertiría en oscuro).
-  background: var(--widex-brand-gradient);
-  color: var(--widex-on-brand);
+  background: var(--kibot-brand-gradient);
+  color: var(--kibot-on-brand);
 }
 
 .robot__details {
@@ -148,15 +148,15 @@
 }
 
 .robot__name {
-  font-size: var(--widex-font-size-subtitle);
-  font-weight: var(--widex-font-weight-bold);
-  color: var(--widex-fg);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
   white-space: nowrap;
 }
 
 .robot__meta {
-  font-size: var(--widex-font-size-subtitle);
-  color: var(--widex-fg-muted);
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
   white-space: nowrap;
 }
 
@@ -167,7 +167,7 @@
   .nav__item {
     justify-content: center;
     gap: 0;
-    padding-inline: var(--widex-spacing-2);
+    padding-inline: var(--kibot-spacing-2);
   }
 
   .nav__label {
@@ -177,7 +177,7 @@
 
   .sidebar__footer {
     align-items: center;
-    padding-inline: var(--widex-spacing-2);
+    padding-inline: var(--kibot-spacing-2);
   }
 
   .robot {

@@ -8,16 +8,16 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
  * Es el puerto del `WitagLoader` / `CustomLoader` de WitagAndroid
  * (presentation/components/WitagUi.kt): mismos radios (0.98 / 0.68 / 0.38 del
  * diámetro), mismo barrido de 260°, mismo grosor (7.5% del diámetro) y las
- * mismas relaciones de velocidad sobre `--widex-motion-pulse`.
+ * mismas relaciones de velocidad sobre `--kibot-motion-pulse`.
  */
 @Component({
-  selector: 'widex-loader',
+  selector: 'kibot-loader',
   imports: [WitagLogo],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     role: 'status',
     '[attr.aria-label]': 'label() ?? "Cargando"',
-    '[style.--widex-loader-size.px]': 'size()'
+    '[style.--kibot-loader-size.px]': 'size()'
   },
   template: `
     <div class="loader">
@@ -48,15 +48,15 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--widex-spacing-4);
+      gap: var(--kibot-spacing-4);
     }
 
     .loader {
       position: relative;
       display: grid;
       place-items: center;
-      width: var(--widex-loader-size, 96px);
-      height: var(--widex-loader-size, 96px);
+      width: var(--kibot-loader-size, 96px);
+      height: var(--kibot-loader-size, 96px);
     }
 
     .loader__arcs {
@@ -70,29 +70,29 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
       stroke-linecap: round;
       transform-origin: 50% 50%;
       /* Barrido de 260°: dash = 260/360 de la circunferencia. */
-      animation-timing-function: var(--widex-ease-linear);
+      animation-timing-function: var(--kibot-ease-linear);
       animation-iteration-count: infinite;
     }
 
     .arc--outer {
-      stroke: var(--widex-brand-ink);
+      stroke: var(--kibot-brand-ink);
       stroke-dasharray: 222.4 85.5;
-      animation-name: widex-spin;
-      animation-duration: var(--widex-motion-pulse);
+      animation-name: kibot-spin;
+      animation-duration: var(--kibot-motion-pulse);
     }
 
     .arc--middle {
-      stroke: var(--widex-brand-magenta);
+      stroke: var(--kibot-brand-magenta);
       stroke-dasharray: 154.3 59.3;
-      animation-name: widex-spin-reverse;
-      animation-duration: calc(var(--widex-motion-pulse) * 0.72);
+      animation-name: kibot-spin-reverse;
+      animation-duration: calc(var(--kibot-motion-pulse) * 0.72);
     }
 
     .arc--inner {
-      stroke: var(--widex-brand-aqua);
+      stroke: var(--kibot-brand-aqua);
       stroke-dasharray: 86.2 33.2;
-      animation-name: widex-spin;
-      animation-duration: calc(var(--widex-motion-pulse) * 0.45);
+      animation-name: kibot-spin;
+      animation-duration: calc(var(--kibot-motion-pulse) * 0.45);
     }
 
     .loader__mark {
@@ -102,13 +102,13 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
 
     .loader__label {
       margin: 0;
-      font-size: var(--widex-font-size-subtitle);
-      font-weight: var(--widex-font-weight-regular);
+      font-size: var(--kibot-font-size-subtitle);
+      font-weight: var(--kibot-font-weight-regular);
       line-height: 1.4;
-      color: var(--widex-fg-muted);
+      color: var(--kibot-fg-muted);
     }
 
-    @keyframes widex-spin {
+    @keyframes kibot-spin {
       from {
         transform: rotate(0deg);
       }
@@ -117,7 +117,7 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
       }
     }
 
-    @keyframes widex-spin-reverse {
+    @keyframes kibot-spin-reverse {
       from {
         transform: rotate(360deg);
       }
@@ -128,12 +128,12 @@ import { WitagLogo, WitagLogoTone } from '../witag-logo/witag-logo';
 
     @media (prefers-reduced-motion: reduce) {
       .arc {
-        animation-duration: calc(var(--widex-motion-pulse) * 4);
+        animation-duration: calc(var(--kibot-motion-pulse) * 4);
       }
     }
   `
 })
-export class WidexLoader {
+export class KiBotLoader {
   /** Diámetro del spinner en px. */
   readonly size = input(96);
   readonly showMark = input(true);

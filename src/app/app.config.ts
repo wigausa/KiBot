@@ -26,7 +26,7 @@ export const appConfig: ApplicationConfig = {
     // test da otro valor en vez de tener que sustituir un módulo.
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
 
-    // La costura. El día que WiDex tenga su registro en B2C, esta línea pasa a
+    // La costura. El día que KiBot tenga su registro en B2C, esta línea pasa a
     // `MsalCredentialsService` y no se toca ningún servicio, store ni pantalla.
     { provide: API_CREDENTIALS, useClass: DevCredentialsService }
   ]

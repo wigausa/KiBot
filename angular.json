@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "WiDex": {
+    "KiBot": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -64,10 +64,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "WiDex:build:production"
+              "buildTarget": "KiBot:build:production"
             },
             "development": {
-              "buildTarget": "WiDex:build:development",
+              "buildTarget": "KiBot:build:development",
               "proxyConfig": "proxy.local.conf.js"
             }
           },

@@ -8,12 +8,12 @@
 
   @switch (store.inventarios().status) {
     @case ('loading') {
-      <widex-loading-indicator label="Cargando inventarios" />
+      <kibot-loading-indicator label="Cargando inventarios" />
     }
     @case ('error') {
       @if (store.inventarios(); as e) {
         @if (e.status === 'error') {
-          <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
         }
       }
     }
@@ -66,24 +66,24 @@
         }
 
         @if (store.recorrido().status === 'loading') {
-          <widex-loading-indicator [size]="32" label="Consultando el recorrido" />
+          <kibot-loading-indicator [size]="32" label="Consultando el recorrido" />
         }
 
         <div class="acciones">
           @if (store.abierto() === null) {
-            <widex-button [disabled]="!store.puedeIniciar()" [busy]="store.ocupado()" (pressed)="store.iniciar()">
+            <kibot-button [disabled]="!store.puedeIniciar()" [busy]="store.ocupado()" (pressed)="store.iniciar()">
               Iniciar recorrido
-            </widex-button>
+            </kibot-button>
           } @else {
-            <widex-button variant="outline" tone="error" [busy]="store.ocupado()" (pressed)="store.cerrar()">
+            <kibot-button variant="outline" tone="error" [busy]="store.ocupado()" (pressed)="store.cerrar()">
               Cerrar recorrido
-            </widex-button>
+            </kibot-button>
           }
         </div>
 
         @if (store.accion(); as a) {
           @if (a.status === 'error') {
-            <widex-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
+            <kibot-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
           }
         }
       </div>

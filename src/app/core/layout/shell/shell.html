@@ -16,7 +16,7 @@
       </button>
     </div>
 
-    <nav class="sidebar__nav" aria-label="Módulos de WiDex">
+    <nav class="sidebar__nav" aria-label="Módulos de KiBot">
       <ul class="nav">
         @for (item of navItems; track item.path) {
           <li>
@@ -26,7 +26,7 @@
               routerLinkActive="nav__item--active"
               [attr.title]="expanded() ? null : item.label"
             >
-              <widex-icon class="nav__icon" [name]="item.icon" />
+              <kibot-icon class="nav__icon" [name]="item.icon" />
               <span class="nav__label">{{ item.label }}</span>
             </a>
           </li>
@@ -35,14 +35,14 @@
     </nav>
 
     <div class="sidebar__footer">
-      <widex-theme-toggle [showLabel]="expanded()" />
+      <kibot-theme-toggle [showLabel]="expanded()" />
 
       <div class="robot">
         <span class="robot__avatar" aria-hidden="true">
-          <widex-icon name="robot" />
+          <kibot-icon name="robot" />
         </span>
         <span class="robot__details">
-          <span class="robot__name">Widex</span>
+          <span class="robot__name">KiBot</span>
           <span class="robot__meta">Bodega 7000</span>
         </span>
       </div>

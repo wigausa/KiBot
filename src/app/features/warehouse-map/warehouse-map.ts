@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { WidexButton } from '../../shared/ui/widex-button/widex-button';
-import { WidexErrorState } from '../../shared/ui/widex-error-state/widex-error-state';
-import { WidexLoadingIndicator } from '../../shared/ui/widex-loading-indicator/widex-loading-indicator';
+import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
+import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
+import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import {
   Lado,
   PlanCanvas,
@@ -72,7 +72,7 @@ function planoEnBlanco(): WarehousePlan {
  */
 @Component({
   selector: 'app-warehouse-map',
-  imports: [PlanCanvas, WidexButton, WidexErrorState, WidexLoadingIndicator],
+  imports: [PlanCanvas, KiBotButton, KiBotErrorState, KiBotLoadingIndicator],
   providers: [WarehouseMapStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './warehouse-map.html',

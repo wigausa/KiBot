@@ -21,7 +21,7 @@ const ASPECT: Record<WitagLogoVariant, number> = {
  *
  * PROVISIONAL: los archivos de `public/brand/` son los del proyecto Witag
  * (WitagAndroid `brand/witag-logo.svg` y las variantes de identidad de
- * WitagFrontend). Se reemplazan por los de WiDex cuando marca los entregue;
+ * WitagFrontend). Se reemplazan por los de KiBot cuando marca los entregue;
  * al ser los mismos nombres de archivo, no hay que tocar este componente.
  */
 @Component({

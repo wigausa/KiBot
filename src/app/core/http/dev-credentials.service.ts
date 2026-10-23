@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ApiCredentials } from './api.config';
 
 /**
- * Las credenciales mientras WiDex no tiene su registro en B2C.
+ * Las credenciales mientras KiBot no tiene su registro en B2C.
  *
  * <p><b>No devuelve ninguna cabecera, y eso es lo correcto.</b> En desarrollo la identidad la pone
  * el proxy de `ng serve` del lado del servidor —ver `proxy.config.example.js`—, así que no hay nada

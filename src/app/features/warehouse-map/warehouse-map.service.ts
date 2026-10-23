@@ -8,7 +8,7 @@ import { PlanPreview, PlanSaveResult, WarehousePlan } from './warehouse-map.mode
 /**
  * Los tres caminos del plano de bodega.
  *
- * <p>Devuelve promesas a propósito. `HttpClient` habla en observables, pero WiDex es una aplicación
+ * <p>Devuelve promesas a propósito. `HttpClient` habla en observables, pero KiBot es una aplicación
  * de señales sin una línea de RxJS fuera de aquí: sellándolo en un `firstValueFrom` por método, el
  * store de arriba es `async/await` y no tiene que saber nada de todo esto.</p>
  *

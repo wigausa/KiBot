@@ -1,18 +1,18 @@
-import { WidexIconName } from '../../shared/ui/widex-icon/widex-icon';
+import { KiBotIconName } from '../../shared/ui/kibot-icon/kibot-icon';
 
-export interface WidexNavItem {
+export interface KiBotNavItem {
   /** Ruta hija del shell, sin slash inicial. */
   readonly path: string;
   readonly label: string;
-  readonly icon: WidexIconName;
+  readonly icon: KiBotIconName;
 }
 
 /**
- * Módulos de WiDex en el orden del mockup (sección "Contenido").
+ * Módulos de KiBot en el orden del mockup (sección "Contenido").
  * Una entrada aquí = una ruta lazy en `app.routes.ts`; no hay otra fuente de
  * verdad para el sidebar.
  */
-export const WIDEX_NAV_ITEMS: readonly WidexNavItem[] = [
+export const KIBOT_NAV_ITEMS: readonly KiBotNavItem[] = [
   { path: 'inicio', label: 'Inicio', icon: 'home' },
   { path: 'control', label: 'Control', icon: 'control' },
   { path: 'buscar', label: 'Buscar', icon: 'search' },

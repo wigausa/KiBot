@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
-import { WidexButton } from '../../shared/ui/widex-button/widex-button';
-import { WidexErrorState } from '../../shared/ui/widex-error-state/widex-error-state';
-import { WidexLoadingIndicator } from '../../shared/ui/widex-loading-indicator/widex-loading-indicator';
+import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
+import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
+import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { RobotControlStore } from './robot-control.store';
 
 /**
@@ -13,8 +13,8 @@ import { RobotControlStore } from './robot-control.store';
  * <p>No decide nada: la pantalla enseña lo que dice el store, y el store lo que dice el backend.</p>
  */
 @Component({
-  selector: 'widex-robot-control',
-  imports: [WidexButton, WidexErrorState, WidexLoadingIndicator, DatePipe, DecimalPipe],
+  selector: 'kibot-robot-control',
+  imports: [KiBotButton, KiBotErrorState, KiBotLoadingIndicator, DatePipe, DecimalPipe],
   providers: [RobotControlStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './robot-control.html',

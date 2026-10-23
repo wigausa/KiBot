@@ -7,7 +7,7 @@ import {
   signal
 } from '@angular/core';
 import { AppBootService } from '../../core/boot/app-boot.service';
-import { WidexLoader } from '../../shared/ui/widex-loader/widex-loader';
+import { KiBotLoader } from '../../shared/ui/kibot-loader/kibot-loader';
 import { WitagLogo } from '../../shared/ui/witag-logo/witag-logo';
 
 /** Tiempo que se sostiene el spinner antes de abrir la cortina. */
@@ -23,7 +23,7 @@ const BOOT_HOLD_REDUCED_MS = 300;
  */
 @Component({
   selector: 'app-home',
-  imports: [WidexLoader, WitagLogo],
+  imports: [KiBotLoader, WitagLogo],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

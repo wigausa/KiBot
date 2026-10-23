@@ -87,28 +87,28 @@
 
     <aside class="panel">
       <div class="panel__acciones">
-        <widex-button
+        <kibot-button
           variant="outline"
           [busy]="store.cargando()"
           (pressed)="store.previsualizar()"
         >
           Previsualizar
-        </widex-button>
+        </kibot-button>
 
-        <widex-button
+        <kibot-button
           [disabled]="!store.puedeGuardar()"
           [busy]="store.guardando()"
           (pressed)="store.guardar()"
         >
           Guardar
-        </widex-button>
+        </kibot-button>
       </div>
 
       @if (store.cargando()) {
-        <widex-loading-indicator [size]="48" label="Expandiendo el plano" />
+        <kibot-loading-indicator [size]="48" label="Expandiendo el plano" />
       } @else if (store.preview(); as estado) {
         @if (estado.status === 'error') {
-          <widex-error-state
+          <kibot-error-state
             [message]="estado.message"
             [details]="estado.details"
             (retry)="store.previsualizar()"
@@ -152,7 +152,7 @@
 
       @if (store.guardado(); as guardado) {
         @if (guardado.status === 'error') {
-          <widex-error-state
+          <kibot-error-state
             [message]="guardado.message"
             [details]="guardado.details"
             [showRetry]="false"

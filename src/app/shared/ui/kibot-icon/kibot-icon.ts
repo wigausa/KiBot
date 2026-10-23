@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * Set de íconos inline de WiDex.
+ * Set de íconos inline de KiBot.
  *
  * DESIGN.md sección 10 marca "Iconografía" como gap abierto: no hay librería
- * elegida. Hasta que se decida, WiDex dibuja sus propios SVG en vez de usar una
+ * elegida. Hasta que se decida, KiBot dibuja sus propios SVG en vez de usar una
  * webfont externa (Material Symbols), porque la pantalla del robot puede
  * arrancar sin red y una webfont que no carga deja la UI sin íconos.
  *
  * El lenguaje gráfico es el mismo de los íconos de menú de WitagFrontend
  * (`src/assets/icons/menu/*.svg`): trazo fino de 1.5 sobre lienzo de ~24,
  * silueta abierta, arcos concéntricos para "señal" y pequeños bloques sólidos
- * como acento. Los motivos están adaptados a los módulos de WiDex:
+ * como acento. Los motivos están adaptados a los módulos de KiBot:
  *
  * - `control` retoma los arcos de `Monitoring&Control` sobre un botón de inicio
  * - `location` retoma el pin con punto interno de `RealTimeVisualization`
@@ -19,7 +19,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  *
  * Todo va en `currentColor`: el color lo define el contenedor.
  */
-export type WidexIconName =
+export type KiBotIconName =
   | 'home'
   | 'control'
   | 'search'
@@ -33,7 +33,7 @@ export type WidexIconName =
   | 'robot';
 
 @Component({
-  selector: 'widex-icon',
+  selector: 'kibot-icon',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <svg
@@ -157,8 +157,8 @@ export type WidexIconName =
   styles: `
     :host {
       display: inline-flex;
-      width: var(--widex-icon-size, 24px);
-      height: var(--widex-icon-size, 24px);
+      width: var(--kibot-icon-size, 24px);
+      height: var(--kibot-icon-size, 24px);
     }
 
     svg {
@@ -167,6 +167,6 @@ export type WidexIconName =
     }
   `
 })
-export class WidexIcon {
-  readonly name = input.required<WidexIconName>();
+export class KiBotIcon {
+  readonly name = input.required<KiBotIconName>();
 }

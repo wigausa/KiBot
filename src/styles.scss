@@ -1,4 +1,4 @@
-// Estilos globales de WiDex. Los tokens del design system entran solo por aquí.
+// Estilos globales de KiBot. Los tokens del design system entran solo por aquí.
 @use "styles/fonts";
 @use "styles/tokens";
 
@@ -7,10 +7,10 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--widex-page);
-  color: var(--widex-fg);
-  font-family: var(--widex-font-family);
-  font-size: var(--widex-font-size-body);
+  background: var(--kibot-page);
+  color: var(--kibot-fg);
+  font-family: var(--kibot-font-family);
+  font-size: var(--kibot-font-size-body);
   -webkit-font-smoothing: antialiased;
 }
 

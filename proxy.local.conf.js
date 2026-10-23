@@ -1,5 +1,5 @@
 /**
- * Proxy del dev server de WiDex.
+ * Proxy del dev server de KiBot.
  *
  * Sustituye a tres cosas que en Azure existen y en local no:
  *
@@ -23,7 +23,7 @@
  * sobrescribe mapas de almacen.
  *
  * Efecto secundario deseable: esto solo existe bajo "ng serve". El dia que
- * alguien intente desplegar WiDex antes de que MSAL este, no va a funcionar.
+ * alguien intente desplegar KiBot antes de que MSAL este, no va a funcionar.
  *
  * ---------------------------------------------------------------------------
  * EL id VA EN MINUSCULAS, y no da igual
@@ -54,7 +54,7 @@ if (!devUserId) {
   console.log('[proxy] id fijo -> ' + devUserId + '   destino ' + target);
 }
 
-// Cuando WiDex tenga MSAL, aqui ira el hook que saca el id del token real y pisa
+// Cuando KiBot tenga MSAL, aqui ira el hook que saca el id del token real y pisa
 // al estatico, como hace WitagFrontend. Hoy no hay token del que sacarlo.
 module.exports = {
   '/api': {

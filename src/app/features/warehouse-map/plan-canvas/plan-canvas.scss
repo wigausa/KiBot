@@ -5,7 +5,7 @@
 .lienzo {
   display: flex;
   flex-direction: column;
-  gap: var(--widex-spacing-3);
+  gap: var(--kibot-spacing-3);
   // Arrastrar una pieza no debe ir seleccionando el texto que pille por el camino.
   user-select: none;
 }
@@ -14,34 +14,34 @@
   width: 100%;
   // Alto fijo para que la pantalla no salte de tamano al previsualizar un plano mas grande.
   height: clamp(240px, 42vh, 520px);
-  background: var(--widex-surface-variant);
-  border: var(--widex-stroke-0) solid var(--widex-line);
-  border-radius: var(--widex-radius-6);
+  background: var(--kibot-surface-variant);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
 }
 
 // La cuadricula tiene que verse: es la referencia de escala del plano.
 .ejes line {
-  stroke: var(--widex-fg-muted);
+  stroke: var(--kibot-fg-muted);
   opacity: 0.45;
 }
 
 .inventario {
   fill: none;
-  stroke: var(--widex-line);
+  stroke: var(--kibot-line);
   stroke-dasharray: 1 0.6;
 }
 
 // Cada celda por separado: un bloque son DOS filas espalda contra espalda, y verlo importa.
 .celda {
-  fill: var(--widex-accent);
-  stroke: var(--widex-accent-strong);
+  fill: var(--kibot-accent);
+  stroke: var(--kibot-accent-strong);
   opacity: 0.85;
 }
 
 // Una celda a la que no llega ningun pasillo: el robot no podra nombrar lo que haya ahi.
 .celda--huerfana {
-  fill: var(--widex-warning);
-  stroke: var(--widex-warning-strong);
+  fill: var(--kibot-warning);
+  stroke: var(--kibot-warning-strong);
 }
 
 // Buscar caja (B12): con alguna cara senalada, el resto se atenua para que se vea donde mirar,
@@ -51,91 +51,91 @@
 }
 
 .celda--resaltada {
-  fill: var(--widex-accent-strong);
-  stroke: var(--widex-accent-strong);
+  fill: var(--kibot-accent-strong);
+  stroke: var(--kibot-accent-strong);
   opacity: 1;
 }
 
 // El pasillo, como una calle: calzada mas oscura y linea de eje discontinua.
 .calle__calzada {
-  fill: var(--widex-page);
+  fill: var(--kibot-page);
   opacity: 0.85;
 }
 
 .calle__eje {
-  stroke: var(--widex-warning);
+  stroke: var(--kibot-warning);
   stroke-linecap: round;
 }
 
 // El marco de anclas: las tres alturas que definen los tramos.
 .marco__anclaje {
-  stroke: var(--widex-accent-strong);
+  stroke: var(--kibot-accent-strong);
   opacity: 0.8;
 }
 
 .marco__transversal {
-  stroke: var(--widex-fg-muted);
+  stroke: var(--kibot-fg-muted);
   opacity: 0.6;
   stroke-dasharray: 0.9 0.6;
 }
 
 .marco__nota {
-  fill: var(--widex-accent-strong);
-  font-weight: var(--widex-font-weight-bold);
+  fill: var(--kibot-accent-strong);
+  font-weight: var(--kibot-font-weight-bold);
 }
 
 .ancla {
-  fill: var(--widex-fg-muted);
+  fill: var(--kibot-fg-muted);
 }
 
 // El .2 es la transversal, el unico de los tres que cae en medio del pasillo.
 .ancla--transversal {
-  fill: var(--widex-accent-strong);
+  fill: var(--kibot-accent-strong);
 }
 
 .numero {
-  fill: var(--widex-fg);
-  stroke: var(--widex-page);
-  font-weight: var(--widex-font-weight-bold);
+  fill: var(--kibot-fg);
+  stroke: var(--kibot-page);
+  font-weight: var(--kibot-font-weight-bold);
   cursor: pointer;
 }
 
 .numero--activo {
-  fill: var(--widex-accent-strong);
+  fill: var(--kibot-accent-strong);
 }
 
 .controles {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--widex-spacing-3);
+  gap: var(--kibot-spacing-3);
 }
 
 .controles button {
-  padding: var(--widex-spacing-1) var(--widex-spacing-5);
-  border: var(--widex-stroke-0) solid var(--widex-accent-strong);
-  border-radius: var(--widex-radius-6);
+  padding: var(--kibot-spacing-1) var(--kibot-spacing-5);
+  border: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+  border-radius: var(--kibot-radius-6);
   background: transparent;
-  color: var(--widex-accent-strong);
+  color: var(--kibot-accent-strong);
   font: inherit;
-  font-size: var(--widex-font-size-caption);
+  font-size: var(--kibot-font-size-caption);
   cursor: pointer;
 }
 
 .controles .quitar {
-  border-color: var(--widex-error-strong);
-  color: var(--widex-error-strong);
+  border-color: var(--kibot-error-strong);
+  color: var(--kibot-error-strong);
 }
 
 .seleccion,
 .pista {
-  font-size: var(--widex-font-size-caption);
-  color: var(--widex-fg-muted);
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg-muted);
 }
 
 .seleccion {
-  color: var(--widex-fg);
-  font-weight: var(--widex-font-weight-bold);
+  color: var(--kibot-fg);
+  font-weight: var(--kibot-font-weight-bold);
 }
 
 // --- la paleta -----------------------------------------------------------------------------
@@ -144,32 +144,32 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--widex-spacing-3);
+  gap: var(--kibot-spacing-3);
 }
 
 .paleta__titulo {
-  font-size: var(--widex-font-size-caption);
-  color: var(--widex-fg-muted);
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg-muted);
 }
 
 .pieza {
   display: inline-flex;
   align-items: center;
-  gap: var(--widex-spacing-3);
-  padding: var(--widex-spacing-2) var(--widex-spacing-4);
-  border: var(--widex-stroke-0) solid var(--widex-line);
-  border-radius: var(--widex-radius-6);
-  background: var(--widex-surface);
-  color: var(--widex-fg);
+  gap: var(--kibot-spacing-3);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-4);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
   font: inherit;
-  font-size: var(--widex-font-size-caption);
+  font-size: var(--kibot-font-size-caption);
   // Es lo que se arrastra: el cursor lo dice antes de que nadie lo intente.
   cursor: grab;
   touch-action: none;
 
   small {
     display: block;
-    color: var(--widex-fg-muted);
+    color: var(--kibot-fg-muted);
   }
 }
 
@@ -190,37 +190,37 @@
 }
 
 .figura__calzada {
-  fill: var(--widex-page);
-  stroke: var(--widex-line);
+  fill: var(--kibot-page);
+  stroke: var(--kibot-line);
   stroke-width: 1;
 }
 
 .figura__eje {
-  stroke: var(--widex-warning);
+  stroke: var(--kibot-warning);
   stroke-width: 1.6;
   stroke-dasharray: 4 3;
   stroke-linecap: round;
 }
 
 .figura__celda {
-  fill: var(--widex-accent);
-  stroke: var(--widex-accent-strong);
+  fill: var(--kibot-accent);
+  stroke: var(--kibot-accent-strong);
   stroke-width: 0.6;
 }
 
 .figura__muro {
-  fill: var(--widex-fg-muted);
+  fill: var(--kibot-fg-muted);
 }
 
 .figura__junta {
-  stroke: var(--widex-page);
+  stroke: var(--kibot-page);
   stroke-width: 1;
 }
 
 .pieza--activa {
   cursor: grabbing;
-  border-color: var(--widex-accent-strong);
-  color: var(--widex-accent-strong);
+  border-color: var(--kibot-accent-strong);
+  color: var(--kibot-accent-strong);
 }
 
 // --- lo que se dibuja encima del plano ------------------------------------------------------
@@ -230,7 +230,7 @@
 }
 
 .muro {
-  fill: var(--widex-fg);
+  fill: var(--kibot-fg);
   opacity: 0.7;
 }
 
@@ -241,14 +241,14 @@
 }
 
 .bloque-zona--activa {
-  stroke: var(--widex-accent-strong);
+  stroke: var(--kibot-accent-strong);
   stroke-dasharray: 0.6 0.4;
 }
 
 .hueco rect {
-  fill: var(--widex-accent);
+  fill: var(--kibot-accent);
   fill-opacity: 0.12;
-  stroke: var(--widex-accent-strong);
+  stroke: var(--kibot-accent-strong);
   stroke-dasharray: 0.8 0.5;
 }
 
@@ -260,19 +260,19 @@
 .campo {
   display: inline-flex;
   align-items: center;
-  gap: var(--widex-spacing-2);
-  font-size: var(--widex-font-size-caption);
-  color: var(--widex-fg-muted);
+  gap: var(--kibot-spacing-2);
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg-muted);
 
   input {
     width: 4rem;
-    padding: var(--widex-spacing-1) var(--widex-spacing-2);
-    border: var(--widex-stroke-0) solid var(--widex-line);
-    border-radius: var(--widex-radius-6);
-    background: var(--widex-surface);
-    color: var(--widex-fg);
+    padding: var(--kibot-spacing-1) var(--kibot-spacing-2);
+    border: var(--kibot-stroke-0) solid var(--kibot-line);
+    border-radius: var(--kibot-radius-6);
+    background: var(--kibot-surface);
+    color: var(--kibot-fg);
     font: inherit;
-    font-size: var(--widex-font-size-caption);
+    font-size: var(--kibot-font-size-caption);
   }
 }
 
@@ -280,35 +280,35 @@
 
 .largos {
   display: inline-flex;
-  gap: var(--widex-spacing-1);
+  gap: var(--kibot-spacing-1);
 }
 
 .largo {
-  padding: var(--widex-spacing-1) var(--widex-spacing-3);
-  border: var(--widex-stroke-0) solid var(--widex-line);
-  border-radius: var(--widex-radius-6);
-  background: var(--widex-surface);
-  color: var(--widex-fg-muted);
+  padding: var(--kibot-spacing-1) var(--kibot-spacing-3);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg-muted);
   font: inherit;
-  font-size: var(--widex-font-size-caption);
+  font-size: var(--kibot-font-size-caption);
   cursor: pointer;
 }
 
 .largo--activo {
-  border-color: var(--widex-accent-strong);
-  color: var(--widex-accent-strong);
-  font-weight: var(--widex-font-weight-bold);
+  border-color: var(--kibot-accent-strong);
+  color: var(--kibot-accent-strong);
+  font-weight: var(--kibot-font-weight-bold);
 }
 
 .largo--quitar {
-  border-color: var(--widex-error);
-  color: var(--widex-error-strong);
+  border-color: var(--kibot-error);
+  color: var(--kibot-error-strong);
 }
 
 .tramo {
   display: inline-flex;
   align-items: center;
-  gap: var(--widex-spacing-1);
-  font-size: var(--widex-font-size-caption);
-  color: var(--widex-fg-muted);
+  gap: var(--kibot-spacing-1);
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg-muted);
 }

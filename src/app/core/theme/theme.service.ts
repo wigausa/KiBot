@@ -3,19 +3,19 @@ import { Injectable, computed, effect, signal } from '@angular/core';
 /**
  * Modo de tema elegido por el usuario. 'system' sigue prefers-color-scheme.
  */
-export type WidexThemeMode = 'light' | 'dark' | 'system';
+export type KiBotThemeMode = 'light' | 'dark' | 'system';
 
 /** Tema realmente aplicado al DOM (nunca 'system'). */
-export type WidexResolvedTheme = 'light' | 'dark';
+export type KiBotResolvedTheme = 'light' | 'dark';
 
-const STORAGE_KEY = 'widex-theme-mode';
+const STORAGE_KEY = 'kibot-theme-mode';
 
 /**
- * Controla el tema claro/oscuro de WiDex.
+ * Controla el tema claro/oscuro de KiBot.
  *
  * Escribe `data-theme="light"|"dark"` en <html>, que es lo que leen los
  * tokens semánticos de `src/styles/tokens/_semantic.scss`. Nunca acceder a
- * colores crudos desde componentes: usar siempre `var(--widex-*)`.
+ * colores crudos desde componentes: usar siempre `var(--kibot-*)`.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -24,9 +24,9 @@ export class ThemeService {
 
   private readonly systemPrefersDark = signal(this.media?.matches ?? false);
 
-  readonly mode = signal<WidexThemeMode>(this.readStoredMode());
+  readonly mode = signal<KiBotThemeMode>(this.readStoredMode());
 
-  readonly resolvedTheme = computed<WidexResolvedTheme>(() => {
+  readonly resolvedTheme = computed<KiBotResolvedTheme>(() => {
     const mode = this.mode();
     return mode === 'system' ? (this.systemPrefersDark() ? 'dark' : 'light') : mode;
   });
@@ -42,14 +42,14 @@ export class ThemeService {
     });
   }
 
-  setMode(mode: WidexThemeMode): void {
+  setMode(mode: KiBotThemeMode): void {
     this.mode.set(mode);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, mode);
     }
   }
 
-  private readStoredMode(): WidexThemeMode {
+  private readStoredMode(): KiBotThemeMode {
     if (typeof localStorage === 'undefined') {
       return 'system';
     }

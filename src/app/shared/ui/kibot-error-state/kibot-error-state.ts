@@ -12,7 +12,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
  * segura de que alguien abandone.</p>
  */
 @Component({
-  selector: 'widex-error-state',
+  selector: 'kibot-error-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { role: 'alert' },
   template: `
@@ -36,11 +36,11 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
     :host {
       display: flex;
       flex-direction: column;
-      gap: var(--widex-spacing-3);
-      padding: var(--widex-spacing-5);
-      border: var(--widex-stroke-0) solid var(--widex-error);
-      border-radius: var(--widex-radius-6);
-      background: var(--widex-surface);
+      gap: var(--kibot-spacing-3);
+      padding: var(--kibot-spacing-5);
+      border: var(--kibot-stroke-0) solid var(--kibot-error);
+      border-radius: var(--kibot-radius-6);
+      background: var(--kibot-surface);
       /* Un mensaje de error suele traer una URL o un id sin espacios. Sin esto se sale de la caja
          y empuja el ancho de la pagina entera. */
       min-width: 0;
@@ -49,37 +49,37 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 
     .mensaje {
       margin: 0;
-      color: var(--widex-error-strong);
-      font-size: var(--widex-font-size-body);
-      font-weight: var(--widex-font-weight-bold);
+      color: var(--kibot-error-strong);
+      font-size: var(--kibot-font-size-body);
+      font-weight: var(--kibot-font-weight-bold);
     }
 
     .detalles {
       margin: 0;
-      padding-inline-start: var(--widex-spacing-5);
+      padding-inline-start: var(--kibot-spacing-5);
       display: flex;
       flex-direction: column;
-      gap: var(--widex-spacing-1);
-      color: var(--widex-fg-muted);
-      font-size: var(--widex-font-size-body);
-      font-weight: var(--widex-font-weight-regular);
+      gap: var(--kibot-spacing-1);
+      color: var(--kibot-fg-muted);
+      font-size: var(--kibot-font-size-body);
+      font-weight: var(--kibot-font-weight-regular);
     }
 
     .reintentar {
       align-self: flex-start;
       /* Boton outline, tamano Medium: DESIGN.md seccion 7. */
-      padding: var(--widex-spacing-2) var(--widex-spacing-6);
-      border: var(--widex-stroke-0) solid var(--widex-error);
-      border-radius: var(--widex-radius-6);
+      padding: var(--kibot-spacing-2) var(--kibot-spacing-6);
+      border: var(--kibot-stroke-0) solid var(--kibot-error);
+      border-radius: var(--kibot-radius-6);
       background: transparent;
-      color: var(--widex-error-strong);
+      color: var(--kibot-error-strong);
       font: inherit;
-      font-size: var(--widex-font-size-body);
+      font-size: var(--kibot-font-size-body);
       cursor: pointer;
     }
   `
 })
-export class WidexErrorState {
+export class KiBotErrorState {
   readonly message = input.required<string>();
   readonly details = input<readonly string[]>([]);
   readonly showRetry = input(true);

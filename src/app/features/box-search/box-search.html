@@ -8,12 +8,12 @@
 
   @switch (store.inventarios().status) {
     @case ('loading') {
-      <widex-loading-indicator label="Cargando inventarios" />
+      <kibot-loading-indicator label="Cargando inventarios" />
     }
     @case ('error') {
       @if (store.inventarios(); as e) {
         @if (e.status === 'error') {
-          <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
         }
       }
     }
@@ -36,12 +36,12 @@
         @if (store.inventarioId() !== null) {
           @switch (store.estado().status) {
             @case ('loading') {
-              <widex-loading-indicator [size]="32" label="Comprobando el recorrido" />
+              <kibot-loading-indicator [size]="32" label="Comprobando el recorrido" />
             }
             @case ('error') {
               @if (store.estado(); as e) {
                 @if (e.status === 'error') {
-                  <widex-error-state [message]="e.message" [details]="e.details" (retry)="store.consultarEstado()" />
+                  <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.consultarEstado()" />
                 }
               }
             }
@@ -54,9 +54,9 @@
                       <p>{{ e.value.Message }}</p>
                     }
                   }
-                  <widex-button variant="outline" size="small" (pressed)="store.consultarEstado()">
+                  <kibot-button variant="outline" size="small" (pressed)="store.consultarEstado()">
                     Comprobar de nuevo
-                  </widex-button>
+                  </kibot-button>
                 </div>
               }
 
@@ -74,9 +74,9 @@
                     (input)="alEscribir($event)"
                   />
                 </label>
-                <widex-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.resultado().status === 'loading'">
+                <kibot-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.resultado().status === 'loading'">
                   Buscar
-                </widex-button>
+                </kibot-button>
               </div>
             }
           }
@@ -85,7 +85,7 @@
 
       @if (store.resultado(); as r) {
         @if (r.status === 'error') {
-          <widex-error-state [message]="r.message" [details]="r.details" [showRetry]="false" />
+          <kibot-error-state [message]="r.message" [details]="r.details" [showRetry]="false" />
         }
         @if (r.status === 'ready') {
           <div class="tarjeta" aria-live="polite">
@@ -120,10 +120,10 @@
 
           @if (store.mapa(); as m) {
             @if (m.status === 'loading') {
-              <widex-loading-indicator [size]="32" label="Cargando el plano" />
+              <kibot-loading-indicator [size]="32" label="Cargando el plano" />
             }
             @if (m.status === 'error') {
-              <widex-error-state [message]="m.message" [details]="m.details" [showRetry]="false" />
+              <kibot-error-state [message]="m.message" [details]="m.details" [showRetry]="false" />
             }
             @if (m.status === 'ready' && rejilla(); as rejilla) {
               <div class="tarjeta plano">

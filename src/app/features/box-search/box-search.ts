@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { DatePipe, PercentPipe } from '@angular/common';
 
-import { WidexButton } from '../../shared/ui/widex-button/widex-button';
-import { WidexErrorState } from '../../shared/ui/widex-error-state/widex-error-state';
-import { WidexLoadingIndicator } from '../../shared/ui/widex-loading-indicator/widex-loading-indicator';
+import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
+import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
+import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { PlanCanvas, RejillaDelPlano } from '../warehouse-map/plan-canvas/plan-canvas';
 import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
 import { BoxSearchStore } from './box-search.store';
@@ -29,8 +29,8 @@ export function rejillaDelMapa(mapa: WarehouseMap): RejillaDelPlano {
  * Buscar caja (B12): por el USDA impreso o por el EPC, y solo con el recorrido terminado.
  */
 @Component({
-  selector: 'widex-box-search',
-  imports: [WidexButton, WidexErrorState, WidexLoadingIndicator, PlanCanvas, DatePipe, PercentPipe],
+  selector: 'kibot-box-search',
+  imports: [KiBotButton, KiBotErrorState, KiBotLoadingIndicator, PlanCanvas, DatePipe, PercentPipe],
   providers: [BoxSearchStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './box-search.html',

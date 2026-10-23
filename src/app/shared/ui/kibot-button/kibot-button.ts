@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-export type WidexButtonVariant = 'fill' | 'outline';
-export type WidexButtonSize = 'small' | 'medium' | 'large';
-export type WidexButtonTone = 'accent' | 'error';
+export type KiBotButtonVariant = 'fill' | 'outline';
+export type KiBotButtonSize = 'small' | 'medium' | 'large';
+export type KiBotButtonTone = 'accent' | 'error';
 
 /**
- * El botón de WiDex, según `DESIGN.md` sección 7: radio `radius-6`, borde `stroke-0`, y los tres
+ * El botón de KiBot, según `DESIGN.md` sección 7: radio `radius-6`, borde `stroke-0`, y los tres
  * tamaños compartiendo cuerpo de letra —solo cambia el relleno—.
  *
  * <p><b>Un hueco declarado del design system.</b> `DESIGN.md` reconoce en sus *Known Gaps* que no
@@ -15,7 +15,7 @@ export type WidexButtonTone = 'accent' | 'error';
  * antes de que se repita en las otras pantallas.</p>
  */
 @Component({
-  selector: 'widex-button',
+  selector: 'kibot-button',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
@@ -35,45 +35,45 @@ export type WidexButtonTone = 'accent' | 'error';
 
     button {
       /* Seccion 7: radio 12px y borde de 1px en todas las variantes. */
-      border-radius: var(--widex-radius-6);
-      border: var(--widex-stroke-0) solid transparent;
+      border-radius: var(--kibot-radius-6);
+      border: var(--kibot-stroke-0) solid transparent;
       font-family: inherit;
       /* Los tres tamanos comparten 18px; solo cambia el padding. */
-      font-size: var(--widex-font-size-body);
-      font-weight: var(--widex-font-weight-bold);
+      font-size: var(--kibot-font-size-body);
+      font-weight: var(--kibot-font-weight-bold);
       cursor: pointer;
-      transition: opacity var(--widex-motion-fast) var(--widex-ease-standard);
+      transition: opacity var(--kibot-motion-fast) var(--kibot-ease-standard);
     }
 
     .small {
-      padding: var(--widex-spacing-1) var(--widex-spacing-5);
+      padding: var(--kibot-spacing-1) var(--kibot-spacing-5);
     }
     .medium {
-      padding: var(--widex-spacing-2) var(--widex-spacing-6);
+      padding: var(--kibot-spacing-2) var(--kibot-spacing-6);
     }
     .large {
-      padding: var(--widex-spacing-3) var(--widex-spacing-7);
+      padding: var(--kibot-spacing-3) var(--kibot-spacing-7);
     }
 
     .fill.accent {
-      background: var(--widex-accent-strong);
-      color: var(--widex-on-brand);
+      background: var(--kibot-accent-strong);
+      color: var(--kibot-on-brand);
     }
     .fill.error {
-      background: var(--widex-error-strong);
-      color: var(--widex-on-brand);
+      background: var(--kibot-error-strong);
+      color: var(--kibot-on-brand);
     }
 
     .outline {
       background: transparent;
     }
     .outline.accent {
-      border-color: var(--widex-accent-strong);
-      color: var(--widex-accent-strong);
+      border-color: var(--kibot-accent-strong);
+      color: var(--kibot-accent-strong);
     }
     .outline.error {
-      border-color: var(--widex-error-strong);
-      color: var(--widex-error-strong);
+      border-color: var(--kibot-error-strong);
+      color: var(--kibot-error-strong);
     }
 
     button:hover:not(:disabled) {
@@ -88,10 +88,10 @@ export type WidexButtonTone = 'accent' | 'error';
     }
   `
 })
-export class WidexButton {
-  readonly variant = input<WidexButtonVariant>('fill');
-  readonly size = input<WidexButtonSize>('medium');
-  readonly tone = input<WidexButtonTone>('accent');
+export class KiBotButton {
+  readonly variant = input<KiBotButtonVariant>('fill');
+  readonly size = input<KiBotButtonSize>('medium');
+  readonly tone = input<KiBotButtonTone>('accent');
   readonly type = input<'button' | 'submit'>('button');
   readonly disabled = input(false);
 
