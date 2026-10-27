@@ -135,4 +135,33 @@ describe('ZonesStore', () => {
     expect(store.hasta()).toBe('P2.3');
     expect(store.resaltadas().map((c) => c.rackId)).toEqual(['P1-P2-sup', 'P1-P2-sup']);
   });
+
+  it('no deja guardar una geocerca con un par de anclas que el robot no sabe recorrer', async () => {
+    await store.elegirPlano('map-1');
+    store.elegirZona(10);
+
+    store.desde.set('P1.1');
+    store.hasta.set('P3.S');
+    expect(store.racksQueEntran()).toBeGreaterThan(0);
+    expect(store.parInvalido()).toBeTrue();
+    expect(store.puedeGuardarGeocerca()).toBeFalse();
+
+    await store.guardarGeocerca();
+
+    expect(api.guardados).toEqual([]);
+    const g = store.guardado();
+    expect(g.status).toBe('error');
+    if (g.status === 'error') expect(g.message).toBe('Una zona tiene que ir de .1 a .I, de .S a .3 o de .1 a .3');
+  });
+
+  it('el par vale en cualquier orden: de .3 a .S son los tramos superiores', async () => {
+    await store.elegirPlano('map-1');
+    store.elegirZona(10);
+
+    store.desde.set('P3.3');
+    store.hasta.set('P1.S');
+
+    expect(store.parInvalido()).toBeFalse();
+    expect(store.puedeGuardarGeocerca()).toBeTrue();
+  });
 });

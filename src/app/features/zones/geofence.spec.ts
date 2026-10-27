@@ -5,6 +5,7 @@ import {
   carasDentro,
   conQuienSePisa,
   geocercaEntre,
+  geocercaValida,
   racksDentro,
   sePisan
 } from './geofence';
@@ -87,5 +88,40 @@ describe('geocerca por anclas', () => {
     const zona = { IdZone: 10, Name: 'A', Shape: 'rect', Points: [{ X: 0.5, Y: 0 }, { X: 3, Y: 4 }] };
 
     expect(anclasDeLaGeocerca(anclasDelMapa(mapa()), zona)).toBeNull();
+  });
+});
+
+describe('geocercaValida', () => {
+  const ancla = (codigo: string) => ({ codigo });
+
+  it('acepta los tramos inferiores, los superiores y los pasillos completos', () => {
+    expect(geocercaValida(ancla('1'), ancla('I'))).toBeTrue();
+    expect(geocercaValida(ancla('S'), ancla('3'))).toBeTrue();
+    expect(geocercaValida(ancla('1'), ancla('3'))).toBeTrue();
+  });
+
+  it('el orden de las dos anclas da igual', () => {
+    expect(geocercaValida(ancla('I'), ancla('1'))).toBeTrue();
+    expect(geocercaValida(ancla('3'), ancla('S'))).toBeTrue();
+    expect(geocercaValida(ancla('3'), ancla('1'))).toBeTrue();
+  });
+
+  it('rechaza cualquier otra combinación', () => {
+    expect(geocercaValida(ancla('1'), ancla('S'))).toBeFalse();
+    expect(geocercaValida(ancla('I'), ancla('3'))).toBeFalse();
+    expect(geocercaValida(ancla('I'), ancla('S'))).toBeFalse();
+    expect(geocercaValida(ancla('1'), ancla('1'))).toBeFalse();
+    expect(geocercaValida(ancla('I'), ancla('I'))).toBeFalse();
+    // El .2 de un plano viejo no lo entiende el robot.
+    expect(geocercaValida(ancla('1'), ancla('2'))).toBeFalse();
+  });
+
+  it('sirve con las anclas reales del plano', () => {
+    const anclas = anclasDelMapa(mapa());
+    const por = (etiqueta: string) => anclas.find((a) => a.etiqueta === etiqueta)!;
+
+    expect(geocercaValida(por('P1.1'), por('P3.I'))).toBeTrue();
+    expect(geocercaValida(por('P1.S'), por('P3.3'))).toBeTrue();
+    expect(geocercaValida(por('P1.1'), por('P3.S'))).toBeFalse();
   });
 });

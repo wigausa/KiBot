@@ -6,6 +6,8 @@ import {
   RobotProgress,
   textoDeAviso,
   textoDeEstado,
+  textoDeFinDeZona,
+  textoDeRechazo,
   ubicacionDe
 } from './robot.models';
 
@@ -91,5 +93,31 @@ describe('robotsDe', () => {
       { IdDevice: 7, Name: 'R1' },
       { IdDevice: 8, Name: 'R2' }
     ]);
+  });
+});
+
+describe('textos de las órdenes', () => {
+  it('cuenta en palabras por qué el robot rechazó una orden', () => {
+    expect(textoDeRechazo('BATTERY_LOW')).toBe('Batería baja para salir');
+    expect(textoDeRechazo('ESTOP')).toBe('Seta de emergencia pulsada');
+    expect(textoDeRechazo('ROBOT_BUSY')).toBe('El robot ya tiene un recorrido en marcha');
+    expect(textoDeRechazo('MISSING_POINTS')).toBe('Al robot le faltan puntos de algún pasillo');
+    expect(textoDeRechazo('GEOFENCE_INVALID')).toBe('La geocerca no es válida para el robot');
+    expect(textoDeRechazo('NO_RESPONSE')).toBe('El robot no contestó');
+  });
+
+  it('un motivo que no conocemos se enseña tal cual, y sin motivo, una raya', () => {
+    expect(textoDeRechazo('ALGO_NUEVO')).toBe('ALGO_NUEVO');
+    expect(textoDeRechazo(null)).toBe('—');
+    expect(textoDeRechazo(undefined)).toBe('—');
+  });
+
+  it('cuenta cómo terminó una zona o por qué se detuvo la tanda', () => {
+    expect(textoDeFinDeZona('COMPLETED')).toBe('Terminada');
+    expect(textoDeFinDeZona('CANCELLED')).toBe('Cancelada');
+    expect(textoDeFinDeZona('RTH')).toBe('Mandado volver al dock');
+    expect(textoDeFinDeZona('REJECTED')).toBe('El robot rechazó la orden');
+    expect(textoDeFinDeZona('OTRO')).toBe('OTRO');
+    expect(textoDeFinDeZona(null)).toBe('—');
   });
 });

@@ -32,6 +32,23 @@ export interface Ancla {
 
 export type Puntos = readonly { X: number; Y: number }[];
 
+/** Lo que se le dice a quien elige un par de anclas que el robot no sabe recorrer. */
+export const GEOCERCA_INVALIDA = 'Una zona tiene que ir de .1 a .I, de .S a .3 o de .1 a .3';
+
+/** Los únicos pares que entiende el robot (órdenes de la nube v1), con el código ordenado. */
+const PARES_VALIDOS: ReadonlySet<string> = new Set(['1-I', '3-S', '1-3']);
+
+/**
+ * Si dos anclas forman una geocerca que el robot sabe recorrer: los tramos inferiores
+ * (<c>.1</c>–<c>.I</c>), los superiores (<c>.S</c>–<c>.3</c>) o los pasillos completos
+ * (<c>.1</c>–<c>.3</c>). El orden de las dos da igual. Cualquier otra combinación —<c>.1</c>–<c>.S</c>,
+ * dos <c>.I</c>, o el <c>.2</c> de un plano viejo— la rechazaría el robot con `GEOFENCE_INVALID`.
+ */
+export function geocercaValida(a: Pick<Ancla, 'codigo'>, b: Pick<Ancla, 'codigo'>): boolean {
+  const par = [a.codigo.toUpperCase(), b.codigo.toUpperCase()].sort().join('-');
+  return PARES_VALIDOS.has(par);
+}
+
 /** Las anclas de los pasillos con número, ordenadas por pasillo y luego por ordinal. */
 export function anclasDelMapa(mapa: WarehouseMap): Ancla[] {
   return mapa.Aisles.filter((a) => a.Number !== null)

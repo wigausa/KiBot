@@ -2,16 +2,44 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { ApiFailure, apiFailure } from '../../core/http/api-error';
 import { API_BASE_URL } from '../../core/http/api.config';
 import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
 import {
   BoxSearchResult,
   BoxSearchStatus,
+  RobotBatchView,
   RobotInventory,
   RobotProgress,
-  RobotRun,
-  RobotStatusView
+  RobotStatusView,
+  textoDeRechazo
 } from './robot.models';
+
+/** Un fallo de una orden al robot, con el motivo en código para quien tenga que decidir por él. */
+export interface FalloDeOrden extends ApiFailure {
+  /** `BATTERY_LOW`, `BATCH_RUNNING`, `GEOFENCE_INVALID`… Nulo si el fallo no trae motivo. */
+  readonly reason: string | null;
+}
+
+/**
+ * Lee el fallo de una orden. Las órdenes contestan <c>{ Reason, Detail, Message }</c> (409 si el
+ * robot la rechaza, 400 si una zona no tiene geocerca válida): el motivo se enseña en palabras y el
+ * detalle debajo, porque «Zona 4: .1–.S» dice qué arreglar. Sin motivo (502/504, la red), el
+ * `Message` o lo que saque `apiFailure`.
+ */
+export function falloDeOrden(error: unknown): FalloDeOrden {
+  const cuerpo = error instanceof HttpErrorResponse ? (error.error as unknown) : null;
+  if (cuerpo !== null && typeof cuerpo === 'object' && !Array.isArray(cuerpo)) {
+    const registro = cuerpo as Record<string, unknown>;
+    const reason = typeof registro['Reason'] === 'string' && registro['Reason'] !== '' ? registro['Reason'] : null;
+    const detail = typeof registro['Detail'] === 'string' && registro['Detail'].trim() !== '' ? registro['Detail'] : null;
+    const mensaje = typeof registro['Message'] === 'string' && registro['Message'].trim() !== '' ? registro['Message'] : null;
+
+    if (reason !== null) return { reason, message: textoDeRechazo(reason), details: detail ? [detail] : [] };
+    if (mensaje !== null) return { reason: null, message: mensaje, details: detail ? [detail] : [] };
+  }
+  return { reason: null, ...apiFailure(error) };
+}
 
 /**
  * Los caminos del robot que usan las pantallas de Control y Buscar (B12).
@@ -29,10 +57,10 @@ export class RobotApiService {
     return firstValueFrom(this.http.get<RobotInventory[]>(`${this.baseUrl}/GetInventories`));
   }
 
-  /** El recorrido abierto de un robot, o `null` si no tiene ninguno (el backend responde 404). */
-  async recorridoAbierto(idInventory: string, idDevice: number): Promise<RobotRun | null> {
+  /** La tanda en marcha del robot, o la última. `null` si nunca tuvo ninguna (el backend responde 404). */
+  async tanda(idInventory: string, idDevice: number): Promise<RobotBatchView | null> {
     try {
-      return await firstValueFrom(this.http.get<RobotRun>(this.ruta(idInventory, idDevice)));
+      return await firstValueFrom(this.http.get<RobotBatchView>(this.rutaDeTanda(idInventory, idDevice)));
     } catch (error) {
       if (error instanceof HttpErrorResponse && error.status === 404) return null;
       throw error;
@@ -40,18 +68,28 @@ export class RobotApiService {
   }
 
   /**
-   * Abre el recorrido con las zonas que va a cubrir. Al abrirse, WiscanAPIs le avisa a GHT con
-   * `robot.run.started` (B9): no hace falta nada más desde aquí.
+   * Empieza una tanda: las zonas en el orden en que se recorren. La nube manda el `START` de la
+   * primera y encadena las demás sola. Un rechazo del robot llega como 409 (ver `falloDeOrden`).
    */
-  abrir(idInventory: string, idDevice: number, zones: readonly number[]): Promise<RobotRun> {
+  iniciarTanda(idInventory: string, idDevice: number, zones: readonly number[]): Promise<RobotBatchView> {
     return firstValueFrom(
-      this.http.post<RobotRun>(this.ruta(idInventory, idDevice), { Zones: [...zones] })
+      this.http.post<RobotBatchView>(this.rutaDeTanda(idInventory, idDevice), { Zones: [...zones] })
     );
   }
 
-  /** Cierra el recorrido. Sin motivo queda `ABORTED`: lo paró una persona. */
-  cerrar(idInventory: string, idDevice: number): Promise<RobotRun> {
-    return firstValueFrom(this.http.post<RobotRun>(`${this.ruta(idInventory, idDevice)}/close`, {}));
+  /** Pausa la zona en curso. No hay reanudar: de la pausa se sale cancelando o volviendo al dock. */
+  pausar(idInventory: string, idDevice: number): Promise<RobotBatchView> {
+    return this.orden(idInventory, idDevice, 'pause');
+  }
+
+  /** Cancela la zona en curso y con ella la tanda: no se encadena la siguiente. */
+  cancelar(idInventory: string, idDevice: number): Promise<RobotBatchView> {
+    return this.orden(idInventory, idDevice, 'cancel');
+  }
+
+  /** Lo manda al dock (RTH). También detiene la tanda. */
+  volverAlDock(idInventory: string, idDevice: number): Promise<RobotBatchView> {
+    return this.orden(idInventory, idDevice, 'rth');
   }
 
   progreso(idInventory: string): Promise<RobotProgress> {
@@ -104,7 +142,13 @@ export class RobotApiService {
     }
   }
 
-  private ruta(idInventory: string, idDevice: number): string {
-    return `${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/run`;
+  private orden(idInventory: string, idDevice: number, accion: 'pause' | 'cancel' | 'rth'): Promise<RobotBatchView> {
+    return firstValueFrom(
+      this.http.post<RobotBatchView>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/${accion}`, {})
+    );
+  }
+
+  private rutaDeTanda(idInventory: string, idDevice: number): string {
+    return `${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/batch`;
   }
 }

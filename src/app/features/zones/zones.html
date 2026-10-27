@@ -332,6 +332,9 @@
                     </div>
 
                     @if (store.puntos() !== null) {
+                      @if (store.parInvalido()) {
+                        <p class="aviso aviso--alerta">{{ geocercaInvalida }}.</p>
+                      }
                       @if (store.racksQueEntran() === 0) {
                         <p class="aviso aviso--alerta">
                           Entre esas anclas no queda ninguna estantería. Elige anclas de pasillos distintos.

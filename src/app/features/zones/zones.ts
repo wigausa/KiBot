@@ -7,6 +7,7 @@ import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-s
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { rejillaDelMapa } from '../box-search/box-search';
 import { PlanCanvas } from '../warehouse-map/plan-canvas/plan-canvas';
+import { GEOCERCA_INVALIDA } from './geofence';
 import { PestanaDeZonas, ZonesStore } from './zones.store';
 
 /**
@@ -27,6 +28,8 @@ import { PestanaDeZonas, ZonesStore } from './zones.store';
 export class Zones implements OnInit {
   protected readonly store = inject(ZonesStore);
   private readonly companias = inject(CompanyStore);
+
+  protected readonly geocercaInvalida = GEOCERCA_INVALIDA;
 
   protected readonly pestanas: readonly { id: PestanaDeZonas; nombre: string }[] = [
     { id: 'manuales', nombre: 'Zonas manuales' },

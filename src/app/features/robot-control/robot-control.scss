@@ -155,3 +155,69 @@
   background: var(--kibot-accent-strong);
   transition: width var(--kibot-motion-fast) var(--kibot-ease-standard);
 }
+
+// El puesto de una zona marcada en el recorrido.
+.orden {
+  min-width: var(--kibot-spacing-5);
+  padding: 0 var(--kibot-spacing-1);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-accent-strong);
+  color: var(--kibot-on-brand);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  text-align: center;
+}
+
+.secuencia {
+  margin: 0;
+  padding-left: var(--kibot-spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg);
+}
+
+.secuencia__zona > span:first-child {
+  margin-right: var(--kibot-spacing-3);
+}
+
+.secuencia__zona--actual {
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.secuencia__mover {
+  display: inline-flex;
+  gap: var(--kibot-spacing-3);
+}
+
+.enlace {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--kibot-accent-strong);
+  font: inherit;
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  cursor: pointer;
+
+  &:disabled {
+    // Como kibot-button: DESIGN.md no define el deshabilitado.
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+    outline-offset: var(--kibot-spacing-0);
+  }
+}
+
+.aviso--alerta {
+  color: var(--kibot-warning-strong);
+}
+
+.dato--fuerte {
+  color: var(--kibot-fg);
+  font-weight: var(--kibot-font-weight-bold);
+}

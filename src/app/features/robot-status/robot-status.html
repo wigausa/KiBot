@@ -69,6 +69,11 @@
             @if (s.Status.Mission; as m) {
               <p class="mision">
                 Misión de {{ textoDeActividad(m.Type).toLowerCase() }}
+                @if (m.Status === 'PAUSED') {
+                  · <strong>En pausa</strong>
+                } @else if (m.Status === 'RETURNING') {
+                  · <strong>Volviendo</strong>
+                }
                 @if (m.Tramo) {
                   · tramo {{ m.Tramo }}
                 }

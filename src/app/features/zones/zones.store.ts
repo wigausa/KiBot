@@ -10,7 +10,9 @@ import {
   anclasDelMapa,
   carasDentro,
   conQuienSePisa,
+  GEOCERCA_INVALIDA,
   geocercaEntre,
+  geocercaValida,
   racksDentro
 } from './geofence';
 import { ZonesApiService } from './zones-api.service';
@@ -129,11 +131,26 @@ export class ZonesStore {
     });
   });
 
-  /** El rectángulo que dibujan las dos anclas elegidas. */
-  readonly puntos = computed(() => {
+  /** Las dos anclas elegidas, si están las dos. */
+  private readonly par = computed<[Ancla, Ancla] | null>(() => {
     const a = this.anclas().find((x) => x.etiqueta === this.desde());
     const b = this.anclas().find((x) => x.etiqueta === this.hasta());
-    return a && b ? geocercaEntre(a, b) : null;
+    return a && b ? [a, b] : null;
+  });
+
+  /** El rectángulo que dibujan las dos anclas elegidas. */
+  readonly puntos = computed(() => {
+    const p = this.par();
+    return p ? geocercaEntre(p[0], p[1]) : null;
+  });
+
+  /**
+   * Si las anclas elegidas no son un par que el robot sepa recorrer (.1–.I, .S–.3 o .1–.3). Con una
+   * sola elegida todavía no se sabe: no se avisa.
+   */
+  readonly parInvalido = computed(() => {
+    const p = this.par();
+    return p !== null && !geocercaValida(p[0], p[1]);
   });
 
   /** Qué se señala en el lienzo: lo que entraría con las anclas elegidas, o lo que ya tiene. */
@@ -161,6 +178,7 @@ export class ZonesStore {
     () =>
       this.zonaId() !== null &&
       this.puntos() !== null &&
+      !this.parInvalido() &&
       this.racksQueEntran() > 0 &&
       this.pisa().length === 0 &&
       this._guardado().status !== 'loading'
@@ -417,6 +435,11 @@ export class ZonesStore {
     const mapa = this.mapaListo();
     const id = this.zonaId();
     const puntos = this.puntos();
+    // El robot rechazaría la orden con esta geocerca: mejor que no llegue a guardarse.
+    if (this.parInvalido()) {
+      this._guardado.set({ status: 'error', message: GEOCERCA_INVALIDA, details: [] });
+      return;
+    }
     if (!this.puedeGuardarGeocerca() || !mapa || id === null || !puntos) return;
 
     const nueva: WarehouseMapZone = {

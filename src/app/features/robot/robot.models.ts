@@ -113,6 +113,115 @@ export interface BoxSearchResult {
   Locations: BoxLocation[];
 }
 
+// --- Tanda (órdenes de la nube al robot v1) -------------------------------------------------------
+
+/**
+ * Una tanda: varias zonas en orden. La nube manda un `START` por zona y encadena sola la siguiente
+ * cuando la anterior termina con `COMPLETED`; con CANCEL, RTH, ERROR o un rechazo, se detiene.
+ * <b>No hay reanudar</b>: de una pausa solo se sale cancelando o mandándolo al dock.
+ */
+export type RobotBatchStatus = 'Running' | 'Done' | 'Stopped';
+export type RobotBatchZoneState = 'Pending' | 'Running' | 'Done' | 'Stopped' | 'Rejected';
+export type RobotCommand = 'START' | 'PAUSE' | 'CANCEL' | 'RTH';
+
+export interface RobotBatchZone {
+  IdZone: number;
+  Name: string;
+  /** Las anclas de su geocerca, como `p18.1` y `p22.i`. */
+  From: string;
+  To: string;
+  RunId: string | null;
+  State: RobotBatchZoneState;
+  /** COMPLETED, CANCELLED, RTH, ERROR o TIMEOUT. Nulo mientras no termina. */
+  EndReason: string | null;
+}
+
+/** Lo que el robot entendió de un `START`: se enseña para que el encargado lo compare. */
+export interface RobotCommandResolved {
+  Aisles: number[];
+  Tramos: string[];
+  TramosTotal: number;
+  ReaderPowerDbm: number;
+  MaxSpeedMps: number;
+}
+
+/** El acuse del robot a una orden. `NO_RESPONSE` lo pone la nube si el robot no contesta. */
+export interface RobotCommandAck {
+  CommandId: string;
+  Command: RobotCommand;
+  Status: 'ACCEPTED' | 'REJECTED' | 'NO_RESPONSE';
+  Reason: string | null;
+  Detail: string | null;
+  Resolved: RobotCommandResolved | null;
+  At: string;
+  RequestedBy: string | null;
+}
+
+export interface RobotBatchView {
+  BatchId: string;
+  IdInventory: string;
+  IdDevice: number;
+  Status: RobotBatchStatus;
+  /** CANCELLED, RTH, ERROR, REJECTED o TIMEOUT. Nulo si terminó bien. */
+  StopReason: string | null;
+  RequestedBy: string | null;
+  StartedAt: string;
+  EndedAt: string | null;
+  /** Índice en `Zones` de la zona en curso (o de la última). */
+  Current: number;
+  CurrentRunId: string | null;
+  Zones: RobotBatchZone[];
+  LastAck: RobotCommandAck | null;
+}
+
+const RECHAZOS: Record<string, string> = {
+  EXPIRED: 'La orden llegó caducada al robot',
+  NOT_MY_ROBOT: 'La orden era para otro robot',
+  GEOFENCE_INVALID: 'La geocerca no es válida para el robot',
+  MISSING_POINTS: 'Al robot le faltan puntos de algún pasillo',
+  SEARCH_EMPTY: 'No hay nada que recorrer en esa zona',
+  ROBOT_BUSY: 'El robot ya tiene un recorrido en marcha',
+  NO_MISSION: 'El robot no tiene ningún recorrido en marcha',
+  RUN_MISMATCH: 'La orden era para otro recorrido',
+  ESTOP: 'Seta de emergencia pulsada',
+  BATTERY_LOW: 'Batería baja para salir',
+  RFID_DOWN: 'El lector RFID no responde',
+  CHASSIS_UNREACHABLE: 'El robot no llega a su chasis',
+  BATCH_RUNNING: 'Ya hay una tanda en marcha',
+  NO_RESPONSE: 'El robot no contestó'
+};
+
+const FINES: Record<string, string> = {
+  COMPLETED: 'Terminada',
+  CANCELLED: 'Cancelada',
+  RTH: 'Mandado volver al dock',
+  ERROR: 'El robot dio un error',
+  REJECTED: 'El robot rechazó la orden',
+  TIMEOUT: 'El robot dejó de dar noticias'
+};
+
+const ESTADOS_DE_ZONA: Record<RobotBatchZoneState, string> = {
+  Pending: 'Pendiente',
+  Running: 'En curso',
+  Done: 'Hecha',
+  Stopped: 'Parada',
+  Rejected: 'Rechazada'
+};
+
+/** Por qué el robot (o la nube) no aceptó una orden, en palabras. Un código desconocido, tal cual. */
+export function textoDeRechazo(reason: string | null | undefined): string {
+  return reason ? (RECHAZOS[reason] ?? reason) : '—';
+}
+
+/** Cómo terminó una zona (`EndReason`) o por qué se detuvo la tanda (`StopReason`). */
+export function textoDeFinDeZona(reason: string | null | undefined): string {
+  return reason ? (FINES[reason] ?? reason) : '—';
+}
+
+export function textoDeEstadoDeZona(estado: RobotBatchZoneState): string {
+  return ESTADOS_DE_ZONA[estado] ?? estado;
+}
+
 // --- Latido (robotStatus) ---------------------------------------------------------------------
 
 /**
@@ -164,6 +273,11 @@ export interface RobotStatusMission {
   Tramo: string | null;
   TramosDone: number | null;
   TramosTotal: number | null;
+  /**
+   * En qué punto está la misión (órdenes de la nube v1). `PAUSED` solo sale de aquí: la tanda no lo
+   * sabe. Nulo en los latidos de antes de que existieran las órdenes.
+   */
+  Status?: 'RUNNING' | 'PAUSED' | 'RETURNING' | null;
 }
 
 /** `X`/`Y` son del mapa del robot (Reeman), no del nuestro: para enseñar sirve la dirección. */
