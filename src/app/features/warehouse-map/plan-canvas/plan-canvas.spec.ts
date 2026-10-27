@@ -131,6 +131,43 @@ describe('PlanCanvas', () => {
     expect(svg.querySelectorAll('circle.ancla--transversal').length).toBe(2);
   });
 
+  it('con anclas .1/.I/.S/.3, las dos de junto a la transversal se distinguen', async () => {
+    const con = mapa();
+    con.Aisles = con.Aisles.map((a) => ({
+      ...a,
+      Anchors: [
+        { Ordinal: 1, Code: '1', X: a.X, Y: 0 },
+        { Ordinal: 2, Code: 'I', X: a.X, Y: 2 },
+        { Ordinal: 3, Code: 'S', X: a.X, Y: 3 },
+        { Ordinal: 4, Code: '3', X: a.X, Y: 5.2 }
+      ]
+    }));
+    fixture.componentRef.setInput('map', con);
+    await fixture.whenStable();
+
+    expect(svg.querySelectorAll('circle.ancla').length).toBe(8);
+    expect(svg.querySelectorAll('circle.ancla--transversal').length).toBe(4);
+  });
+
+  it('sin espejo no transforma nada', () => {
+    expect(svg.querySelector(':scope > g')!.getAttribute('transform')).toBeNull();
+    expect(svg.querySelector('text.numero')!.getAttribute('transform')).toBeNull();
+  });
+
+  it('con la numeración hacia la izquierda dibuja en espejo y endereza los textos', async () => {
+    // El cooler 2 del 7000 numera hacia la izquierda: así se ve como el plano del cliente. El eje
+    // del espejo es el centro del lienzo (-2 + 10 / 2 = 3, o sea 2·X + ancho = 6).
+    fixture.componentRef.setInput('map', { ...mapa(), AisleNumberingTowards: 'izquierda' });
+    await fixture.whenStable();
+
+    expect(svg.querySelector(':scope > g')!.getAttribute('transform')).toBe('matrix(-1 0 0 1 6 0)');
+    const numero = svg.querySelector('text.numero')!;
+    const x = Number(numero.getAttribute('x'));
+    expect(numero.getAttribute('transform')).toBe(`matrix(-1 0 0 1 ${2 * x} 0)`);
+    // Las coordenadas no cambian: el espejo es solo del dibujo.
+    expect(Number(svg.querySelector('rect.celda')!.getAttribute('x'))).toBeCloseTo(1.8, 6);
+  });
+
   it('enseña la numeración impresa del plano', () => {
     const numeros = [...svg.querySelectorAll('text.numero')].map((t) => t.textContent?.trim());
     expect(numeros).toEqual(['1', '2']);
@@ -285,7 +322,7 @@ describe('PlanCanvas', () => {
     );
     await fixture.whenStable();
 
-    // Los largos que dijo el cliente: 7, 13 o 14.
+    // Los largos que dijo el cliente y el CAD: 7, 9, 13 o 14.
     const siete = botones().filter((b) => b.textContent?.trim() === '7');
     siete[siete.length - 1].click();
     await fixture.whenStable();

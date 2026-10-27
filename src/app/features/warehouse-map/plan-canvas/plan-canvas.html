@@ -79,6 +79,8 @@
     role="img"
     aria-label="Plano de la bodega"
   >
+    <!-- Con la numeración hacia la izquierda se dibuja en espejo; los textos se enderezan uno a uno. -->
+    <g [attr.transform]="transformacionEspejo()">
     <g class="ejes" [attr.stroke-width]="trazo() * 1.6">
       @for (x of marcasX(); track x) {
         <line [attr.x1]="x" [attr.y1]="yDe(plano().Y)" [attr.x2]="x" [attr.y2]="yDe(plano().Y + plano().Depth)" />
@@ -96,11 +98,12 @@
       }
       <line class="marco__anclaje" [attr.x1]="plano().X" [attr.y1]="yDe(marco().total)" [attr.x2]="plano().X + plano().Width" [attr.y2]="yDe(marco().total)" />
 
-      <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(0) - trazo() * 10" [attr.font-size]="tamanoDeAncla()">.1</text>
+      <text class="marco__nota" [attr.x]="xDeNota()" [attr.y]="yDe(0) - trazo() * 10" [attr.font-size]="tamanoDeAncla()" [attr.transform]="derecho(xDeNota())">.1</text>
       @if (marco().dosTramos) {
-        <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(marco().medio) + tamanoDeAncla() / 3" [attr.font-size]="tamanoDeAncla()">.2</text>
+        <text class="marco__nota" [attr.x]="xDeNota()" [attr.y]="yDe(marco().finInferior) + tamanoDeAncla()" [attr.font-size]="tamanoDeAncla()" [attr.transform]="derecho(xDeNota())">.I</text>
+        <text class="marco__nota" [attr.x]="xDeNota()" [attr.y]="yDe(marco().inicioSuperior) - trazo() * 10" [attr.font-size]="tamanoDeAncla()" [attr.transform]="derecho(xDeNota())">.S</text>
       }
-      <text class="marco__nota" [attr.x]="plano().X + trazo() * 12" [attr.y]="yDe(marco().total) + tamanoDeAncla()" [attr.font-size]="tamanoDeAncla()">.3</text>
+      <text class="marco__nota" [attr.x]="xDeNota()" [attr.y]="yDe(marco().total) + tamanoDeAncla()" [attr.font-size]="tamanoDeAncla()" [attr.transform]="derecho(xDeNota())">.3</text>
     </g>
 
     <rect
@@ -174,7 +177,7 @@
     @for (ancla of anclas(); track ancla.id) {
       <circle
         class="ancla"
-        [class.ancla--transversal]="ancla.ordinal === 2"
+        [class.ancla--transversal]="ancla.juntoATransversal"
         [attr.cx]="ancla.x"
         [attr.cy]="yDe(ancla.y)"
         [attr.r]="trazo() * 4"
@@ -186,6 +189,7 @@
         class="numero"
         [attr.x]="etiqueta.x"
         [attr.y]="yDe(etiqueta.y) + trazo() * 22"
+        [attr.transform]="derecho(etiqueta.x)"
         [attr.font-size]="plano().Width / 90"
         text-anchor="middle"
         paint-order="stroke fill"
@@ -206,6 +210,7 @@
         />
       </g>
     }
+    </g>
   </svg>
 
   @if (editable()) {

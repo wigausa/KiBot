@@ -64,6 +64,17 @@
               (change)="cambiarDato('companyId', $any($event.target).value)"
             />
           </label>
+          <label class="dato dato--corto">
+            <span>Pasillos crecen a la</span>
+            <select
+              [value]="datoDel('numeracionHacia')"
+              (change)="cambiarDato('numeracionHacia', $any($event.target).value)"
+              title="Hacia dónde crecen los números de pasillo en el plano impreso. Solo cambia el dibujo."
+            >
+              <option value="derecha">derecha</option>
+              <option value="izquierda">izquierda</option>
+            </select>
+          </label>
           <label class="dato">
             <span>El punto 0,0, descrito</span>
             <input

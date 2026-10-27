@@ -115,6 +115,12 @@
                   <dt>Última lectura</dt>
                   <dd>{{ p.LastReadAt ? (p.LastReadAt | date: 'mediumTime') : '—' }}</dd>
                 </div>
+                @if (p.TramosTotal) {
+                  <div>
+                    <dt>Tramos</dt>
+                    <dd>{{ p.TramosDone ?? 0 }} de {{ p.TramosTotal }}</dd>
+                  </div>
+                }
                 <div>
                   <dt>Caras recorridas</dt>
                   <dd>{{ p.CoveredSides }} de {{ p.TotalSides }}</dd>
@@ -126,7 +132,7 @@
                 [attr.aria-valuenow]="avance() | number: '1.0-0'"
                 aria-valuemin="0"
                 aria-valuemax="100"
-                aria-label="Caras recorridas"
+                [attr.aria-label]="p.TramosTotal ? 'Tramos de la ruta hechos' : 'Caras recorridas'"
               >
                 <div class="barra__relleno" [style.width.%]="avance()"></div>
               </div>

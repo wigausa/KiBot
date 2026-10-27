@@ -9,7 +9,7 @@ import {
   viewChild
 } from '@angular/core';
 
-import { WarehouseAisle, WarehouseMap } from '../warehouse-map.models';
+import { codigoDeAncla, WarehouseAisle, WarehouseMap } from '../warehouse-map.models';
 
 /** Las tres piezas que se pueden colocar. No hay más, y eso es lo que mantiene el plano sano. */
 export type PiezaDelPlano = 'pasillo' | 'bloque' | 'muro';
@@ -24,8 +24,8 @@ export type TramosDePasillo = 'ambos' | 'inferior' | 'superior';
 /** Dónde va un bloque: entre dos pasillos, o contra el muro de un extremo. */
 export type SitioDelBloque = readonly [number, number] | Extremo;
 
-/** Los tamaños de tramo que dijo el cliente. Un bloque es de uno de estos tres. */
-export const LARGOS_DE_BLOQUE = [7, 13, 14] as const;
+/** Los tamaños de tramo que dijo el cliente; el 9, del CAD del cooler 2 (2026-10-26). */
+export const LARGOS_DE_BLOQUE = [7, 9, 13, 14] as const;
 export type LargoDeBloque = (typeof LARGOS_DE_BLOQUE)[number];
 
 /** Lo que el lienzo pide cambiar del plano. Lo aplica la pantalla, que es quien tiene el texto. */
@@ -160,7 +160,6 @@ export class PlanCanvas {
       finInferior,
       inicioSuperior,
       total,
-      medio: dosTramos ? (finInferior + inicioSuperior) / 2 : total / 2,
       dosTramos
     };
   });
@@ -171,6 +170,28 @@ export class PlanCanvas {
   });
 
   private readonly espejoY = computed(() => 2 * this.plano().Y + this.plano().Depth);
+
+  /**
+   * Si el plano impreso numera los pasillos hacia la izquierda (el cooler 2 del 7000). Entonces se
+   * dibuja en espejo en X para que se vea como el plano del cliente y el del robot. <b>Solo el
+   * dibujo</b>: las coordenadas del mapa, y con ellas las direcciones y las geocercas, no cambian.
+   */
+  protected readonly espejo = computed(() => this.map().AisleNumberingTowards === 'izquierda');
+
+  private readonly ejeDelEspejo = computed(() => 2 * this.plano().X + this.plano().Width);
+
+  /** El espejo de todo el dibujo, o nada. */
+  protected readonly transformacionEspejo = computed(() =>
+    this.espejo() ? `matrix(-1 0 0 1 ${this.ejeDelEspejo()} 0)` : null
+  );
+
+  /** Endereza un texto que el espejo dejaría al revés, girándolo sobre su propia X. */
+  protected derecho(x: number): string | null {
+    return this.espejo() ? `matrix(-1 0 0 1 ${2 * x} 0)` : null;
+  }
+
+  /** Dónde van las notas de las anclas del marco: en el borde por el que empieza la numeración. */
+  protected readonly xDeNota = computed(() => this.plano().X + this.trazo() * 12);
 
   /** De una Y del plano a la Y de la pantalla. <c>alto</c> es el de la figura que se dibuja. */
   protected yDe(y: number, alto = 0): number {
@@ -292,7 +313,17 @@ export class PlanCanvas {
 
   protected readonly anclas = computed(() =>
     this.pasillos().flatMap((a) =>
-      a.Anchors.map((p) => ({ id: `${a.AisleId}.${p.Ordinal}`, x: p.X, y: p.Y, ordinal: p.Ordinal }))
+      a.Anchors.map((p) => {
+        const codigo = codigoDeAncla(p);
+        return {
+          id: `${a.AisleId}.${codigo}`,
+          x: p.X,
+          y: p.Y,
+          codigo,
+          // .I y .S a los lados de la transversal; .2 era la transversal en los planos viejos.
+          juntoATransversal: codigo === 'I' || codigo === 'S' || codigo === '2'
+        };
+      })
     )
   );
 
@@ -584,7 +615,9 @@ export class PlanCanvas {
     if (!svg || !ctm) return null;
 
     const punto = new DOMPoint(evento.clientX, evento.clientY).matrixTransform(ctm.inverse());
-    return { x: punto.x, y: this.espejoY() - punto.y };
+    // El espejo en X está en un grupo de dentro, que el CTM del svg no ve: se deshace aquí.
+    const x = this.espejo() ? this.ejeDelEspejo() - punto.x : punto.x;
+    return { x, y: this.espejoY() - punto.y };
   }
 
   /** El hueco bajo el cursor; si no hay ninguno, el más cercano dentro de medio paso. */

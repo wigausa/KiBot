@@ -44,6 +44,9 @@ const MEDIDAS_POR_DEFECTO: PlanMedidas = {
   grosorMuro: 0.2
 };
 
+/** Los datos del plano que se cambian sin abrir el texto. */
+type DatoDelPlano = 'nombre' | 'companyId' | 'origen' | 'numeracionHacia';
+
 /** Un plano recién empezado: sin pasillos todavía, pero ya expandible en cuanto caiga el primero. */
 function planoEnBlanco(): WarehousePlan {
   return {
@@ -140,7 +143,7 @@ export class WarehouseMap {
   }
 
   /** Cambia un dato de identidad del plano sin tener que abrir el texto. */
-  protected async cambiarDato(campo: 'nombre' | 'companyId' | 'origen', valor: string): Promise<void> {
+  protected async cambiarDato(campo: DatoDelPlano, valor: string): Promise<void> {
     const plan = this.planActual() ?? planoEnBlanco();
 
     const nuevo: WarehousePlan =
@@ -148,7 +151,9 @@ export class WarehouseMap {
         ? { ...plan, nombre: valor }
         : campo === 'companyId'
           ? { ...plan, companyId: Number(valor) || 0 }
-          : { ...plan, origen: { ...plan.origen, descripcion: valor } };
+          : campo === 'numeracionHacia'
+            ? { ...plan, numeracionHacia: valor === 'izquierda' ? 'izquierda' : 'derecha' }
+            : { ...plan, origen: { ...plan.origen, descripcion: valor } };
 
     // Sin pasillos el plano todavía no se puede expandir, así que se guarda sin previsualizar:
     // pedirlo devolvería un error que no dice nada útil mientras aún no has dibujado nada.
@@ -156,10 +161,11 @@ export class WarehouseMap {
     else await this.store.aplicar(nuevo);
   }
 
-  protected datoDel(campo: 'nombre' | 'companyId' | 'origen'): string {
+  protected datoDel(campo: DatoDelPlano): string {
     const plan = this.planActual() ?? planoEnBlanco();
     if (campo === 'nombre') return plan.nombre;
     if (campo === 'companyId') return String(plan.companyId);
+    if (campo === 'numeracionHacia') return plan.numeracionHacia ?? 'derecha';
     return plan.origen?.descripcion ?? '';
   }
 

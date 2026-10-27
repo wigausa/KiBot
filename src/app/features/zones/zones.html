@@ -1,0 +1,386 @@
+<section class="zonas">
+  <header class="zonas__cabecera">
+    <h1>Zonas</h1>
+    <p class="zonas__nota">
+      Las zonas de la compañía y dónde está cada una en el plano. El robot atribuye cada caja a la zona cuya geocerca
+      contiene su estantería.
+    </p>
+  </header>
+
+  <kibot-company-picker />
+
+  @if (store.companiaId() !== null) {
+    <div class="pestanas" role="tablist" aria-label="Zonas">
+      @for (p of pestanas; track p.id) {
+        <button
+          type="button"
+          role="tab"
+          class="pestana"
+          [class.pestana--activa]="store.pestana() === p.id"
+          [attr.aria-selected]="store.pestana() === p.id"
+          (click)="store.pestana.set(p.id)"
+        >
+          {{ p.nombre }}
+        </button>
+      }
+    </div>
+
+    @switch (store.pestana()) {
+      <!-- ===================== ZONAS MANUALES ===================== -->
+      @case ('manuales') {
+        @if (usaExterna()) {
+          <p class="aviso aviso--marco">
+            Esta compañía tiene configurada la API del cliente: sus zonas salen de ahí y las manuales no se usan.
+          </p>
+        }
+
+        <div class="tarjeta">
+          <h2 class="tarjeta__titulo">{{ store.editandoId() === null ? 'Nueva zona' : 'Editar zona' }}</h2>
+          <div class="fila">
+            <label class="campo campo--ancho">
+              <span class="campo__etiqueta">Nombre</span>
+              <input class="campo__control" [value]="store.nombre()" (input)="store.nombre.set(valor($event))" />
+            </label>
+            <label class="campo">
+              <span class="campo__etiqueta">Id en el sistema del cliente (opcional)</span>
+              <input
+                class="campo__control"
+                inputmode="numeric"
+                [value]="store.idDelCliente()"
+                (input)="store.idDelCliente.set(valor($event))"
+              />
+            </label>
+          </div>
+          <div class="acciones">
+            <kibot-button
+              [disabled]="!store.puedeGuardarManual()"
+              [busy]="store.accionManual().status === 'loading'"
+              (pressed)="store.guardarManual()"
+            >
+              {{ store.editandoId() === null ? 'Crear zona' : 'Guardar' }}
+            </kibot-button>
+            @if (store.editandoId() !== null) {
+              <kibot-button variant="outline" (pressed)="store.limpiarManual()">Cancelar</kibot-button>
+            }
+          </div>
+          @if (store.accionManual(); as a) {
+            @if (a.status === 'error') {
+              <kibot-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
+            } @else if (a.status === 'ready') {
+              <p class="hecho" role="status">{{ a.value }}</p>
+            }
+          }
+        </div>
+
+        @switch (store.manuales().status) {
+          @case ('loading') {
+            <kibot-loading-indicator [size]="40" label="Cargando zonas" />
+          }
+          @case ('error') {
+            @if (store.manuales(); as e) {
+              @if (e.status === 'error') {
+                <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+              }
+            }
+          }
+          @case ('ready') {
+            @if (store.manuales(); as l) {
+              @if (l.status === 'ready') {
+                @if (l.value.length === 0) {
+                  <p class="aviso">Esta compañía todavía no tiene zonas manuales.</p>
+                } @else {
+                  <ul class="lista">
+                    @for (z of l.value; track z.ID) {
+                      <li class="lista__fila">
+                        <span class="lista__nombre">{{ z.NAME }}</span>
+                        @if (z.ZONE_ID !== null) {
+                          <span class="dato">cliente: {{ z.ZONE_ID }}</span>
+                        }
+                        <span class="lista__acciones">
+                          <kibot-button size="small" variant="outline" (pressed)="store.editarManual(z)">Editar</kibot-button>
+                          <kibot-button
+                            size="small"
+                            variant="outline"
+                            tone="error"
+                            [disabled]="store.accionManual().status === 'loading'"
+                            (pressed)="store.borrarManual(z)"
+                          >
+                            Borrar
+                          </kibot-button>
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            }
+          }
+        }
+      }
+
+      <!-- ===================== API DEL CLIENTE ===================== -->
+      @case ('externa') {
+        @switch (store.externa().status) {
+          @case ('loading') {
+            <kibot-loading-indicator [size]="40" label="Cargando configuración" />
+          }
+          @case ('error') {
+            @if (store.externa(); as e) {
+              @if (e.status === 'error') {
+                <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+              }
+            }
+          }
+          @case ('ready') {
+            <div class="tarjeta">
+              <p class="aviso">
+                Si la compañía ya tiene sus zonas en su propio sistema, se configura aquí dónde preguntarlas y KiBot las
+                usa en vez de las manuales. Una configuración por compañía.
+              </p>
+              <div class="fila">
+                <label class="campo">
+                  <span class="campo__etiqueta">Nombre</span>
+                  <input
+                    class="campo__control"
+                    [value]="store.nombreExterna()"
+                    (input)="store.nombreExterna.set(valor($event))"
+                  />
+                </label>
+                <label class="campo campo--ancho">
+                  <span class="campo__etiqueta">URL de la API de zonas</span>
+                  <input class="campo__control" type="url" [value]="store.url()" (input)="store.url.set(valor($event))" />
+                </label>
+              </div>
+
+              <fieldset class="pares">
+                <legend class="campo__etiqueta">Cabeceras</legend>
+                @for (h of store.cabeceras(); track $index; let i = $index) {
+                  <div class="par">
+                    <input
+                      class="campo__control"
+                      placeholder="Nombre"
+                      aria-label="Nombre de la cabecera"
+                      [value]="h.HeaderName"
+                      (input)="store.cambiarCabecera(i, 'HeaderName', valor($event))"
+                    />
+                    <input
+                      class="campo__control"
+                      placeholder="Valor"
+                      aria-label="Valor de la cabecera"
+                      [value]="h.Value"
+                      (input)="store.cambiarCabecera(i, 'Value', valor($event))"
+                    />
+                    <kibot-button size="small" variant="outline" tone="error" (pressed)="store.quitarCabecera(i)">Quitar</kibot-button>
+                  </div>
+                }
+                <kibot-button size="small" variant="outline" (pressed)="store.anadirCabecera()">Añadir cabecera</kibot-button>
+              </fieldset>
+
+              <fieldset class="pares">
+                <legend class="campo__etiqueta">Parámetros de la consulta</legend>
+                @for (p of store.parametros(); track $index; let i = $index) {
+                  <div class="par">
+                    <input
+                      class="campo__control"
+                      placeholder="Nombre"
+                      aria-label="Nombre del parámetro"
+                      [value]="p.ParamName"
+                      (input)="store.cambiarParametro(i, 'ParamName', valor($event))"
+                    />
+                    <input
+                      class="campo__control"
+                      placeholder="Valor"
+                      aria-label="Valor del parámetro"
+                      [value]="p.Value"
+                      (input)="store.cambiarParametro(i, 'Value', valor($event))"
+                    />
+                    <kibot-button size="small" variant="outline" tone="error" (pressed)="store.quitarParametro(i)">Quitar</kibot-button>
+                  </div>
+                }
+                <kibot-button size="small" variant="outline" (pressed)="store.anadirParametro()">Añadir parámetro</kibot-button>
+              </fieldset>
+
+              <div class="acciones">
+                <kibot-button
+                  [disabled]="!store.puedeGuardarExterna()"
+                  [busy]="store.accionExterna().status === 'loading'"
+                  (pressed)="store.guardarExterna()"
+                >
+                  {{ usaExterna() ? 'Guardar' : 'Configurar' }}
+                </kibot-button>
+                @if (usaExterna()) {
+                  <kibot-button variant="outline" tone="error" (pressed)="store.borrarExterna()">Quitar la API</kibot-button>
+                }
+              </div>
+              @if (store.accionExterna(); as a) {
+                @if (a.status === 'error') {
+                  <kibot-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
+                } @else if (a.status === 'ready') {
+                  <p class="hecho" role="status">{{ a.value }}</p>
+                }
+              }
+            </div>
+          }
+        }
+      }
+
+      <!-- ===================== GEOCERCAS ===================== -->
+      @case ('geocercas') {
+        <div class="tarjeta">
+          <p class="aviso">
+            Una geocerca va de un ancla de pasillo a otra: <strong>P1.1 → P3.I</strong> es del pasillo 1 al 3, desde el
+            extremo inferior hasta el final del tramo inferior (<strong>.I</strong>); <strong>.S</strong> es el inicio del
+            superior. Entran las estanterías que quedan entre esos pasillos.
+          </p>
+
+          <div class="fila">
+            <label class="campo campo--ancho">
+              <span class="campo__etiqueta">Plano</span>
+              <select class="campo__control" (change)="alElegirPlano($event)">
+                <option value="" [selected]="store.planoId() === null">
+                  {{ store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano' }}
+                </option>
+                @if (store.planos(); as l) {
+                  @if (l.status === 'ready') {
+                    @for (p of l.value; track p.MapId) {
+                      <option [value]="p.MapId" [selected]="p.MapId === store.planoId()">{{ p.Name }} (v{{ p.Version }})</option>
+                    }
+                  }
+                }
+              </select>
+            </label>
+          </div>
+
+          @if (store.planos(); as l) {
+            @if (l.status === 'ready' && l.value.length === 0) {
+              <p class="aviso">Esta compañía no tiene planos. Se crean en Mapa.</p>
+            }
+            @if (l.status === 'error') {
+              <kibot-error-state [message]="l.message" [details]="l.details" (retry)="store.cargar()" />
+            }
+          }
+        </div>
+
+        @if (store.mapa(); as m) {
+          @if (m.status === 'loading') {
+            <kibot-loading-indicator [size]="40" label="Cargando el plano" />
+          }
+          @if (m.status === 'error') {
+            <kibot-error-state [message]="m.message" [details]="m.details" [showRetry]="false" />
+          }
+          @if (m.status === 'ready') {
+            <div class="geocercas">
+              <div class="tarjeta">
+                @if (store.geocercasDelPlano().length > 0) {
+                  <h2 class="tarjeta__titulo">Geocercas de este plano</h2>
+                  <ul class="lista">
+                    @for (g of store.geocercasDelPlano(); track g.idZone) {
+                      <li class="lista__fila">
+                        <span class="lista__nombre">{{ g.nombre }}</span>
+                        <span class="dato">{{ g.anclas }} · {{ g.racks }} estanterías</span>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                <h2 class="tarjeta__titulo">Situar una zona</h2>
+                <label class="campo">
+                  <span class="campo__etiqueta">Zona</span>
+                  <select class="campo__control" (change)="alElegirZona($event)">
+                    <option value="" [selected]="store.zonaId() === null">Elige una zona</option>
+                    @if (store.zonas(); as z) {
+                      @if (z.status === 'ready') {
+                        @for (zona of z.value; track zona.ID) {
+                          <option [value]="zona.ID" [selected]="zona.ID === store.zonaId()">{{ zona.NAME }}</option>
+                        }
+                      }
+                    }
+                  </select>
+                </label>
+                @if (store.zonas(); as z) {
+                  @if (z.status === 'ready' && z.value.length === 0) {
+                    <p class="aviso">La compañía no tiene zonas: créalas antes en «Zonas manuales» o configura su API.</p>
+                  }
+                  @if (z.status === 'error') {
+                    <kibot-error-state [message]="z.message" [details]="z.details" [showRetry]="false" />
+                  }
+                }
+
+                @if (store.zonaId() !== null) {
+                  @if (store.anclas().length === 0) {
+                    <p class="aviso">Este plano no tiene pasillos numerados: no hay anclas que elegir.</p>
+                  } @else {
+                    <div class="fila">
+                      <label class="campo">
+                        <span class="campo__etiqueta">Desde</span>
+                        <select class="campo__control" (change)="alElegirAncla('desde', $event)">
+                          <option value="" [selected]="store.desde() === null">Ancla</option>
+                          @for (a of store.anclas(); track a.etiqueta) {
+                            <option [value]="a.etiqueta" [selected]="a.etiqueta === store.desde()">{{ a.etiqueta }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Hasta</span>
+                        <select class="campo__control" (change)="alElegirAncla('hasta', $event)">
+                          <option value="" [selected]="store.hasta() === null">Ancla</option>
+                          @for (a of store.anclas(); track a.etiqueta) {
+                            <option [value]="a.etiqueta" [selected]="a.etiqueta === store.hasta()">{{ a.etiqueta }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+
+                    @if (store.puntos() !== null) {
+                      @if (store.racksQueEntran() === 0) {
+                        <p class="aviso aviso--alerta">
+                          Entre esas anclas no queda ninguna estantería. Elige anclas de pasillos distintos.
+                        </p>
+                      } @else {
+                        <p class="dato">Entran {{ store.racksQueEntran() }} estanterías (resaltadas en el plano).</p>
+                      }
+                      @if (store.pisa().length > 0) {
+                        <p class="aviso aviso--alerta">
+                          Se pisaría con: {{ store.pisa().join(', ') }}. Dos geocercas no pueden solaparse.
+                        </p>
+                      }
+                    } @else if (store.geocercaActual() !== null) {
+                      <p class="dato">Esta zona ya tiene geocerca: está resaltada en el plano.</p>
+                    }
+
+                    <div class="acciones">
+                      <kibot-button
+                        [disabled]="!store.puedeGuardarGeocerca()"
+                        [busy]="store.guardado().status === 'loading'"
+                        (pressed)="store.guardarGeocerca()"
+                      >
+                        Guardar geocerca
+                      </kibot-button>
+                    </div>
+                  }
+                }
+
+                @if (store.guardado(); as g) {
+                  @if (g.status === 'error') {
+                    <kibot-error-state [message]="g.message" [details]="g.details" [showRetry]="false" />
+                  } @else if (g.status === 'ready') {
+                    <p class="hecho" role="status">Guardada en la versión {{ g.value.Version }} del plano.</p>
+                    @for (w of g.value.Warnings; track $index) {
+                      <p class="aviso">{{ w }}</p>
+                    }
+                  }
+                }
+              </div>
+
+              @if (rejilla(); as r) {
+                <div class="tarjeta plano">
+                  <plan-canvas [map]="m.value" [rejilla]="r" [editable]="false" [resaltadas]="store.resaltadas()" />
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+    }
+  }
+</section>

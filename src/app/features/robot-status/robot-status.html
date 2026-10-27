@@ -1,0 +1,134 @@
+<section class="estado">
+  <header class="estado__cabecera">
+    <h1>Estado del equipo y alertas</h1>
+    <p class="estado__nota">
+      Lo que cada robot cuenta en su latido. Se actualiza cada pocos segundos.
+    </p>
+  </header>
+
+  @switch (store.robots().status) {
+    @case ('loading') {
+      <kibot-loading-indicator label="Cargando robots" />
+    }
+    @case ('error') {
+      @if (store.robots(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+    }
+    @case ('ready') {
+      @if (store.estados(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+      @if (store.refrescoFallido() && store.estados().status === 'ready') {
+        <p class="aviso" role="status">No se pudo actualizar: lo que se ve puede no ser lo último.</p>
+      }
+
+      @for (fila of store.filas(); track fila.IdDevice) {
+        <article class="tarjeta" [class.tarjeta--alerta]="fila.estado && (fila.estado.Status.Alerts.length > 0 || estadoGrave(fila.estado.Status.State))">
+          <div class="tarjeta__fila">
+            <h2 class="tarjeta__titulo">{{ fila.Name }}</h2>
+            @if (fila.estado; as s) {
+              <span class="insignia" [class.insignia--ok]="s.Signal === 'OK'" [class.insignia--mal]="s.Signal !== 'OK'">
+                {{ s.Signal === 'OK' ? 'Con señal' : 'Sin señal' }}
+              </span>
+              <span class="dato" [title]="s.ReceivedAt | date: 'medium'">{{ haceCuanto(s.SilentForS) }}</span>
+            } @else {
+              <span class="insignia">Sin latidos</span>
+            }
+          </div>
+
+          @if (fila.estado; as s) {
+            <dl class="cifras">
+              <div>
+                <dt>Estado</dt>
+                <dd [class.grave]="estadoGrave(s.Status.State)">{{ textoDeEstado(s.Status.State) }}</dd>
+              </div>
+              <div>
+                <dt>Tarea</dt>
+                <dd>{{ textoDeActividad(s.Status.Activity) }}</dd>
+              </div>
+              <div>
+                <dt>Batería</dt>
+                <dd>
+                  {{ s.Status.Chassis?.BatteryPct !== null && s.Status.Chassis?.BatteryPct !== undefined ? (s.Status.Chassis!.BatteryPct | number: '1.0-0') + ' %' : '—' }}
+                  @if (s.Status.Chassis?.Charging) {
+                    <span class="dato">cargando</span>
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Dónde</dt>
+                <dd>{{ ubicacionDe(s.Status.Pose) }}</dd>
+              </div>
+            </dl>
+
+            @if (s.Status.Mission; as m) {
+              <p class="mision">
+                Misión de {{ textoDeActividad(m.Type).toLowerCase() }}
+                @if (m.Tramo) {
+                  · tramo {{ m.Tramo }}
+                }
+                @if (m.TramosTotal) {
+                  · {{ m.TramosDone ?? 0 }} de {{ m.TramosTotal }} tramos
+                }
+              </p>
+            }
+
+            @if (s.Status.Alerts.length > 0) {
+              <ul class="avisos" aria-label="Avisos">
+                @for (aviso of s.Status.Alerts; track aviso) {
+                  <li>{{ textoDeAviso(aviso) }}</li>
+                }
+              </ul>
+            }
+
+            <button type="button" class="enlace" (click)="alternarDetalle(fila.IdDevice)"
+                    [attr.aria-expanded]="store.elegido() === fila.IdDevice">
+              {{ store.elegido() === fila.IdDevice ? 'Ocultar detalle' : 'Ver detalle' }}
+            </button>
+
+            @if (store.elegido() === fila.IdDevice) {
+              @if (store.detalle(); as d) {
+                <dl class="componentes">
+                  <div><dt>Lector RFID</dt><dd>{{ estadoDe(d.Status.Rfid?.Connected, 'Conectado', 'Desconectado') }} · {{ estadoDe(d.Status.Rfid?.Reading, 'leyendo', 'sin leer') }}</dd></div>
+                  <div><dt>Cámara</dt><dd>{{ estadoDe(d.Status.Camera?.Connected, 'Conectada', 'Desconectada') }} · {{ estadoDe(d.Status.Camera?.Running, 'en marcha', 'parada') }}</dd></div>
+                  <div><dt>Internet</dt><dd>{{ siNo(d.Status.Network?.InternetOk) }}</dd></div>
+                  <div><dt>Seta de emergencia</dt><dd>{{ d.Status.Chassis?.EmergencyStop ? 'Pulsada' : 'Suelta' }}</dd></div>
+                  <div><dt>Reloj sincronizado</dt><dd>{{ siNo(d.Status.Jetson?.ClockSynced) }}</dd></div>
+                  <div><dt>Temperatura del ordenador</dt><dd>{{ d.Status.Jetson?.TempC !== null && d.Status.Jetson?.TempC !== undefined ? (d.Status.Jetson!.TempC | number: '1.0-1') + ' °C' : '—' }}</dd></div>
+                </dl>
+
+                <h3 class="subtitulo">Cambios recientes</h3>
+                @if ((d.Recent ?? []).length === 0) {
+                  <p class="aviso">Sin cambios de estado ni avisos en los últimos 30 días.</p>
+                } @else {
+                  <ol class="historial">
+                    @for (c of d.Recent; track $index) {
+                      <li>
+                        <span class="dato">{{ c.Timestamp | date: 'short' }}</span>
+                        {{ textoDeEstado(c.State) }} · {{ textoDeActividad(c.Activity) }}
+                        @for (aviso of c.Alerts; track aviso) {
+                          <span class="etiqueta-aviso">{{ textoDeAviso(aviso) }}</span>
+                        }
+                      </li>
+                    }
+                  </ol>
+                }
+              } @else {
+                <kibot-loading-indicator [size]="32" label="Cargando el detalle" />
+              }
+            }
+          } @else {
+            <p class="aviso">Este robot todavía no ha mandado ningún latido.</p>
+          }
+        </article>
+      } @empty {
+        <p class="aviso">No hay ningún robot en tus inventarios.</p>
+      }
+    }
+  }
+</section>

@@ -21,6 +21,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  */
 export type KiBotIconName =
   | 'home'
+  | 'inventory'
   | 'control'
   | 'search'
   | 'location'
@@ -52,6 +53,18 @@ export type KiBotIconName =
           <path d="M2.8 10.4 12 3.4l9.2 7" />
           <path d="M5 9.7v10.9h14V9.7" />
           <rect x="10" y="13.4" width="4" height="4" rx="0.5" fill="currentColor" stroke="none" />
+        }
+
+        <!-- Inventarios: la hoja del conteo, con sus casillas marcadas. -->
+        @case ('inventory') {
+          <rect x="4.8" y="3.6" width="14.4" height="17.6" rx="1.4" />
+          <path d="M9.4 3.6V2.4h5.2v1.2" />
+          <path d="M11.6 9h4.6M11.6 13h4.6M11.6 17h4.6" />
+          <g fill="currentColor" stroke="none">
+            <rect x="7.4" y="7.9" width="2.2" height="2.2" rx="0.4" />
+            <rect x="7.4" y="11.9" width="2.2" height="2.2" rx="0.4" />
+          </g>
+          <rect x="7.4" y="15.9" width="2.2" height="2.2" rx="0.4" />
         }
 
         <!-- Control: iniciar el recorrido + arcos de señal. -->

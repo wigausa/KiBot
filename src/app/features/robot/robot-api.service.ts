@@ -9,7 +9,8 @@ import {
   BoxSearchStatus,
   RobotInventory,
   RobotProgress,
-  RobotRun
+  RobotRun,
+  RobotStatusView
 } from './robot.models';
 
 /**
@@ -80,6 +81,27 @@ export class RobotApiService {
     return firstValueFrom(
       this.http.get<WarehouseMap>(`${this.baseUrl}/warehouseMap/${mapId}/version/${version}`)
     );
+  }
+
+  /** El último latido de cada robot. Los que nunca latieron no vienen. */
+  estados(idDevices: readonly number[]): Promise<RobotStatusView[]> {
+    return firstValueFrom(
+      this.http.get<RobotStatusView[]>(`${this.baseUrl}/robot/status`, {
+        params: { devices: idDevices.join(',') }
+      })
+    );
+  }
+
+  /** El último latido de un robot con sus cambios recientes, o `null` si nunca latió (404). */
+  async estado(idDevice: number): Promise<RobotStatusView | null> {
+    try {
+      return await firstValueFrom(
+        this.http.get<RobotStatusView>(`${this.baseUrl}/robot/${idDevice}/status`)
+      );
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 404) return null;
+      throw error;
+    }
   }
 
   private ruta(idInventory: string, idDevice: number): string {

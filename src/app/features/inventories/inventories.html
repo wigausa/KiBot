@@ -1,0 +1,184 @@
+<section class="inventarios">
+  <header class="inventarios__cabecera">
+    <h1>Inventarios</h1>
+    <p class="inventarios__nota">
+      Un inventario del robot lleva un plano, las zonas que se van a contar y los robots que las recorren. Las zonas
+      tienen que tener su geocerca en ese plano (en Zonas).
+    </p>
+  </header>
+
+  <kibot-company-picker />
+
+  @if (store.companiaId() !== null) {
+    <!-- ===================== CREAR ===================== -->
+    <div class="tarjeta">
+      <h2 class="tarjeta__titulo">Nuevo inventario</h2>
+
+      <div class="fila">
+        <label class="campo campo--ancho">
+          <span class="campo__etiqueta">Nombre</span>
+          <input class="campo__control" [value]="store.nombre()" (input)="store.nombre.set(valor($event))" />
+        </label>
+        <label class="campo campo--ancho">
+          <span class="campo__etiqueta">Plano</span>
+          <select class="campo__control" (change)="alElegirPlano($event)">
+            <option value="" [selected]="store.planoId() === null">
+              {{ store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano' }}
+            </option>
+            @for (p of store.planosElegibles(); track p.id) {
+              <option [value]="p.id" [selected]="p.id === store.planoId()" [disabled]="p.ocupadoPor !== null">
+                {{ p.nombre }}{{ p.ocupadoPor ? ' — en «' + p.ocupadoPor + '»' : '' }}
+              </option>
+            }
+          </select>
+        </label>
+      </div>
+      @if (store.planos(); as p) {
+        @if (p.status === 'error') {
+          <kibot-error-state [message]="p.message" [details]="p.details" (retry)="store.cargar()" />
+        }
+        @if (p.status === 'ready' && p.value.length === 0) {
+          <p class="aviso">La compañía no tiene planos. Se crean en Mapa.</p>
+        }
+      }
+
+      @if (store.planoId() !== null) {
+        <fieldset class="opciones">
+          <legend class="campo__etiqueta">Zonas</legend>
+          @if (store.zonasElegibles().length === 0) {
+            <p class="aviso">Este plano no tiene ninguna zona con geocerca. Sitúalas en Zonas → Geocercas.</p>
+          }
+          @for (z of store.zonasElegibles(); track z.id) {
+            <label class="opcion" [class.opcion--ocupada]="z.ocupadoPor !== null">
+              <input
+                type="checkbox"
+                [disabled]="z.ocupadoPor !== null"
+                [checked]="store.zonasMarcadas().has(+z.id)"
+                (change)="store.alternarZona(+z.id)"
+              />
+              <span>{{ z.nombre }}</span>
+              @if (z.ocupadoPor) {
+                <span class="dato">en «{{ z.ocupadoPor }}»</span>
+              }
+            </label>
+          }
+        </fieldset>
+      }
+
+      <fieldset class="opciones">
+        <legend class="campo__etiqueta">Robots</legend>
+        @switch (store.robotsCargados().status) {
+          @case ('loading') {
+            <kibot-loading-indicator [size]="32" label="Cargando robots" />
+          }
+          @case ('error') {
+            @if (store.robotsCargados(); as e) {
+              @if (e.status === 'error') {
+                <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+              }
+            }
+          }
+          @case ('ready') {
+            @if (store.robotsElegibles().length === 0) {
+              <p class="aviso">La compañía no tiene robots dados de alta.</p>
+            }
+            @for (r of store.robotsElegibles(); track r.id) {
+              <label class="opcion" [class.opcion--ocupada]="r.ocupadoPor !== null">
+                <input
+                  type="checkbox"
+                  [disabled]="r.ocupadoPor !== null"
+                  [checked]="store.robotsMarcados().has(+r.id)"
+                  (change)="store.alternarRobot(+r.id)"
+                />
+                <span>{{ r.nombre }}</span>
+                @if (r.ocupadoPor) {
+                  <span class="dato">en «{{ r.ocupadoPor }}»</span>
+                }
+              </label>
+            }
+          }
+        }
+      </fieldset>
+
+      <div class="acciones">
+        <kibot-button [disabled]="!store.puedeCrear()" [busy]="store.creacion().status === 'loading'" (pressed)="store.crear()">
+          Crear inventario
+        </kibot-button>
+      </div>
+      @if (store.creacion(); as c) {
+        @if (c.status === 'error') {
+          <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
+        } @else if (c.status === 'ready') {
+          <p class="hecho" role="status">«{{ c.value.Name }}» creado. El recorrido se inicia desde Control.</p>
+        }
+      }
+    </div>
+
+    <!-- ===================== LISTA ===================== -->
+    @switch (store.inventarios().status) {
+      @case ('loading') {
+        <kibot-loading-indicator [size]="40" label="Cargando inventarios" />
+      }
+      @case ('error') {
+        @if (store.inventarios(); as e) {
+          @if (e.status === 'error') {
+            <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+          }
+        }
+      }
+      @case ('ready') {
+        <h2 class="seccion">Abiertos</h2>
+        @if (store.abiertos().length === 0) {
+          <p class="aviso">No hay inventarios abiertos.</p>
+        } @else {
+          <ul class="lista">
+            @for (i of store.abiertos(); track i._id) {
+              <li class="lista__fila">
+                <span class="lista__nombre">{{ i.Name }}</span>
+                <span class="dato">desde {{ i.StartDate | date: 'short' }}</span>
+                <span class="dato">{{ cuantos((i.Zones ?? []).length, 'zona', 'zonas') }} · {{ cuantos((i.Devices ?? []).length, 'dispositivo', 'dispositivos') }}</span>
+                <span class="lista__acciones">
+                  @if (store.confirmandoCierre() === i._id) {
+                    <span class="dato">No se puede reabrir.</span>
+                    <kibot-button size="small" variant="outline" (pressed)="store.confirmandoCierre.set(null)">Cancelar</kibot-button>
+                  }
+                  <kibot-button
+                    size="small"
+                    variant="outline"
+                    tone="error"
+                    [busy]="store.cierre().status === 'loading' && store.confirmandoCierre() === i._id"
+                    (pressed)="store.cerrar(i)"
+                  >
+                    {{ store.confirmandoCierre() === i._id ? 'Confirmar cierre' : 'Cerrar' }}
+                  </kibot-button>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+        @if (store.cierre(); as c) {
+          @if (c.status === 'error') {
+            <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
+          } @else if (c.status === 'ready') {
+            <p class="hecho" role="status">{{ c.value }}</p>
+          }
+        }
+
+        <h2 class="seccion">Cerrados</h2>
+        @if (store.cerrados().length === 0) {
+          <p class="aviso">Todavía no hay inventarios cerrados.</p>
+        } @else {
+          <ul class="lista">
+            @for (i of store.cerrados(); track i._id) {
+              <li class="lista__fila">
+                <span class="lista__nombre">{{ i.Name }}</span>
+                <span class="dato">{{ i.StartDate | date: 'shortDate' }} — {{ i.EndDate | date: 'shortDate' }}</span>
+                <span class="dato">{{ cuantos((i.Zones ?? []).length, 'zona', 'zonas') }}</span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  }
+</section>

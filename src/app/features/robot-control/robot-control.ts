@@ -4,6 +4,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
+import { avanceDe } from '../robot/robot.models';
 import { RobotControlStore } from './robot-control.store';
 
 /**
@@ -23,11 +24,8 @@ import { RobotControlStore } from './robot-control.store';
 export class RobotControl implements OnInit {
   protected readonly store = inject(RobotControlStore);
 
-  /** Caras recorridas sobre el total, para la barra de avance. */
-  protected readonly avance = computed(() => {
-    const p = this.store.progreso();
-    return p && p.TotalSides > 0 ? Math.min(100, (p.CoveredSides / p.TotalSides) * 100) : 0;
-  });
+  /** Tramos de la ruta hechos (o caras recorridas, sin ruta), para la barra de avance. */
+  protected readonly avance = computed(() => avanceDe(this.store.progreso()));
 
   ngOnInit(): void {
     void this.store.cargar();

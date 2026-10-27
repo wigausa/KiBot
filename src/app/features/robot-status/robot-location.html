@@ -1,0 +1,72 @@
+<section class="estado">
+  <header class="estado__cabecera">
+    <h1>Ubicación en tiempo real</h1>
+    <p class="estado__nota">
+      Dónde está cada robot según su último latido. El segmento va como lo numera el robot: en el tramo superior
+      sigue la cuenta del inferior.
+    </p>
+  </header>
+
+  @switch (store.robots().status) {
+    @case ('loading') {
+      <kibot-loading-indicator label="Cargando robots" />
+    }
+    @case ('error') {
+      @if (store.robots(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+    }
+    @case ('ready') {
+      @if (store.estados(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+      @if (store.refrescoFallido() && store.estados().status === 'ready') {
+        <p class="aviso" role="status">No se pudo actualizar: lo que se ve puede no ser lo último.</p>
+      }
+
+      @for (fila of store.filas(); track fila.IdDevice) {
+        <article class="tarjeta" aria-live="polite">
+          <div class="tarjeta__fila">
+            <h2 class="tarjeta__titulo">{{ fila.Name }}</h2>
+            @if (fila.estado; as s) {
+              <span class="insignia" [class.insignia--ok]="s.Signal === 'OK'" [class.insignia--mal]="s.Signal !== 'OK'">
+                {{ s.Signal === 'OK' ? 'Con señal' : 'Sin señal' }}
+              </span>
+              <span class="dato" [title]="s.ReceivedAt | date: 'medium'">{{ haceCuanto(s.SilentForS) }}</span>
+            }
+          </div>
+
+          @if (fila.estado; as s) {
+            <dl class="cifras">
+              <div>
+                <dt>{{ s.Signal === 'OK' ? 'Está' : 'Se le vio por última vez' }}</dt>
+                <dd>{{ ubicacionDe(s.Status.Pose) }}</dd>
+              </div>
+              @if (s.Status.Pose?.Cooler) {
+                <div>
+                  <dt>Cooler</dt>
+                  <dd>{{ s.Status.Pose?.Cooler }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Estado</dt>
+                <dd>{{ textoDeEstado(s.Status.State) }}</dd>
+              </div>
+            </dl>
+            @if (s.Status.Mission?.Tramo) {
+              <p class="mision">Recorriendo el tramo {{ s.Status.Mission?.Tramo }}</p>
+            }
+          } @else {
+            <p class="aviso">Este robot todavía no ha mandado ningún latido.</p>
+          }
+        </article>
+      } @empty {
+        <p class="aviso">No hay ningún robot en tus inventarios.</p>
+      }
+    }
+  }
+</section>

@@ -20,6 +20,12 @@ export interface WarehousePlan {
   origen: PlanOrigen;
   medidas: PlanMedidas;
   pasillos: PlanRangoDePasillos[];
+
+  /**
+   * Hacia dónde crecen los números de pasillo en el plano impreso. Falta = `derecha`. Solo cambia
+   * cómo se dibuja: ver `WarehouseMap.AisleNumberingTowards`.
+   */
+  numeracionHacia?: NumeracionHacia;
   bloques: PlanBloque;
   excepciones?: PlanExcepcion[];
   bloqueInicial?: PlanBloque | null;
@@ -31,6 +37,9 @@ export interface WarehousePlan {
    */
   muros?: PlanMuro[];
 }
+
+/** Hacia dónde crecen los números de pasillo en el plano impreso. */
+export type NumeracionHacia = 'derecha' | 'izquierda';
 
 /** Un muro, por sus dos extremos en metros. */
 export interface PlanMuro {
@@ -139,11 +148,32 @@ export interface WarehouseMap {
   Unit: string;
   Origin: WarehouseOrigin;
   Plane: WarehouseRect;
+
+  /**
+   * Hacia dónde crecen los números de pasillo en el plano impreso. Con `izquierda` el lienzo se
+   * dibuja en espejo en X para verse como el plano del cliente; **las coordenadas no cambian**.
+   * Nulo o ausente es `derecha` (los planos anteriores).
+   */
+  AisleNumberingTowards?: NumeracionHacia | null;
   Inventory: WarehouseRect;
   Aisles: WarehouseAisle[];
   ShelvingUnits: WarehouseShelvingUnit[];
   Walls: WarehouseWall[];
   ResolvedWith: WarehouseLayoutConstants;
+  /** Las geocercas: dónde está cada zona en este plano. Ver `features/zones/geofence.ts`. */
+  Zones?: WarehouseMapZone[];
+}
+
+/**
+ * La geocerca de una zona: el sitio de una zona del catálogo (manual o externa) en este plano. No
+ * crea la zona; la sitúa. El robot atribuye cada caja a la zona cuya geocerca contiene su rack.
+ */
+export interface WarehouseMapZone {
+  IdZone: number;
+  Name: string;
+  /** `rect`: dos esquinas opuestas en `Points`. */
+  Shape: string;
+  Points: { X: number; Y: number }[];
 }
 
 /** Un muro ya resuelto: centro, largo y ángulo. 0 grados corre sobre X y 90 sobre Y. */
@@ -183,11 +213,29 @@ export interface WarehouseAisle {
   Anchors: WarehouseAnchor[];
 }
 
-/** 1 extremo inferior · 2 transversal · 3 extremo superior. */
+/**
+ * Un punto de referencia del pasillo, nombrado por `Code`: `P12.I` es el final del tramo inferior.
+ *
+ * <p>Desde el 2026-10-26 son cuatro —`.1`, `.I`, `.S`, `.3`— con la transversal entre `.I` y `.S`
+ * (ahí el robot no lee). Un pasillo de un solo tramo tiene `.1` y `.3`. Los planos guardados antes
+ * traen `.1/.2/.3` sin código; ver `codigoDeAncla`.</p>
+ */
 export interface WarehouseAnchor {
+  /** Orden a lo largo del pasillo: 1 `.1` · 2 `.I` · 3 `.S` · 4 `.3`. */
   Ordinal: number;
+  /** `1`, `I`, `S` o `3`. Vacío o ausente en los planos anteriores al 2026-10-26. */
+  Code?: string;
   X: number;
   Y: number;
+}
+
+/**
+ * El código de un ancla, también para los planos viejos: sin `Code`, los ordinales 1/2/3 eran
+ * `.1`, `.2` (la transversal) y `.3`.
+ */
+export function codigoDeAncla(ancla: WarehouseAnchor): string {
+  if (ancla.Code) return ancla.Code;
+  return String(ancla.Ordinal);
 }
 
 export interface WarehouseShelvingUnit {

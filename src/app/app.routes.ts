@@ -1,14 +1,4 @@
 import { Routes } from '@angular/router';
-import { KiBotIconName } from './shared/ui/kibot-icon/kibot-icon';
-
-/** Ruta de un módulo aún no implementado; ver `ModulePlaceholder`. */
-const placeholder = (path: string, title: string, icon: KiBotIconName) => ({
-  path,
-  title: `${title} · KiBot`,
-  data: { title, icon },
-  loadComponent: () =>
-    import('./features/module-placeholder/module-placeholder').then((m) => m.ModulePlaceholder)
-});
 
 /**
  * Arquitectura por módulo/ruta: el shell (sidebar + contenido) es la ruta
@@ -27,6 +17,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/home/home').then((m) => m.Home)
       },
       {
+        path: 'inventarios',
+        title: 'Inventarios · KiBot',
+        data: { title: 'Inventarios', icon: 'inventory' },
+        loadComponent: () => import('./features/inventories/inventories').then((m) => m.Inventories)
+      },
+      {
         path: 'control',
         title: 'Control del recorrido · KiBot',
         data: { title: 'Control', icon: 'control' },
@@ -39,9 +35,25 @@ export const routes: Routes = [
         data: { title: 'Buscar', icon: 'search' },
         loadComponent: () => import('./features/box-search/box-search').then((m) => m.BoxSearch)
       },
-      placeholder('ubicacion', 'Ubicación en tiempo real', 'location'),
-      placeholder('estado', 'Estado del equipo y alertas', 'status'),
-      placeholder('zonas', 'Configuración de zonas', 'zones'),
+      {
+        path: 'ubicacion',
+        title: 'Ubicación en tiempo real · KiBot',
+        data: { title: 'Ubicación', icon: 'location' },
+        loadComponent: () =>
+          import('./features/robot-status/robot-location').then((m) => m.RobotLocation)
+      },
+      {
+        path: 'estado',
+        title: 'Estado del equipo y alertas · KiBot',
+        data: { title: 'Estado', icon: 'status' },
+        loadComponent: () => import('./features/robot-status/robot-status').then((m) => m.RobotStatus)
+      },
+      {
+        path: 'zonas',
+        title: 'Zonas · KiBot',
+        data: { title: 'Zonas', icon: 'zones' },
+        loadComponent: () => import('./features/zones/zones').then((m) => m.Zones)
+      },
       {
         path: 'mapa',
         title: 'Plano de bodega · KiBot',

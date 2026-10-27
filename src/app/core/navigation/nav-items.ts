@@ -14,6 +14,7 @@ export interface KiBotNavItem {
  */
 export const KIBOT_NAV_ITEMS: readonly KiBotNavItem[] = [
   { path: 'inicio', label: 'Inicio', icon: 'home' },
+  { path: 'inventarios', label: 'Inventarios', icon: 'inventory' },
   { path: 'control', label: 'Control', icon: 'control' },
   { path: 'buscar', label: 'Buscar', icon: 'search' },
   { path: 'ubicacion', label: 'Ubicación', icon: 'location' },

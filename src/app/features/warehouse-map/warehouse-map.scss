@@ -214,7 +214,8 @@
   font-size: var(--kibot-font-size-caption);
   color: var(--kibot-fg-muted);
 
-  input {
+  input,
+  select {
     padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
     border: var(--kibot-stroke-0) solid var(--kibot-line);
     border-radius: var(--kibot-radius-6);
