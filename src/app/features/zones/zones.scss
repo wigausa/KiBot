@@ -182,6 +182,39 @@
   color: var(--kibot-fg-muted);
 }
 
+// Las anclas elegidas en el plano: el par, en grande, y cómo volver a empezar.
+.eleccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+}
+
+.eleccion__par {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--kibot-spacing-2);
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg);
+
+  strong {
+    color: var(--kibot-accent-strong);
+  }
+}
+
+.eleccion__borrar {
+  padding: var(--kibot-spacing-1) var(--kibot-spacing-3);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: transparent;
+  color: var(--kibot-fg-muted);
+  font: inherit;
+  font-size: var(--kibot-font-size-subtitle);
+  cursor: pointer;
+}
+
 .aviso {
   margin: 0;
   max-width: 56rem;

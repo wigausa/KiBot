@@ -1,4 +1,28 @@
-<div class="lienzo">
+<!-- La figura de cada pieza: la misma en la paleta y en la que acompaña al cursor al arrastrar. -->
+<ng-template #figura let-pieza>
+  <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
+    @switch (pieza) {
+      @case ('pasillo') {
+        <rect class="figura__calzada" x="4" y="2" width="16" height="40" rx="1" />
+        <line class="figura__eje" x1="12" y1="3" x2="12" y2="41" />
+      }
+      @case ('bloque') {
+        @for (fila of [0, 1, 2, 3, 4, 5]; track fila) {
+          <rect class="figura__celda" x="3" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
+          <rect class="figura__celda" x="12.5" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
+        }
+      }
+      @case ('muro') {
+        <rect class="figura__muro" x="9" y="2" width="6" height="40" rx="0.5" />
+        @for (raya of [0, 1, 2, 3, 4]; track raya) {
+          <line class="figura__junta" x1="9" [attr.y1]="10 + raya * 8" x2="15" [attr.y2]="10 + raya * 8" />
+        }
+      }
+    }
+  </svg>
+</ng-template>
+
+<div class="lienzo" [class.lienzo--arrastrando]="arrastrando() !== null">
   @if (editable()) {
     <div class="paleta" role="toolbar" aria-label="Piezas del plano">
       <span class="paleta__titulo">Arrastra al plano:</span>
@@ -9,10 +33,7 @@
         [class.pieza--activa]="arrastrando() === 'pasillo'"
         (pointerdown)="empezar('pasillo', $event)"
       >
-        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
-          <rect class="figura__calzada" x="4" y="2" width="16" height="40" rx="1" />
-          <line class="figura__eje" x1="12" y1="3" x2="12" y2="41" />
-        </svg>
+        <ng-container *ngTemplateOutlet="figura; context: { $implicit: 'pasillo' }" />
         <span class="pieza__texto">
           Pasillo
           <small>{{ anchoPasilloTexto() }} de ancho</small>
@@ -25,12 +46,7 @@
         [class.pieza--activa]="arrastrando() === 'bloque'"
         (pointerdown)="empezar('bloque', $event)"
       >
-        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
-          @for (fila of [0, 1, 2, 3, 4, 5]; track fila) {
-            <rect class="figura__celda" x="3" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
-            <rect class="figura__celda" x="12.5" [attr.y]="2 + fila * 6.8" width="8.5" height="5.6" rx="0.8" />
-          }
-        </svg>
+        <ng-container *ngTemplateOutlet="figura; context: { $implicit: 'bloque' }" />
         <span class="pieza__texto">
           Bloque
           <small>{{ anchoBloqueTexto() }}, dos filas</small>
@@ -56,28 +72,54 @@
         [class.pieza--activa]="arrastrando() === 'muro'"
         (pointerdown)="empezar('muro', $event)"
       >
-        <svg class="figura" viewBox="0 0 24 44" aria-hidden="true">
-          <rect class="figura__muro" x="9" y="2" width="6" height="40" rx="0.5" />
-          @for (raya of [0, 1, 2, 3, 4]; track raya) {
-            <line class="figura__junta" x1="9" [attr.y1]="10 + raya * 8" x2="15" [attr.y2]="10 + raya * 8" />
-          }
-        </svg>
+        <ng-container *ngTemplateOutlet="figura; context: { $implicit: 'muro' }" />
         <span class="pieza__texto">
           Muro
-          <small>a un lado del recinto</small>
+          <small>junto a un pasillo, arriba o abajo</small>
         </span>
       </button>
     </div>
+
+    <!-- La pieza sigue al cursor mientras se arrastra, y dice si ya está sobre un sitio. -->
+    @if (arrastrando(); as pieza) {
+      @if (cursor(); as c) {
+        <div
+          class="fantasma"
+          [class.fantasma--encaja]="huecoActivo() !== null"
+          [style.left.px]="c.x"
+          [style.top.px]="c.y"
+          aria-hidden="true"
+        >
+          <ng-container *ngTemplateOutlet="figura; context: { $implicit: pieza }" />
+          <span class="fantasma__texto">{{ textoDelArrastre() }}</span>
+        </div>
+      }
+    }
   }
+
+  <div class="lienzo__marco">
+  <!-- Acercar, alejar y volver a ver el plano entero. Con zoom, el lienzo se mueve arrastrándolo. -->
+  <div class="zoom" role="group" aria-label="Zoom del plano">
+    <button type="button" class="zoom__boton" (click)="acercar()" aria-label="Acercar" title="Acercar">+</button>
+    <button type="button" class="zoom__boton" (click)="alejar()" [disabled]="!ampliado()" aria-label="Alejar" title="Alejar">−</button>
+    <button type="button" class="zoom__boton zoom__boton--texto" (click)="ajustar()" [disabled]="!ampliado()" title="Ver el plano entero">
+      Ajustar
+    </button>
+    @if (ampliado()) {
+      <span class="zoom__nivel">{{ zoom() * 100 | number: '1.0-0' }} %</span>
+    }
+  </div>
 
   <svg
     #lienzo
     class="lienzo__svg"
     [class.lienzo__svg--arrastrando]="arrastrando() !== null"
+    [class.lienzo__svg--movible]="ampliado() && arrastrando() === null"
     [attr.viewBox]="viewBox()"
     preserveAspectRatio="xMidYMid meet"
     role="img"
     aria-label="Plano de la bodega"
+    (pointerdown)="empezarAMover($event)"
   >
     <!-- Con la numeración hacia la izquierda se dibuja en espejo; los textos se enderezan uno a uno. -->
     <g [attr.transform]="transformacionEspejo()">
@@ -154,43 +196,88 @@
       <rect
         class="bloque-zona"
         [class.bloque-zona--activa]="bloque.id === bloqueActivo()"
+        [class.bloque-zona--apagada]="bloqueActivo() !== null && bloque.id !== bloqueActivo()"
         [attr.x]="bloque.x"
         [attr.y]="yDe(map().Inventory.Y, map().Inventory.Depth)"
         [attr.width]="bloque.ancho"
         [attr.height]="map().Inventory.Depth"
-        [attr.stroke-width]="trazo() * 2"
+        [attr.stroke-width]="trazo() * (bloque.id === bloqueActivo() ? 6 : 3)"
         (click)="seleccionarBloque(bloque.id)"
-      />
+      >
+        <title>{{ bloque.etiqueta }} — pulsa para editarlo</title>
+      </rect>
     }
 
     @for (muro of muros(); track muro.WallId) {
       <rect
         class="muro"
         [attr.x]="muro.X - muro.Length / 2"
-        [attr.y]="yDe(muro.Y, muro.Thickness) + muro.Thickness / 2"
+        [attr.y]="yDe(muro.Y, grosorVisible(muro)) + grosorVisible(muro) / 2"
         [attr.width]="muro.Length"
-        [attr.height]="muro.Thickness"
+        [attr.height]="grosorVisible(muro)"
         [attr.transform]="transformacion(muro)"
       />
     }
 
-    @for (ancla of anclas(); track ancla.id) {
-      <circle
-        class="ancla"
-        [class.ancla--transversal]="ancla.juntoATransversal"
-        [attr.cx]="ancla.x"
-        [attr.cy]="yDe(ancla.y)"
-        [attr.r]="trazo() * 4"
+    <!-- La geocerca que se está eligiendo: de un ancla a la otra, en vivo mientras se arrastra. -->
+    @if (rectanguloDeGeocerca(); as g) {
+      <rect
+        class="geocerca"
+        [class.geocerca--invalida]="!g.valida"
+        [attr.x]="g.x"
+        [attr.y]="yDe(g.y, g.fondo)"
+        [attr.width]="g.ancho"
+        [attr.height]="g.fondo"
+        [attr.stroke-width]="trazo() * 5"
       />
+    }
+
+    @for (ancla of anclas(); track ancla.id) {
+      @if (eligiendoGeocerca()) {
+        <!-- En modo geocerca el ancla se pulsa: el círculo grande e invisible es la zona de toque. -->
+        <g
+          class="ancla-elegible"
+          [class.ancla-elegible--elegida]="esElegida(ancla.id)"
+          [class.ancla-elegible--valida]="eligiendoDestino() && esDestinoValido(ancla.codigo)"
+          [class.ancla-elegible--invalida]="eligiendoDestino() && !esElegida(ancla.id) && !esDestinoValido(ancla.codigo)"
+          (pointerdown)="empezarGeocerca(ancla.id, $event)"
+        >
+          <circle class="ancla-elegible__toque" [attr.cx]="ancla.x" [attr.cy]="yDe(ancla.y)" [attr.r]="trazo() * 30" />
+          <circle class="ancla-elegible__punto" [attr.cx]="ancla.x" [attr.cy]="yDe(ancla.y)" [attr.r]="trazo() * (esElegida(ancla.id) ? 14 : 9)" [attr.stroke-width]="trazo() * 4" />
+          <title>{{ ancla.id }}</title>
+        </g>
+        @if (esElegida(ancla.id)) {
+          <text
+            class="ancla-elegible__etiqueta"
+            [attr.x]="ancla.x"
+            [attr.y]="yDe(ancla.y) - trazo() * 22"
+            [attr.transform]="derecho(ancla.x)"
+            [attr.font-size]="tamanoDeNumero()"
+            text-anchor="middle"
+            paint-order="stroke fill"
+            [attr.stroke-width]="trazo() * 6"
+          >
+            {{ ancla.id }}
+          </text>
+        }
+      } @else {
+        <circle
+          class="ancla"
+          [class.ancla--transversal]="ancla.juntoATransversal"
+          [attr.cx]="ancla.x"
+          [attr.cy]="yDe(ancla.y)"
+          [attr.r]="trazo() * 4"
+        />
+      }
     }
 
     @for (etiqueta of numeros(); track etiqueta.id) {
       <text
         class="numero"
         [attr.x]="etiqueta.x"
-        [attr.y]="yDe(etiqueta.y) + trazo() * 22"
+        [attr.y]="yDe(etiqueta.y) + trazo() * 50"
         [attr.transform]="derecho(etiqueta.x)"
-        [attr.font-size]="plano().Width / 90"
+        [attr.font-size]="tamanoDeNumero()"
         text-anchor="middle"
         paint-order="stroke fill"
         [attr.stroke-width]="trazo() * 4"
@@ -212,53 +299,60 @@
     }
     </g>
   </svg>
+  </div>
 
   @if (editable()) {
     <div class="controles">
       @if (sinPasillos()) {
         <span class="pista">Arrastra una pieza al tramo de arriba o al de abajo para empezar.</span>
       } @else if (bloqueSeleccionado(); as bloque) {
-        <span class="seleccion">{{ bloque.etiqueta }}</span>
+        <section class="edicion" aria-label="Editar bloque">
+          <header class="edicion__cabecera">
+            <span class="edicion__titulo">Editando: {{ bloque.etiqueta }}</span>
+            <button type="button" class="edicion__cerrar" (click)="cancelar()" title="Dejar de editar (Esc)">
+              Listo
+            </button>
+          </header>
 
-        <span class="tramo">
-          abajo
-          @for (largo of largos; track largo) {
-            <button
-              type="button"
-              class="largo"
-              [class.largo--activo]="bloque.inferior === largo"
-              (click)="ponerLargo(bloque, 'inferior', largo)"
-            >
-              {{ largo }}
-            </button>
+          <!-- Arriba primero: es como se ve en el plano. -->
+          @for (fila of [{ tramo: 'superior', nombre: 'Tramo de arriba', ancla: '.S → .3', valor: bloque.superior }, { tramo: 'inferior', nombre: 'Tramo de abajo', ancla: '.1 → .I', valor: bloque.inferior }]; track fila.tramo) {
+            <div class="edicion__fila">
+              <span class="edicion__tramo">
+                {{ fila.nombre }}
+                <small>{{ fila.ancla }} · {{ fila.valor > 0 ? fila.valor + ' segmentos' : 'sin estantería' }}</small>
+              </span>
+              <span class="edicion__opciones" role="group" [attr.aria-label]="fila.nombre">
+                @for (largo of largos; track largo) {
+                  <button
+                    type="button"
+                    class="largo"
+                    [class.largo--activo]="fila.valor === largo"
+                    [attr.aria-pressed]="fila.valor === largo"
+                    (click)="ponerLargo(bloque, $any(fila.tramo), largo)"
+                  >
+                    {{ largo }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="largo largo--ninguno"
+                  [class.largo--activo]="fila.valor === 0"
+                  [attr.aria-pressed]="fila.valor === 0"
+                  (click)="quitarTramo(bloque, $any(fila.tramo))"
+                >
+                  Ninguno
+                </button>
+              </span>
+            </div>
           }
-          @if (bloque.inferior > 0) {
-            <button type="button" class="largo largo--quitar" (click)="quitarTramo(bloque, 'inferior')">
-              sin tramo
-            </button>
-          }
-        </span>
 
-        <span class="tramo">
-          arriba
-          @for (largo of largos; track largo) {
-            <button
-              type="button"
-              class="largo"
-              [class.largo--activo]="bloque.superior === largo"
-              (click)="ponerLargo(bloque, 'superior', largo)"
-            >
-              {{ largo }}
-            </button>
-          }
-          @if (bloque.superior > 0) {
-            <button type="button" class="largo largo--quitar" (click)="quitarTramo(bloque, 'superior')">
-              sin tramo
-            </button>
-          }
-        </span>
+          <footer class="edicion__pie">
+            <button type="button" class="quitar" (click)="quitarBloque(bloque)">Quitar bloque</button>
+            <span class="pista">Pulsa otro bloque para editarlo, o Esc para terminar.</span>
+          </footer>
+        </section>
       } @else {
-        <span class="pista">Pulsa un bloque para cambiar sus tramos.</span>
+        <span class="pista">Pulsa un bloque del plano para editar sus tramos.</span>
       }
 
       @if (pasilloExtremo('max'); as ultimo) {
@@ -267,8 +361,8 @@
         </button>
       }
 
-      @for (muro of muros(); track muro.WallId; let i = $index) {
-        <button type="button" class="quitar" (click)="quitarMuro(i)">Quitar {{ muro.Name }}</button>
+      @for (muro of muros(); track muro.WallId) {
+        <button type="button" class="quitar" (click)="quitarMuro(muro.WallId)">Quitar {{ muro.Name }}</button>
       }
     </div>
   }

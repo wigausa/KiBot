@@ -78,7 +78,20 @@ export class WarehouseMapStore {
    */
   readonly puedeGuardar = computed(() => {
     const estado = this._preview();
-    return estado.status === 'ready' && estado.value.Valid && !this.guardando();
+    return estado.status === 'ready' && estado.value.Valid && !this.guardando() && !this.faltaNombre();
+  });
+
+  /**
+   * Si el plano todavía no tiene nombre. Se puede dibujar sin él —el campo arranca vacío, con un
+   * ejemplo de guía—, pero no guardar: el nombre es el lugar, y se elige por él.
+   */
+  readonly faltaNombre = computed(() => {
+    try {
+      const plan = JSON.parse(this.texto()) as Partial<WarehousePlan> | null;
+      return !plan?.nombre?.trim();
+    } catch {
+      return false;
+    }
   });
 
   /** Edita el plano. Invalida la previsualización: lo que hay en pantalla ya no es de este texto. */
@@ -102,7 +115,10 @@ export class WarehouseMapStore {
     this._preview.set({ status: 'loading' });
 
     try {
-      const respuesta = await this.api.previewPlan(plan);
+      // Sin nombre el backend no expande, y entonces no habría nada que dibujar. Para mirar basta uno
+      // provisional; para guardar no (ver `faltaNombre`).
+      const paraVer = plan.nombre?.trim() ? plan : { ...plan, nombre: 'Sin nombre' };
+      const respuesta = await this.api.previewPlan(paraVer);
       if (mio === this.peticion) this._preview.set({ status: 'ready', value: respuesta });
     } catch (error) {
       if (mio === this.peticion) this._preview.set(this.fallo(error));

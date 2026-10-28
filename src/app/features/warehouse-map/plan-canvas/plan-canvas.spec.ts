@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { WarehouseMap, WarehouseRackFace } from '../warehouse-map.models';
-import { PlanCanvas, PlanCanvasAction } from './plan-canvas';
+import { GeocercaElegida, PlanCanvas, PlanCanvasAction } from './plan-canvas';
 
 function cara(side: string, gridSide: string, aisleId: string, segment: number): WarehouseRackFace {
   return { Side: side, X: 0, Y: 0, AisleId: aisleId, GridSide: gridSide, Tramo: 'INFERIOR', Segment: segment };
@@ -97,6 +97,39 @@ describe('PlanCanvas', () => {
 
   it('encuadra en metros, con el lienzo que calculó el backend', () => {
     // Una unidad del viewBox es un metro. Sin eso habría un factor de escala que mantener a mano.
+    expect(svg.getAttribute('viewBox')).toBe('-2 -2 10 10');
+  });
+
+  // --- zoom ---------------------------------------------------------------------------------
+
+  it('acercar enseña un trozo del plano alrededor del centro, y ajustar vuelve a enseñarlo entero', async () => {
+    (fixture.nativeElement.querySelector('button[aria-label="Acercar"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    // 10 m / 1,5 alrededor del centro (3, 3).
+    const [x, y, ancho, alto] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    expect(ancho).toBeCloseTo(10 / 1.5, 6);
+    expect(alto).toBeCloseTo(10 / 1.5, 6);
+    expect(x + ancho / 2).toBeCloseTo(3, 6);
+    expect(y + alto / 2).toBeCloseTo(3, 6);
+
+    boton('Ajustar').click();
+    await fixture.whenStable();
+
+    expect(svg.getAttribute('viewBox')).toBe('-2 -2 10 10');
+  });
+
+  it('con el plano entero no se puede alejar más', () => {
+    const botonAlejar = fixture.nativeElement.querySelector('button[aria-label="Alejar"]') as HTMLButtonElement;
+    expect(botonAlejar.disabled).toBeTrue();
+  });
+
+  it('alejar desde el zoom vuelve al plano entero, sin pasarse', async () => {
+    (fixture.nativeElement.querySelector('button[aria-label="Acercar"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('button[aria-label="Alejar"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
     expect(svg.getAttribute('viewBox')).toBe('-2 -2 10 10');
   });
 
@@ -253,7 +286,7 @@ describe('PlanCanvas', () => {
     expect(Number(hueco.getAttribute('x'))).toBeCloseTo(2.8, 6);
   });
 
-  it('los muros de los lados van por tramo: la transversal se queda libre', async () => {
+  it('un muro se suelta en cada columna vacía, por tramo o cerrado, y nunca al lado de un bloque', async () => {
     fixture.componentRef.setInput('rejilla', {
       inferior: 13,
       superior: 13,
@@ -265,16 +298,78 @@ describe('PlanCanvas', () => {
     boton('Muro').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     await fixture.whenStable();
 
-    // Los dos extremos de punta a punta, y los dos lados partidos por tramo: un muro que cruzara
-    // la transversal la dejaría cerrada, y por ahí no pasa ningún muro de una bodega de verdad.
-    expect(svg.querySelectorAll('g.hueco').length).toBe(6);
+    // El norte y el sur, y tres franjas -abajo, cerrado, arriba- en las dos columnas vacías: antes
+    // del 1 y después del 2. La del medio tiene el bloque del fixture y no ofrece nada.
+    expect(svg.querySelectorAll('g.hueco').length).toBe(2 + 2 * 3);
   });
 
-  it('un muro encaja en los cuatro lados del recinto', async () => {
+  it('con un solo tramo, un muro va al norte, al sur o a una de las columnas vacías', async () => {
     boton('Muro').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     await fixture.whenStable();
 
-    expect(svg.querySelectorAll('g.hueco').length).toBe(4);
+    expect(svg.querySelectorAll('g.hueco').length).toBe(2 + 2);
+  });
+
+  /** El fixture con un muro entre el 1 y el 2: la columna mide 0,2 y el 2 queda pegado a él. */
+  function conMuroEntre(): WarehouseMap {
+    const m = mapa();
+    m.ShelvingUnits = [];
+    m.Aisles = m.Aisles.map((a) => (a.Number === 2 ? { ...a, X: 1 + 1.6 + 0.2 } : a));
+    m.Walls = [{ WallId: 'ME1-2.inferior', Name: 'Muro entre 1 y 2', X: 1.9, Y: 1.3, Length: 2.6, Rotation: 90, Thickness: 0.2 }];
+    return m;
+  }
+
+  it('al lado de un muro solo van pasillos: su columna no ofrece sitio para un bloque', async () => {
+    fixture.componentRef.setInput('map', conMuroEntre());
+    await fixture.whenStable();
+
+    boton('Bloque').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+
+    // Dos franjas -abajo y arriba- por columna, y solo quedan las de los extremos.
+    expect(svg.querySelectorAll('g.hueco').length).toBe(2 * 2);
+  });
+
+  /** El fixture con un muro en un extremo, tal como lo devuelve el backend. */
+  function conMuro(wallId: 'MI.ambos' | 'MF.ambos', x: number): WarehouseMap {
+    const m = mapa();
+    m.Walls = [{ WallId: wallId, Name: 'Muro', X: x, Y: 2.6, Length: 5.2, Rotation: 90, Thickness: 0.2 }];
+    return m;
+  }
+
+  it('con un muro en un extremo, ese extremo tampoco ofrece bloque', async () => {
+    fixture.componentRef.setInput('map', conMuro('MI.ambos', 0.1));
+    await fixture.whenStable();
+
+    boton('Bloque').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(svg.querySelectorAll('g.hueco').length).toBe(2 * 2);
+  });
+
+  it('las sombras salen del mapa que se ve, no del plano escrito', async () => {
+    // Un backend que todavía no entiende los muros de columna los ignora sin error: el plano dice
+    // que hay muro y el mapa no lo trae. Las sombras tienen que caer sobre lo que se ve.
+    fixture.componentRef.setInput('rejilla', { inferior: 2, superior: 0, largoSegmento: 1.3, hueco: 2 });
+    await fixture.whenStable();
+
+    boton('Bloque').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+
+    // Sin muros en el mapa, las tres columnas son de bloque.
+    expect(svg.querySelectorAll('g.hueco').length).toBe(3 * 2);
+  });
+
+  it('con un muro final, el pasillo nuevo cae pegado al otro lado del muro', async () => {
+    fixture.componentRef.setInput('map', conMuro('MF.ambos', 4.5));
+    await fixture.whenStable();
+
+    boton('Pasillo').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+
+    // El 2 está en 3,6 y mide 1,6: su borde cae en 4,4, el muro ocupa hasta 4,6 y ahí empieza el nuevo.
+    const xs = [...svg.querySelectorAll('g.hueco rect')].map((r) => Number(r.getAttribute('x')));
+    expect(xs.some((x) => Math.abs(x - 4.6) < 1e-6)).toBeTrue();
   });
 
   it('soltar fuera de todo hueco no cambia el plano', async () => {
@@ -310,7 +405,8 @@ describe('PlanCanvas', () => {
     await fixture.whenStable();
 
     // Quitar el tramo de abajo deja el bloque solo con el de arriba. No toda bodega tiene los dos.
-    boton('sin tramo').click();
+    // La tarjeta pone arriba primero, como el plano: el segundo «Ninguno» es el de abajo.
+    botones().filter((b) => b.textContent?.includes('Ninguno'))[1].click();
     await fixture.whenStable();
 
     expect(acciones.at(-1)).toEqual({ tipo: 'poner-bloque', donde: [1, 2], inferior: 0, superior: 0 });
@@ -322,9 +418,9 @@ describe('PlanCanvas', () => {
     );
     await fixture.whenStable();
 
-    // Los largos que dijo el cliente y el CAD: 7, 9, 13 o 14.
-    const siete = botones().filter((b) => b.textContent?.trim() === '7');
-    siete[siete.length - 1].click();
+    // Los largos que dijo el cliente y el CAD: 7, 9, 13 o 14. La primera fila es la de arriba.
+    const arriba = fixture.nativeElement.querySelectorAll('.edicion__fila')[0] as HTMLElement;
+    [...arriba.querySelectorAll('button')].find((b) => b.textContent?.trim() === '7')!.click();
     await fixture.whenStable();
 
     expect(acciones.at(-1)).toEqual({ tipo: 'poner-bloque', donde: [1, 2], inferior: 2, superior: 7 });
@@ -366,11 +462,100 @@ describe('PlanCanvas', () => {
     expect(svg.querySelectorAll('rect.celda--resaltada').length).toBe(2);
   });
 
-  it('sin editable no se puede tocar nada', async () => {
+  it('sin editable no se puede cambiar nada del plano, pero sí acercarse a mirarlo', async () => {
     fixture.componentRef.setInput('editable', false);
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('.paleta')).toBeNull();
-    expect(botones().length).toBe(0);
+    // Solo quedan los del zoom, que no tocan el plano: mirar de cerca sirve también en Zonas y en
+    // Buscar caja.
+    expect(botones().filter((b) => !b.closest('.zoom')).length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.zoom button').length).toBe(3);
+  });
+
+  // --- elegir una geocerca ------------------------------------------------------------------
+
+  describe('modo geocerca', () => {
+    let elegidas: GeocercaElegida[];
+
+    beforeEach(async () => {
+      elegidas = [];
+      // Como la pantalla de Zonas: lo que el lienzo elige le vuelve como entrada.
+      fixture.componentInstance.geocercaCambia.subscribe((g) => {
+        elegidas.push(g);
+        fixture.componentRef.setInput('geocerca', g);
+      });
+      fixture.componentRef.setInput('editable', false);
+      fixture.componentRef.setInput('geocerca', { desde: null, hasta: null });
+      await fixture.whenStable();
+    });
+
+    const ancla = (id: string) =>
+      [...fixture.nativeElement.querySelectorAll('g.ancla-elegible')].find(
+        (g) => (g as Element).querySelector('title')?.textContent?.trim() === id
+      ) as SVGGElement;
+
+    it('sin geocerca las anclas son solo dibujo; con ella, se pueden pulsar', async () => {
+      expect(ancla('P1.1')).toBeTruthy();
+
+      fixture.componentRef.setInput('geocerca', null);
+      await fixture.whenStable();
+      expect(fixture.nativeElement.querySelectorAll('g.ancla-elegible').length).toBe(0);
+    });
+
+    it('pulsar un ancla la pone como primera, y pulsar otra completa la geocerca', async () => {
+      ancla('P1.1').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      // Soltar sin estar sobre otra ancla deja la primera esperando a la segunda.
+      fixture.nativeElement.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+      ancla('P2.3').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+      expect(elegidas[0]).toEqual({ desde: 'P1.1', hasta: null });
+      expect(elegidas.at(-1)).toEqual({ desde: 'P1.1', hasta: 'P2.3' });
+    });
+
+    it('dibuja el rectángulo de la geocerca, y lo marca si el robot no la aceptaría', async () => {
+      fixture.componentRef.setInput('geocerca', { desde: 'P1.1', hasta: 'P2.3' });
+      await fixture.whenStable();
+      expect(svg.querySelector('rect.geocerca')).toBeTruthy();
+      expect(svg.querySelector('rect.geocerca--invalida')).toBeNull();
+
+      // .1 con .2 no es ninguno de los pares que recorre el robot.
+      fixture.componentRef.setInput('geocerca', { desde: 'P1.1', hasta: 'P2.2' });
+      await fixture.whenStable();
+      expect(svg.querySelector('rect.geocerca--invalida')).toBeTruthy();
+    });
+
+    it('si la pantalla borra la primera ancla, la siguiente que se pulse empieza de cero', async () => {
+      ancla('P1.1').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      fixture.nativeElement.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+      fixture.componentRef.setInput('geocerca', { desde: null, hasta: null });   // «Empezar de nuevo»
+      await fixture.whenStable();
+
+      ancla('P2.3').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      fixture.nativeElement.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+
+      expect(elegidas.at(-1)).toEqual({ desde: 'P2.3', hasta: null });
+    });
+
+    it('mientras se arrastra la pantalla no se entera: solo al soltar', async () => {
+      // Si se enterase en vivo, sus avisos cambiarían de alto y el lienzo saltaría bajo el cursor.
+      ancla('P1.1').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      expect(elegidas).toEqual([]);
+
+      fixture.nativeElement.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+      expect(elegidas).toEqual([{ desde: 'P1.1', hasta: null }]);
+    });
+
+    it('Esc a medio arrastre lo cancela y deja la geocerca como estaba', async () => {
+      fixture.componentRef.setInput('geocerca', { desde: 'P1.1', hasta: 'P2.3' });
+      await fixture.whenStable();
+
+      ancla('P2.1').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await fixture.whenStable();
+
+      expect(elegidas).toEqual([]);
+      expect(svg.querySelector('rect.geocerca')).toBeTruthy();   // la que ya había, P1.1 → P2.3
+    });
   });
 });

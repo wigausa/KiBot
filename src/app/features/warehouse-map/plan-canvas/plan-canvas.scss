@@ -10,6 +10,64 @@
   user-select: none;
 }
 
+// El marco del lienzo: los botones de zoom van encima, en la esquina.
+.lienzo__marco {
+  position: relative;
+}
+
+.zoom {
+  position: absolute;
+  top: var(--kibot-spacing-2);
+  right: var(--kibot-spacing-2);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--kibot-spacing-1);
+}
+
+.zoom__boton {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--kibot-spacing-2);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
+  font: inherit;
+  font-size: var(--kibot-font-size-body);
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--kibot-accent-strong);
+    color: var(--kibot-accent-strong);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.zoom__boton--texto {
+  font-size: var(--kibot-font-size-caption);
+}
+
+.zoom__nivel {
+  padding: 0 var(--kibot-spacing-2);
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg-muted);
+}
+
+// Con zoom, el fondo se agarra para moverse por el plano.
+.lienzo__svg--movible {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 .lienzo__svg {
   width: 100%;
   // Alto fijo para que la pantalla no salte de tamano al previsualizar un plano mas grande.
@@ -57,9 +115,9 @@
 }
 
 // El pasillo, como una calle: calzada mas oscura y linea de eje discontinua.
+// Gris de asfalto en los dos temas: el pasillo se lee como una calle, y el eje amarillo resalta.
 .calle__calzada {
-  fill: var(--kibot-page);
-  opacity: 0.85;
+  fill: color-mix(in srgb, var(--kibot-fg) 22%, var(--kibot-surface));
 }
 
 .calle__eje {
@@ -93,11 +151,68 @@
   fill: var(--kibot-accent-strong);
 }
 
+// --- elegir una geocerca ------------------------------------------------------------------
+
+.geocerca {
+  fill: var(--kibot-accent);
+  fill-opacity: 0.18;
+  stroke: var(--kibot-accent-strong);
+  pointer-events: none;
+}
+
+.geocerca--invalida {
+  fill: var(--kibot-error);
+  stroke: var(--kibot-error-strong);
+  stroke-dasharray: 1 0.6;
+}
+
+.ancla-elegible {
+  cursor: crosshair;
+}
+
+// Invisible pero pulsable: el punto es pequeño y apuntarle exacto costaría.
+.ancla-elegible__toque {
+  fill: transparent;
+}
+
+.ancla-elegible__punto {
+  fill: var(--kibot-surface);
+  stroke: var(--kibot-accent-strong);
+  transition: r var(--kibot-motion-fast);
+}
+
+.ancla-elegible:hover .ancla-elegible__punto {
+  fill: var(--kibot-accent);
+}
+
+.ancla-elegible--elegida .ancla-elegible__punto {
+  fill: var(--kibot-accent-strong);
+}
+
+// Mientras se arrastra: a cuáles se puede llegar y a cuáles no, antes de soltar.
+.ancla-elegible--valida .ancla-elegible__punto {
+  fill: var(--kibot-accent);
+}
+
+.ancla-elegible--invalida .ancla-elegible__punto {
+  stroke: var(--kibot-fg-muted);
+  opacity: 0.45;
+}
+
+.ancla-elegible__etiqueta {
+  fill: var(--kibot-accent-strong);
+  stroke: var(--kibot-surface-variant);
+  font-weight: var(--kibot-font-weight-bold);
+  pointer-events: none;
+}
+
+// El número va por debajo de la zona de pulsación del ancla .1 (30 trazos de radio) y no recibe el
+// puntero: encima de ella tapaba el ancla y no dejaba elegirla para una geocerca.
 .numero {
   fill: var(--kibot-fg);
   stroke: var(--kibot-page);
   font-weight: var(--kibot-font-weight-bold);
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .numero--activo {
@@ -229,20 +344,147 @@
   cursor: grabbing;
 }
 
+// Gris muy oscuro y opaco: el negro puro pesaba demasiado, y al 70 % pegado a un pasillo se leía
+// como el borde de la calzada.
 .muro {
-  fill: var(--kibot-fg);
-  opacity: 0.7;
+  fill: color-mix(in srgb, var(--kibot-fg) 72%, var(--kibot-surface));
 }
 
+// Un bloque se pulsa para editarlo: al pasar por encima se marca, para que se sepa que se puede.
 .bloque-zona {
   fill: transparent;
   stroke: transparent;
   cursor: pointer;
+  transition: fill var(--kibot-motion-fast), stroke var(--kibot-motion-fast);
+
+  &:hover {
+    fill: var(--kibot-accent);
+    fill-opacity: 0.12;
+    stroke: var(--kibot-accent);
+  }
 }
 
-.bloque-zona--activa {
+// El seleccionado se nota de lejos: relleno, borde grueso y continuo, y los demás se apagan.
+.bloque-zona--activa,
+.bloque-zona--activa:hover {
+  fill: var(--kibot-accent);
+  fill-opacity: 0.28;
   stroke: var(--kibot-accent-strong);
-  stroke-dasharray: 0.6 0.4;
+}
+
+.bloque-zona--apagada {
+  fill: var(--kibot-surface);
+  fill-opacity: 0.45;
+}
+
+// Mientras se arrastra, los bloques no se pulsan: el cursor busca dónde soltar.
+.lienzo--arrastrando {
+  cursor: grabbing;
+
+  .bloque-zona {
+    pointer-events: none;
+  }
+}
+
+// La pieza que acompaña al cursor. No recibe el puntero: si lo recibiera, el plano no se enteraría
+// de por dónde va.
+.fantasma {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border: var(--kibot-stroke-0) dashed var(--kibot-accent-strong);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+  opacity: 0.92;
+  transform: translate(12px, 12px);
+
+  .figura {
+    width: 22px;
+    height: 40px;
+  }
+}
+
+.fantasma--encaja {
+  border-style: solid;
+  background: color-mix(in srgb, var(--kibot-accent) 22%, var(--kibot-surface));
+}
+
+.fantasma__texto {
+  max-width: 220px;
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg);
+}
+
+// --- editar un bloque ---------------------------------------------------------------------
+
+.edicion {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-3);
+  padding: var(--kibot-spacing-4);
+  border: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+  border-radius: var(--kibot-radius-6);
+  background: color-mix(in srgb, var(--kibot-accent) 10%, var(--kibot-surface));
+}
+
+.edicion__cabecera,
+.edicion__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+  flex-wrap: wrap;
+}
+
+.edicion__titulo {
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
+}
+
+.edicion__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+  flex-wrap: wrap;
+}
+
+.edicion__tramo {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--kibot-font-size-caption);
+  color: var(--kibot-fg);
+
+  small {
+    color: var(--kibot-fg-muted);
+  }
+}
+
+.edicion__opciones {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--kibot-spacing-1);
+}
+
+// Más específico que `.controles button`: dentro de la tarjeta el estado activo tiene que verse.
+.edicion .largo {
+  min-width: 2.75em;
+  border-color: var(--kibot-line);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg-muted);
+}
+
+.edicion .largo--activo {
+  border-color: var(--kibot-accent-strong);
+  background: var(--kibot-accent-strong);
+  color: var(--kibot-on-brand);
+  font-weight: var(--kibot-font-weight-bold);
 }
 
 .hueco rect {

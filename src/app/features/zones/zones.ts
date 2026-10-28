@@ -6,7 +6,7 @@ import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { rejillaDelMapa } from '../box-search/box-search';
-import { PlanCanvas } from '../warehouse-map/plan-canvas/plan-canvas';
+import { GeocercaElegida, PlanCanvas } from '../warehouse-map/plan-canvas/plan-canvas';
 import { GEOCERCA_INVALIDA } from './geofence';
 import { PestanaDeZonas, ZonesStore } from './zones.store';
 
@@ -74,8 +74,14 @@ export class Zones implements OnInit {
     this.store.elegirZona(v === '' ? null : Number(v));
   }
 
-  protected alElegirAncla(cual: 'desde' | 'hasta', evento: Event): void {
-    const v = this.valor(evento);
-    this.store[cual].set(v === '' ? null : v);
+  /** Las anclas que se van eligiendo en el plano: en vivo mientras se arrastra de una a otra. */
+  protected alCambiarGeocerca(geocerca: GeocercaElegida): void {
+    this.store.desde.set(geocerca.desde);
+    this.store.hasta.set(geocerca.hasta);
+  }
+
+  protected borrarAnclas(): void {
+    this.store.desde.set(null);
+    this.store.hasta.set(null);
   }
 }

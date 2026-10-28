@@ -32,10 +32,39 @@ export interface WarehousePlan {
   bloqueFinal?: PlanBloque | null;
 
   /**
-   * Los muros. Son lo único del plano que no sale de la rejilla, y por eso lo único que se declara
-   * por coordenadas.
+   * Los muros por coordenadas: los del norte y el sur, que cruzan la bodega. Son lo único del plano
+   * que no sale de la rejilla.
    */
   muros?: PlanMuro[];
+
+  /**
+   * Muros que ocupan una <b>columna de la rejilla</b> en vez de un bloque: antes del primer pasillo,
+   * después del último o entre dos. La columna mide lo que el muro, así que los pasillos quedan
+   * pegados a él y ahí no cabe ninguna estantería.
+   */
+  muroInicial?: PlanColumnaDeMuro | null;
+  muroFinal?: PlanColumnaDeMuro | null;
+  murosEntre?: PlanMuroEntre[];
+
+  /**
+   * Muros del norte y del sur. Sin coordenadas: el backend los pone por fuera de todo, con un
+   * segmento de holgura, y de un muro lateral al otro.
+   */
+  muroNorte?: boolean;
+  muroSur?: boolean;
+}
+
+/**
+ * Un muro de columna. Sin `tramos` corre por los dos, cortado en la transversal; `completo` corre
+ * de punta a punta sin cortarse y la cierra.
+ */
+export interface PlanColumnaDeMuro {
+  tramos?: 'inferior' | 'superior' | 'completo';
+}
+
+/** Un muro de columna entre dos pasillos consecutivos. */
+export interface PlanMuroEntre extends PlanColumnaDeMuro {
+  entre: [number, number];
 }
 
 /** Hacia dónde crecen los números de pasillo en el plano impreso. */

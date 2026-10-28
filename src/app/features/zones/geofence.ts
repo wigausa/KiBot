@@ -1,4 +1,5 @@
-import { CaraResaltada } from '../warehouse-map/plan-canvas/plan-canvas';
+// Solo el tipo: el lienzo importa `geocercaValida` de aquí, y un import de valor cerraría el ciclo.
+import type { CaraResaltada } from '../warehouse-map/plan-canvas/plan-canvas';
 import { codigoDeAncla, WarehouseMap, WarehouseMapZone } from '../warehouse-map/warehouse-map.models';
 
 /**

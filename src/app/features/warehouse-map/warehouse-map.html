@@ -32,18 +32,46 @@
   <div class="mapa__cuerpo">
     @if (modo() === 'texto') {
       <!-- Siempre montado: si se tapara al previsualizar, desapareceria el texto recien escrito. -->
-      <label class="editor">
-        <span class="editor__titulo">El plano, en JSON</span>
+      <div class="editor">
+        <div class="editor__cabecera">
+          <label class="editor__titulo" for="plano-texto">El plano, en JSON</label>
+          <button
+            type="button"
+            class="editor__ejemplo"
+            [disabled]="store.texto().trim() !== ''"
+            [title]="store.texto().trim() !== '' ? 'Vacía el texto para empezar con el ejemplo' : ''"
+            (click)="usarEjemplo()"
+          >
+            Empezar con el ejemplo
+          </button>
+        </div>
+
+        <!-- El ejemplo como guía: se ve mientras el texto está vacío, y es un plano válido. -->
         <textarea
+          id="plano-texto"
           class="editor__texto"
           spellcheck="false"
           autocapitalize="off"
           autocomplete="off"
-          placeholder='{ "nombre": "7000 Logistics", "companyId": 2, ... }'
+          [placeholder]="ejemplo"
           [value]="store.texto()"
           (input)="alEscribir($event)"
         ></textarea>
-      </label>
+
+        <details class="esquema">
+          <summary>Qué es cada campo</summary>
+          <dl>
+            <div><dt>nombre, companyId</dt><dd>El lugar y su compañía. Obligatorios para guardar.</dd></div>
+            <div><dt>origen</dt><dd>El punto (0,0), descrito para que alguien pueda señalarlo en la bodega.</dd></div>
+            <div><dt>medidas</dt><dd>En metros. <code>anchoBloque</code> es el de las dos filas juntas.</dd></div>
+            <div><dt>pasillos</dt><dd>Rangos con la numeración del plano impreso. <code>tramos</code>: <code>inferior</code> o <code>superior</code> si solo recorre uno.</dd></div>
+            <div><dt>bloques, excepciones</dt><dd>Segmentos por tramo del bloque general, y de los que cambian (<code>entre: [3, 4]</code>).</dd></div>
+            <div><dt>bloqueInicial, bloqueFinal</dt><dd>La estantería antes del primer pasillo o después del último.</dd></div>
+            <div><dt>muroInicial, muroFinal, murosEntre</dt><dd>Muros pegados a los pasillos, en una columna sin bloque. <code>tramos</code>: <code>inferior</code>, <code>superior</code> o <code>completo</code> (cierra la transversal).</dd></div>
+            <div><dt>muroNorte, muroSur</dt><dd><code>true</code> para cerrar la bodega por arriba o por abajo. Se colocan solos, por fuera de todo.</dd></div>
+          </dl>
+        </details>
+      </div>
     } @else {
       <div class="dibujo">
         <div class="datos">
@@ -51,18 +79,39 @@
             <span>Nombre</span>
             <input
               type="text"
+              placeholder="Nombre de la bodega, p. ej. Cooler 1"
               [value]="datoDel('nombre')"
               (change)="cambiarDato('nombre', $any($event.target).value)"
             />
           </label>
-          <label class="dato dato--corto">
+          <label class="dato">
             <span>Compañía</span>
-            <input
-              type="number"
-              min="1"
-              [value]="datoDel('companyId')"
-              (change)="cambiarDato('companyId', $any($event.target).value)"
-            />
+            @switch (companias.companias().status) {
+              @case ('ready') {
+                <select (change)="cambiarDato('companyId', $any($event.target).value)">
+                  @for (compania of listaDeCompanias(); track compania.idCompany) {
+                    <option
+                      [value]="compania.idCompany"
+                      [selected]="compania.idCompany === +datoDel('companyId')"
+                    >
+                      {{ compania.name }}
+                    </option>
+                  }
+                </select>
+              }
+              @case ('error') {
+                <!-- Sin la lista no hay de dónde elegir: el número a mano, como antes. -->
+                <input
+                  type="number"
+                  min="1"
+                  [value]="datoDel('companyId')"
+                  (change)="cambiarDato('companyId', $any($event.target).value)"
+                />
+              }
+              @default {
+                <select disabled><option>Cargando compañías…</option></select>
+              }
+            }
           </label>
           <label class="dato dato--corto">
             <span>Pasillos crecen a la</span>
@@ -74,14 +123,6 @@
               <option value="derecha">derecha</option>
               <option value="izquierda">izquierda</option>
             </select>
-          </label>
-          <label class="dato">
-            <span>El punto 0,0, descrito</span>
-            <input
-              type="text"
-              [value]="datoDel('origen')"
-              (change)="cambiarDato('origen', $any($event.target).value)"
-            />
           </label>
         </div>
 
@@ -114,6 +155,10 @@
           Guardar
         </kibot-button>
       </div>
+
+      @if (store.faltaNombre()) {
+        <p class="panel__pista">Ponle nombre al plano para poder guardarlo.</p>
+      }
 
       @if (store.cargando()) {
         <kibot-loading-indicator [size]="48" label="Expandiendo el plano" />

@@ -4,21 +4,21 @@ import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import {
-  Lado,
   PlanCanvas,
   PlanCanvasAction,
   RejillaDelPlano,
-  SitioDelBloque,
-  Tramo
+  SitioDelBloque
 } from './plan-canvas/plan-canvas';
 import {
   PlanBloque,
+  PlanColumnaDeMuro,
   PlanMedidas,
   PlanMuro,
   PlanRangoDePasillos,
   WarehouseMap as MapaDeBodega,
   WarehousePlan
 } from './warehouse-map.models';
+import { CompanyStore } from '../../core/company/company.store';
 import { WarehouseMapStore } from './warehouse-map.store';
 
 type Modo = 'lienzo' | 'texto';
@@ -26,6 +26,47 @@ type Modo = 'lienzo' | 'texto';
 /** Si un rango de pasillos corre por los mismos tramos que el que se quiere añadir. */
 function mismoTramo(rango: PlanRangoDePasillos, tramos: string | undefined): boolean {
   return (rango.tramos ?? 'ambos') === (tramos ?? 'ambos');
+}
+
+/** Si dos pares de pasillos nombran la misma columna. */
+function mismaColumna(a: readonly [number, number], b: readonly [number, number]): boolean {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
+/**
+ * Dos muros de la misma columna hechos uno. Si alguno está cerrado (`completo`), el resultado
+ * también: sumar un tramo no puede reabrir la transversal. Si no, tramos distintos —o alguno de
+ * los dos— dan uno de los dos tramos con la transversal abierta (sin `tramos`).
+ */
+export function unirMuros(
+  a: PlanColumnaDeMuro | null | undefined,
+  b: PlanColumnaDeMuro | null | undefined
+): PlanColumnaDeMuro | null {
+  // Solo los tramos: el muro puede venir de otra columna, y su `entre` no vale para la nueva.
+  const tramos = (m: PlanColumnaDeMuro): PlanColumnaDeMuro => (m.tramos ? { tramos: m.tramos } : {});
+  if (!a) return b ? tramos(b) : null;
+  if (!b) return tramos(a);
+  if (a.tramos === 'completo' || b.tramos === 'completo') return { tramos: 'completo' };
+  return a.tramos !== undefined && a.tramos === b.tramos ? tramos(a) : {};
+}
+
+/**
+ * Los muros por coordenadas —los del norte y el sur— corridos en X.
+ *
+ * <p>Los pasillos y los bloques se colocan por su <b>posición en la lista</b>, desde x = 0; estos
+ * muros, por coordenadas. Cuando lo demás se corre tienen que correrse con ello o se quedan atrás.</p>
+ *
+ * <p>Con <c>masAllaDe</c> solo se corren los extremos que quedan a su derecha. Va por extremo y no
+ * por muro porque uno del norte o del sur cruza la bodega: al crecer por la izquierda se estira, y
+ * al quitar un pasillo se acorta.</p>
+ */
+export function murosCorridos(
+  muros: readonly PlanMuro[] | undefined,
+  dx: number,
+  masAllaDe = Number.NEGATIVE_INFINITY
+): PlanMuro[] | undefined {
+  const corrido = ([x, y]: [number, number]): [number, number] => [x > masAllaDe ? x + dx : x, y];
+  return muros?.map((muro) => ({ desde: corrido(muro.desde), hasta: corrido(muro.hasta) }));
 }
 
 /**
@@ -45,13 +86,52 @@ const MEDIDAS_POR_DEFECTO: PlanMedidas = {
 };
 
 /** Los datos del plano que se cambian sin abrir el texto. */
-type DatoDelPlano = 'nombre' | 'companyId' | 'origen' | 'numeracionHacia';
+type DatoDelPlano = 'nombre' | 'companyId' | 'numeracionHacia';
 
-/** Un plano recién empezado: sin pasillos todavía, pero ya expandible en cuanto caiga el primero. */
-function planoEnBlanco(): WarehousePlan {
-  return {
-    nombre: 'Bodega sin nombre',
+/**
+ * Un plano de ejemplo para el modo texto, con todos los campos que existen. Es válido tal cual: se
+ * puede previsualizar y luego cambiar, en vez de escribir el esquema de memoria.
+ */
+const EJEMPLO_DE_PLANO = JSON.stringify(
+  {
+    nombre: 'Cooler 1',
     companyId: 1,
+    notas: ['Texto libre: lo que falte por confirmar en sitio'],
+    origen: { descripcion: 'Esquina del muelle 1, junto a la puerta', x: 0, y: 0 },
+    medidas: {
+      anchoPasillo: 1.6,
+      anchoBloque: 1.96,
+      largoSegmento: 1.27,
+      separacionTramos: 1.96,
+      niveles: 4,
+      huecosPorSegmento: 1,
+      grosorMuro: 0.2
+    },
+    numeracionHacia: 'derecha',
+    pasillos: [{ desde: 1, hasta: 4 }],
+    bloques: { inferior: 13, superior: 13 },
+    excepciones: [{ entre: [3, 4], superior: 9 }],
+    bloqueInicial: { inferior: 13, superior: 13 },
+    muroFinal: { tramos: 'completo' },
+    murosEntre: [{ entre: [1, 2], tramos: 'inferior' }],
+    muroNorte: true,
+    muroSur: true
+  },
+  null,
+  2
+);
+
+/**
+ * Un plano recién empezado: sin pasillos todavía, pero ya expandible en cuanto caiga el primero.
+ *
+ * <p><b>Sin nombre</b>: el campo enseña un ejemplo y se rellena antes de guardar. El origen va con
+ * su texto de pendiente; ya no se pide en pantalla y se ajusta en el modo texto cuando se confirme
+ * en sitio.</p>
+ */
+function planoEnBlanco(companyId: number | null = null): WarehousePlan {
+  return {
+    nombre: '',
+    companyId: companyId ?? 1,
     origen: { descripcion: 'PENDIENTE DE CONFIRMAR EN SITIO', x: 0, y: 0 },
     medidas: { ...MEDIDAS_POR_DEFECTO },
     pasillos: [],
@@ -83,7 +163,36 @@ function planoEnBlanco(): WarehousePlan {
 })
 export class WarehouseMap {
   protected readonly store = inject(WarehouseMapStore);
+  protected readonly companias = inject(CompanyStore);
   protected readonly modo = signal<Modo>('lienzo');
+
+  /** El ejemplo que guía el modo texto: un plano completo y válido, con cada campo que existe. */
+  protected readonly ejemplo = EJEMPLO_DE_PLANO;
+
+  constructor() {
+    void this.companias.cargar();
+  }
+
+  /**
+   * Las compañías para elegir. Si el plano trae una que no está en la lista —un JSON pegado de
+   * otro sitio—, se añade tal cual: el select no puede cambiarla en silencio por la primera.
+   */
+  protected readonly listaDeCompanias = computed(() => {
+    const estado = this.companias.companias();
+    const lista = estado.status === 'ready' ? estado.value : [];
+    const id = Number(this.datoDel('companyId'));
+    return lista.some((c) => c.idCompany === id) || !id ? lista : [{ idCompany: id, name: `Compañía ${id}` }, ...lista];
+  });
+
+  /** Un plano en blanco de la compañía con la que se está trabajando. */
+  private planoNuevo(): WarehousePlan {
+    return planoEnBlanco(this.companias.companiaId());
+  }
+
+  /** Empieza el modo texto con el ejemplo, para cambiarlo en vez de escribirlo desde cero. */
+  protected usarEjemplo(): void {
+    this.store.escribir(this.ejemplo);
+  }
 
   /**
    * Lo que dibuja el lienzo: el mapa expandido, o un solar vacío si todavía no hay plano.
@@ -100,7 +209,7 @@ export class WarehouseMap {
    * esté vacío. Sale del plano, no del mapa: el marco existe antes que la primera pieza.
    */
   protected readonly rejilla = computed<RejillaDelPlano>(() => {
-    const plan = this.planActual() ?? planoEnBlanco();
+    const plan = this.planActual() ?? this.planoNuevo();
     return {
       inferior: plan.bloques?.inferior ?? 0,
       superior: plan.bloques?.superior ?? 0,
@@ -144,16 +253,14 @@ export class WarehouseMap {
 
   /** Cambia un dato de identidad del plano sin tener que abrir el texto. */
   protected async cambiarDato(campo: DatoDelPlano, valor: string): Promise<void> {
-    const plan = this.planActual() ?? planoEnBlanco();
+    const plan = this.planActual() ?? this.planoNuevo();
 
     const nuevo: WarehousePlan =
       campo === 'nombre'
         ? { ...plan, nombre: valor }
         : campo === 'companyId'
           ? { ...plan, companyId: Number(valor) || 0 }
-          : campo === 'numeracionHacia'
-            ? { ...plan, numeracionHacia: valor === 'izquierda' ? 'izquierda' : 'derecha' }
-            : { ...plan, origen: { ...plan.origen, descripcion: valor } };
+          : { ...plan, numeracionHacia: valor === 'izquierda' ? 'izquierda' : 'derecha' };
 
     // Sin pasillos el plano todavía no se puede expandir, así que se guarda sin previsualizar:
     // pedirlo devolvería un error que no dice nada útil mientras aún no has dibujado nada.
@@ -162,11 +269,10 @@ export class WarehouseMap {
   }
 
   protected datoDel(campo: DatoDelPlano): string {
-    const plan = this.planActual() ?? planoEnBlanco();
+    const plan = this.planActual() ?? this.planoNuevo();
     if (campo === 'nombre') return plan.nombre;
     if (campo === 'companyId') return String(plan.companyId);
-    if (campo === 'numeracionHacia') return plan.numeracionHacia ?? 'derecha';
-    return plan.origen?.descripcion ?? '';
+    return plan.numeracionHacia ?? 'derecha';
   }
 
   protected cambiarModo(modo: Modo): void {
@@ -214,44 +320,56 @@ export class WarehouseMap {
               ? rangos.map((r) => ({ ...r, desde: r.desde + 1, hasta: r.hasta + 1 }))
               : rangos;
 
-          const conExcepcionesCorridas =
+          const mas1 = (e: [number, number]): [number, number] => [e[0] + 1, e[1] + 1];
+          const conTodoCorrido =
             corridos === rangos
               ? plan
               : {
                   ...plan,
-                  excepciones: (plan.excepciones ?? []).map((e) => ({
-                    ...e,
-                    entre: [e.entre[0] + 1, e.entre[1] + 1] as [number, number]
-                  }))
+                  excepciones: (plan.excepciones ?? []).map((e) => ({ ...e, entre: mas1(e.entre) })),
+                  murosEntre: plan.murosEntre?.map((w) => ({ ...w, entre: mas1(w.entre) }))
                 };
 
-          plan = conExcepcionesCorridas;
+          // El pasillo nuevo entra en la PRIMERA posición, así que todo lo que ya estaba se corre un
+          // paso a la derecha. Un muro del norte o del sur se estira hasta él: su punta del oeste
+          // se queda en 0 y la otra va con lo demás.
+          const paso = plan.medidas.anchoBloque + plan.medidas.anchoPasillo;
+          plan = { ...conTodoCorrido, muros: murosCorridos(conTodoCorrido.muros, paso, 0.01) };
           rangos = corridos;
 
           const nuevo = rangos[0].desde - 1;
+          const primero = rangos[0].desde;
           const pasillos = mismoTramo(rangos[0], tramos)
             ? [{ ...rangos[0], desde: nuevo }, ...rangos.slice(1)]
             : [{ desde: nuevo, hasta: nuevo, tramos }, ...rangos];
 
-          // La estantería del extremo NO se mueve: deja de ser «la de antes del primero» y pasa a
-          // estar entre el pasillo nuevo y el que era primero. Sin esto el bloque saltaba al otro
-          // lado del pasillo recién puesto, que es lo contrario de lo que uno ve al soltarlo.
+          // Lo del extremo NO se mueve: deja de ser «lo de antes del primero» y pasa a estar entre
+          // el pasillo nuevo y el que era primero. Con un muro, el pasillo nuevo queda pegado a él
+          // por el otro lado; con un bloque, el bloque se queda donde se ve en vez de saltar al
+          // otro lado del pasillo recién puesto.
+          if (plan.muroInicial) {
+            return this.conMuro({ ...plan, pasillos, muroInicial: null }, [nuevo, primero], plan.muroInicial);
+          }
           return this.conColumna(
             { ...plan, pasillos, bloqueInicial: null },
-            [nuevo, rangos[0].desde],
+            [nuevo, primero],
             plan.bloqueInicial ?? null
           );
         }
 
         const u = rangos.length - 1;
         const nuevo = rangos[u].hasta + 1;
+        const ultimo = rangos[u].hasta;
         const pasillos = mismoTramo(rangos[u], tramos)
           ? [...rangos.slice(0, u), { ...rangos[u], hasta: nuevo }]
           : [...rangos, { desde: nuevo, hasta: nuevo, tramos }];
 
+        if (plan.muroFinal) {
+          return this.conMuro({ ...plan, pasillos, muroFinal: null }, [ultimo, nuevo], plan.muroFinal);
+        }
         return this.conColumna(
           { ...plan, pasillos, bloqueFinal: null },
-          [rangos[u].hasta, nuevo],
+          [ultimo, nuevo],
           plan.bloqueFinal ?? null
         );
       }
@@ -274,27 +392,177 @@ export class WarehouseMap {
         return { ...plan, pasillos: salida };
       }
 
-      case 'quitar-pasillo': {
-        const quedan = this.sinPasillo(rangos, accion.numero);
-        return quedan === null ? null : { ...plan, pasillos: quedan };
-      }
+      case 'quitar-pasillo':
+        return this.quitarPasillo(plan, rangos, accion.numero);
 
       case 'poner-bloque':
         return this.ponerBloque(plan, rangos, accion.donde, accion.inferior, accion.superior);
 
       case 'anadir-muro':
-        return {
-          ...plan,
-          muros: [...(plan.muros ?? []), this.muroDelLado(plan, accion.lado, accion.tramo)]
-        };
+        // Sin coordenadas: el backend lo pone por fuera de lo que haya, aunque crezca después.
+        return accion.lado === 'norte' ? { ...plan, muroNorte: true } : { ...plan, muroSur: true };
 
-      case 'quitar-muro': {
-        const muros = [...(plan.muros ?? [])];
-        if (accion.indice < 0 || accion.indice >= muros.length) return null;
-        muros.splice(accion.indice, 1);
-        return { ...plan, muros };
-      }
+      case 'poner-muro':
+        // Un muro va solo al lado de pasillos: sobre una columna con bloque no se pone. Antes se
+        // ponía y se comía el bloque.
+        if (this.hayBloqueEn(plan, accion.donde)) return null;
+        return this.conMuro(plan, accion.donde, { tramos: accion.tramos });
+
+      case 'quitar-muro':
+        return this.quitarMuro(plan, accion.wallId);
     }
+  }
+
+  /**
+   * Quita un pasillo. Las dos columnas que lo rodeaban se juntan en una.
+   *
+   * <p>Si alguna de las dos era de muro, la que queda también lo es —con los tramos de las dos—:
+   * quitar un pasillo no puede hacer desaparecer un muro. Si no, queda el bloque general.</p>
+   *
+   * <p>Los pasillos se colocan por su posición en la lista, así que lo que estaba a la derecha del
+   * quitado se corre. Los muros del norte y del sur se acortan con ello.</p>
+   */
+  private quitarPasillo(plan: WarehousePlan, rangos: PlanRangoDePasillos[], k: number): WarehousePlan | null {
+    const quedan = this.sinPasillo(rangos, k);
+    if (quedan === null) return null;
+
+    const numeros = rangos.flatMap((r) => Array.from({ length: r.hasta - r.desde + 1 }, (_, i) => r.desde + i));
+    const i = numeros.indexOf(k);
+    const p = numeros[i - 1] ?? null;
+    const q = numeros[i + 1] ?? null;
+
+    const izquierda: SitioDelBloque = p === null ? 'inicio' : [p, k];
+    const derecha: SitioDelBloque = q === null ? 'fin' : [k, q];
+    const queda: SitioDelBloque = p === null ? 'inicio' : q === null ? 'fin' : [p, q];
+    const muro = unirMuros(this.muroEn(plan, izquierda), this.muroEn(plan, derecha));
+
+    let siguiente: WarehousePlan = {
+      ...plan,
+      pasillos: quedan,
+      // Lo que nombraba al pasillo quitado ya no existe: dejarlo haría el plano inválido.
+      excepciones: (plan.excepciones ?? []).filter((e) => !e.entre.includes(k)),
+      murosEntre: plan.murosEntre?.filter((w) => !w.entre.includes(k)),
+      muros: this.murosAlQuitar(plan, k, p, q, muro !== null)
+    };
+    if (muro !== null) siguiente = this.conMuro(siguiente, queda, muro);
+
+    return siguiente;
+  }
+
+  /**
+   * Los muros por coordenadas tras quitar el pasillo <c>k</c>: lo que está a su derecha se corre lo
+   * que mida lo quitado. Se mide en el mapa que se ve, porque con columnas de muro el paso ya no es
+   * fijo.
+   */
+  private murosAlQuitar(plan: WarehousePlan, k: number, p: number | null, q: number | null, quedaMuro: boolean): PlanMuro[] | undefined {
+    const mapa = this.store.mapa();
+    const xDe = (n: number) => mapa?.Aisles.find((a) => a.Number === n)?.X;
+    const xk = xDe(k);
+    if (!plan.muros?.length || xk === undefined) return plan.muros;
+
+    const m = plan.medidas;
+    const columna = quedaMuro ? m.grosorMuro ?? 0.2 : m.anchoBloque;
+
+    let dx: number;
+    if (q !== null) {
+      const xq = xDe(q);
+      const xp = p === null ? undefined : xDe(p);
+      if (xq === undefined || (p !== null && xp === undefined)) return plan.muros;
+      const nuevoXq = (xp === undefined ? 0 : xp + m.anchoPasillo / 2) + columna + m.anchoPasillo / 2;
+      dx = nuevoXq - xq;
+    } else {
+      const xp = p === null ? undefined : xDe(p);
+      if (xp === undefined) return plan.muros;
+      dx = xp - xk;
+    }
+
+    return murosCorridos(plan.muros, dx, xk);
+  }
+
+  /** El muro de una columna, si lo tiene. */
+  private muroEn(plan: WarehousePlan, donde: SitioDelBloque): PlanColumnaDeMuro | null {
+    if (donde === 'inicio') return plan.muroInicial ?? null;
+    if (donde === 'fin') return plan.muroFinal ?? null;
+    return plan.murosEntre?.find((w) => mismaColumna(w.entre, donde)) ?? null;
+  }
+
+  /**
+   * Pone un muro en una columna, sumándolo al que ya haya. La columna deja de ser de bloque: lo que
+   * hubiera ahí desaparece, porque al lado de un muro solo van pasillos.
+   */
+  /**
+   * Si una columna tiene estantería en algún tramo. Entre dos pasillos, sin excepción, lo que haya
+   * es el bloque general; una columna de muro no tiene ninguno.
+   */
+  private hayBloqueEn(plan: WarehousePlan, donde: SitioDelBloque): boolean {
+    const tiene = (b: PlanBloque | null | undefined) => !!b && ((b.inferior ?? 0) > 0 || (b.superior ?? 0) > 0);
+
+    if (donde === 'inicio') return tiene(plan.bloqueInicial);
+    if (donde === 'fin') return tiene(plan.bloqueFinal);
+    if (this.muroEn(plan, donde) !== null) return false;
+
+    const excepcion = (plan.excepciones ?? []).find((e) => mismaColumna(e.entre, donde));
+    return tiene(excepcion ?? plan.bloques);
+  }
+
+  private conMuro(plan: WarehousePlan, donde: SitioDelBloque, muro: PlanColumnaDeMuro): WarehousePlan {
+    const unido = unirMuros(this.muroEn(plan, donde), muro) ?? {};
+
+    if (donde === 'inicio') return { ...plan, muroInicial: unido, bloqueInicial: null };
+    if (donde === 'fin') return { ...plan, muroFinal: unido, bloqueFinal: null };
+
+    return {
+      ...plan,
+      excepciones: (plan.excepciones ?? []).filter((e) => !mismaColumna(e.entre, donde)),
+      murosEntre: [
+        ...(plan.murosEntre ?? []).filter((w) => !mismaColumna(w.entre, donde)),
+        { entre: [donde[0], donde[1]], ...unido }
+      ]
+    };
+  }
+
+  /**
+   * Quita un muro por el id que le dio el backend: <c>MN</c> y <c>MS</c> son el norte y el sur;
+   * <c>M01</c>, uno por coordenadas de un plano viejo; <c>ME4-5.inferior</c>, el tramo de una
+   * columna. Quitar un tramo de un muro de los dos deja el otro; quitar el último deja la columna
+   * <b>vacía</b>, no con un bloque que nadie puso.
+   */
+  private quitarMuro(plan: WarehousePlan, wallId: string): WarehousePlan | null {
+    if (wallId === 'MN') return { ...plan, muroNorte: false };
+    if (wallId === 'MS') return { ...plan, muroSur: false };
+
+    const porCoordenadas = /^M(\d+)$/.exec(wallId);
+    if (porCoordenadas) {
+      const indice = Number(porCoordenadas[1]) - 1;
+      const muros = [...(plan.muros ?? [])];
+      if (indice < 0 || indice >= muros.length) return null;
+      muros.splice(indice, 1);
+      return { ...plan, muros };
+    }
+
+    const deColumna = /^(MI|MF|ME(\d+)-(\d+))\.(ambos|inferior|superior|completo)$/.exec(wallId);
+    if (!deColumna) return null;
+
+    const donde: SitioDelBloque =
+      deColumna[1] === 'MI' ? 'inicio' : deColumna[1] === 'MF' ? 'fin' : [Number(deColumna[2]), Number(deColumna[3])];
+    const actual = this.muroEn(plan, donde);
+    if (actual === null) return null;
+
+    const tramo = deColumna[4];
+    const resto: PlanColumnaDeMuro | null =
+      tramo === 'ambos' || actual.tramos === tramo
+        ? null
+        : actual.tramos === undefined
+          ? { tramos: tramo === 'inferior' ? 'superior' : 'inferior' }
+          : actual;
+
+    if (donde === 'inicio') return { ...plan, muroInicial: resto };
+    if (donde === 'fin') return { ...plan, muroFinal: resto };
+
+    const otros = (plan.murosEntre ?? []).filter((w) => !mismaColumna(w.entre, donde));
+    if (resto !== null) return { ...plan, murosEntre: [...otros, { entre: [donde[0], donde[1]], ...resto }] };
+
+    return this.conColumna({ ...plan, murosEntre: otros }, [donde[0], donde[1]], null);
   }
 
   /**
@@ -377,56 +645,6 @@ export class WarehouseMap {
   }
 
   /**
-   * Un muro a lo largo de un lado del recinto.
-   *
-   * <p>Las coordenadas salen de lo que ya mide el plano: pasillos por su paso, y largo por el tramo
-   * más alto más la transversal. Nadie escribe un número.</p>
-   */
-  private muroDelLado(plan: WarehousePlan, lado: Lado, tramo?: Tramo): PlanMuro {
-    const m = plan.medidas;
-    const paso = m.anchoBloque + m.anchoPasillo;
-
-    const numeros = (plan.pasillos ?? []).flatMap((r) =>
-      Array.from({ length: r.hasta - r.desde + 1 }, (_, i) => r.desde + i)
-    );
-    const cuantos = Math.max(numeros.length, 1);
-
-    const inferior = Math.max(plan.bloques?.inferior ?? 0, ...this.excepcionales(plan, 'inferior'));
-    const superior = Math.max(plan.bloques?.superior ?? 0, ...this.excepcionales(plan, 'superior'));
-
-    const dosTramos = inferior > 0 && superior > 0;
-    const hueco = dosTramos ? m.separacionTramos : 0;
-    const finInferior = inferior * m.largoSegmento;
-    const inicioSuperior = finInferior + hueco;
-
-    const x0 = 0;
-    const x1 = m.anchoBloque + cuantos * paso;
-    const z0 = 0;
-    const z1 = inicioSuperior + superior * m.largoSegmento;
-
-    // Un muro de un lado corre solo por su tramo: la transversal es un pasaje y por ahí no pasa
-    // ningún muro. Sin tramo —o sin transversal que respetar— va de punta a punta.
-    const [za, zb] =
-      tramo === 'inferior' ? [z0, finInferior] : tramo === 'superior' ? [inicioSuperior, z1] : [z0, z1];
-
-    switch (lado) {
-      case 'sur':
-        return { desde: [x0, z0], hasta: [x1, z0] };
-      case 'norte':
-        return { desde: [x0, z1], hasta: [x1, z1] };
-      case 'oeste':
-        return { desde: [x0, za], hasta: [x0, zb] };
-      case 'este':
-        return { desde: [x1, za], hasta: [x1, zb] };
-    }
-  }
-
-  private excepcionales(plan: WarehousePlan, cual: 'inferior' | 'superior'): number[] {
-    const valores = (plan.excepciones ?? []).map((e) => e[cual]).filter((v): v is number => typeof v === 'number');
-    return valores.length > 0 ? valores : [0];
-  }
-
-  /**
    * Quita un número de los rangos. Si cae en medio, el rango se parte en dos — que es lo correcto:
    * los pasillos llevan la numeración impresa en el plano, y renumerar los de después cambiaría el
    * nombre de sitios que no se han tocado.
@@ -445,8 +663,10 @@ export class WarehouseMap {
       }
 
       encontrado = true;
-      if (numero > rango.desde) salida.push({ desde: rango.desde, hasta: numero - 1 });
-      if (numero < rango.hasta) salida.push({ desde: numero + 1, hasta: rango.hasta });
+      // Los dos trozos conservan sus tramos: sin eso, quitar uno de varios pasillos de un solo
+      // tramo convertía a los demás en pasillos completos.
+      if (numero > rango.desde) salida.push({ desde: rango.desde, hasta: numero - 1, tramos: rango.tramos });
+      if (numero < rango.hasta) salida.push({ desde: numero + 1, hasta: rango.hasta, tramos: rango.tramos });
     }
 
     return encontrado && salida.length > 0 ? salida : null;
@@ -458,7 +678,7 @@ export class WarehouseMap {
    */
   private planActual(): WarehousePlan | null {
     const texto = this.store.texto().trim();
-    if (texto === '') return planoEnBlanco();
+    if (texto === '') return this.planoNuevo();
 
     try {
       return JSON.parse(texto) as WarehousePlan;

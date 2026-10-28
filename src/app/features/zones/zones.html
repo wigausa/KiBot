@@ -310,25 +310,25 @@
                   @if (store.anclas().length === 0) {
                     <p class="aviso">Este plano no tiene pasillos numerados: no hay anclas que elegir.</p>
                   } @else {
-                    <div class="fila">
-                      <label class="campo">
-                        <span class="campo__etiqueta">Desde</span>
-                        <select class="campo__control" (change)="alElegirAncla('desde', $event)">
-                          <option value="" [selected]="store.desde() === null">Ancla</option>
-                          @for (a of store.anclas(); track a.etiqueta) {
-                            <option [value]="a.etiqueta" [selected]="a.etiqueta === store.desde()">{{ a.etiqueta }}</option>
+                    <!-- Las anclas se eligen en el plano, arrastrando de una a otra. -->
+                    <div class="eleccion">
+                      @if (store.desde() === null) {
+                        <p class="dato">
+                          En el plano, <strong>pulsa un ancla y arrástrala hasta otra</strong>. También vale pulsar
+                          una y luego la otra.
+                        </p>
+                      } @else {
+                        <p class="eleccion__par">
+                          <strong>{{ store.desde() }}</strong>
+                          <span aria-hidden="true">→</span>
+                          @if (store.hasta(); as hasta) {
+                            <strong>{{ hasta }}</strong>
+                          } @else {
+                            <span class="dato">elige la otra ancla en el plano</span>
                           }
-                        </select>
-                      </label>
-                      <label class="campo">
-                        <span class="campo__etiqueta">Hasta</span>
-                        <select class="campo__control" (change)="alElegirAncla('hasta', $event)">
-                          <option value="" [selected]="store.hasta() === null">Ancla</option>
-                          @for (a of store.anclas(); track a.etiqueta) {
-                            <option [value]="a.etiqueta" [selected]="a.etiqueta === store.hasta()">{{ a.etiqueta }}</option>
-                          }
-                        </select>
-                      </label>
+                        </p>
+                        <button type="button" class="eleccion__borrar" (click)="borrarAnclas()">Empezar de nuevo</button>
+                      }
                     </div>
 
                     @if (store.puntos() !== null) {
@@ -377,7 +377,14 @@
 
               @if (rejilla(); as r) {
                 <div class="tarjeta plano">
-                  <plan-canvas [map]="m.value" [rejilla]="r" [editable]="false" [resaltadas]="store.resaltadas()" />
+                  <plan-canvas
+                    [map]="m.value"
+                    [rejilla]="r"
+                    [editable]="false"
+                    [resaltadas]="store.resaltadas()"
+                    [geocerca]="store.zonaId() !== null ? { desde: store.desde(), hasta: store.hasta() } : null"
+                    (geocercaCambia)="alCambiarGeocerca($event)"
+                  />
                 </div>
               }
             </div>
