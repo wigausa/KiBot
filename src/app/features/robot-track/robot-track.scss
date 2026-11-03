@@ -1,0 +1,180 @@
+// Solo tokens de KiBot (src/styles/tokens): nada de colores, tamanos ni radios sueltos.
+
+.recorrido {
+  min-height: 100%;
+  padding-inline: var(--kibot-spacing-7);
+  padding-block: var(--kibot-spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-6);
+}
+
+.recorrido__cabecera h1 {
+  margin: 0;
+  font-size: var(--kibot-font-size-heading3);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
+}
+
+.recorrido__nota {
+  margin: var(--kibot-spacing-1) 0 0;
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg-muted);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-4);
+  padding: var(--kibot-spacing-6);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+}
+
+.elegir {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  max-width: 48rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+}
+
+.campo__etiqueta {
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg-muted);
+}
+
+.campo__control {
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
+  font: inherit;
+  font-size: var(--kibot-font-size-body);
+
+  &:focus-visible {
+    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+    outline-offset: var(--kibot-spacing-0);
+  }
+}
+
+// El plano manda; el panel va al lado en pantallas anchas y debajo en estrechas.
+.vista {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  gap: var(--kibot-spacing-5);
+  align-items: start;
+
+  @media (max-width: 64rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.repeticion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kibot-spacing-3);
+}
+
+.repeticion__barra {
+  flex: 1;
+  min-width: 10rem;
+  accent-color: var(--kibot-accent-strong);
+}
+
+.repeticion__hora {
+  font-variant-numeric: tabular-nums;
+}
+
+.repeticion__velocidad {
+  padding-block: var(--kibot-spacing-1);
+}
+
+.panel__estado {
+  margin: 0;
+  font-size: var(--kibot-font-size-body);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg-muted);
+}
+
+.panel__estado--vivo {
+  color: var(--kibot-success-strong);
+}
+
+.panel__titulo {
+  margin: 0;
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--kibot-spacing-1) var(--kibot-spacing-4);
+  margin: 0;
+  font-size: var(--kibot-font-size-body);
+
+  dt {
+    color: var(--kibot-fg-muted);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--kibot-fg);
+  }
+}
+
+.tramos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg);
+}
+
+.tramos__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
+}
+
+.tramos__marca {
+  width: var(--kibot-spacing-3);
+  height: var(--kibot-spacing-3);
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-warning-strong);
+}
+
+.tramos__marca--completo {
+  background: var(--kibot-success-strong);
+}
+
+.dato {
+  margin: 0;
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+.calidad {
+  padding-top: var(--kibot-spacing-3);
+  border-top: var(--kibot-stroke-0) solid var(--kibot-line);
+}
+
+.aviso {
+  margin: 0;
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-warning-strong);
+}

@@ -111,6 +111,8 @@ export interface BoxSearchResult {
   Epc: string;
   Usda: string | null;
   Locations: BoxLocation[];
+  /** Las veces que una búsqueda del robot la vio. No cambian `Locations`: la búsqueda no toca el inventario. */
+  SearchSightings?: RobotSearchSighting[];
 }
 
 // --- Tanda (órdenes de la nube al robot v1) -------------------------------------------------------
@@ -172,6 +174,8 @@ export interface RobotBatchView {
   CurrentRunId: string | null;
   Zones: RobotBatchZone[];
   LastAck: RobotCommandAck | null;
+  /** `INVENTORY` o `SEARCH`. */
+  MissionType?: string;
 }
 
 const RECHAZOS: Record<string, string> = {
@@ -179,7 +183,9 @@ const RECHAZOS: Record<string, string> = {
   NOT_MY_ROBOT: 'La orden era para otro robot',
   GEOFENCE_INVALID: 'La geocerca no es válida para el robot',
   MISSING_POINTS: 'Al robot le faltan puntos de algún pasillo',
-  SEARCH_EMPTY: 'No hay nada que recorrer en esa zona',
+  SEARCH_EMPTY: 'No hay nada que buscar',
+  CODES_INVALID: 'Algún código no es ni un USDA ni un EPC',
+  TOO_MANY: 'Demasiadas cajas para una búsqueda',
   ROBOT_BUSY: 'El robot ya tiene un recorrido en marcha',
   NO_MISSION: 'El robot no tiene ningún recorrido en marcha',
   RUN_MISMATCH: 'La orden era para otro recorrido',
@@ -373,4 +379,159 @@ export function robotsDe(inventarios: readonly RobotInventory[]): { IdDevice: nu
     }
   }
   return [...vistos].map(([IdDevice, Name]) => ({ IdDevice, Name }));
+}
+
+/**
+ * El recorrido de un robot sobre el plano (`GET inventory/{id}/robot/{device}/track`). Los puntos
+ * vienen YA en coordenadas de nuestro plano: el backend los lleva desde el mapa del robot con
+ * triángulos entre anclas.
+ */
+export interface RobotTrack {
+  IdInventory: string;
+  IdDevice: number;
+  RunId: string | null;
+  RobotRunId: string | null;
+  MapId: string | null;
+  MapVersion: number | null;
+  Run: RobotTrackRun;
+  Transform: RobotTrackTransform;
+  /** Ordenados por `T`. Con `since`, solo los posteriores. */
+  Points: RobotTrackPoint[];
+  Tramos: RobotTrackTramo[];
+}
+
+export interface RobotTrackRun {
+  Status: 'OPEN' | 'CLOSED' | string;
+  StartedAt: string | null;
+  ClosedAt: string | null;
+  Reason: string | null;
+}
+
+export interface RobotTrackTransform {
+  /** Anclas que están en los dos mapas. */
+  Pairs: number;
+  Triangles: number;
+  /** Error de la afín de respaldo en las anclas, en metros. */
+  RmsM: number | null;
+  /** Si un mapa es el reflejo del otro (el de 7000 Logistics lo es). */
+  Reflected: boolean;
+}
+
+export interface RobotTrackPoint {
+  T: string;
+  /** Metros de nuestro plano. */
+  X: number;
+  Y: number;
+  /** Radianes de nuestro plano, como `atan2`. */
+  Heading: number | null;
+  Zone: string | null;
+  Aisle: number | null;
+  Tramo: string | null;
+  Segment: number | null;
+  State: string | null;
+  MissionTramo: string | null;
+  ReadsPerS: number | null;
+  BatteryPct: number | null;
+  /** `TRIANGLE` (exacto en las anclas) o `AFFINE` (fuera de ellas, ~1 m). */
+  Method: 'TRIANGLE' | 'AFFINE' | string;
+  /** El robot decía un segmento y el punto cayó lejos: el plano o las anclas no cuadran. */
+  Mismatch: boolean;
+  /** `HEARTBEAT` (latido) o `READ` (lectura que tapa un hueco sin latidos). */
+  Source: 'HEARTBEAT' | 'READ' | string;
+}
+
+export interface RobotTrackTramo {
+  Aisle: number;
+  /** El pasillo en el plano (`P18`). */
+  AisleId: string | null;
+  Tramo: string;
+  /** `COMPLETO`, `PARCIAL`, `NO_VERIFICADO`. */
+  Status: string | null;
+  Direction: string | null;
+  CoveredAt: string;
+}
+
+// --- Búsqueda con el robot (missionType SEARCH) -------------------------------------------------
+
+/** Una caja que se buscó: el código tal como se escribió y su EPC. */
+export interface RobotSearchTarget {
+  Code: string;
+  Epc: string;
+}
+
+/** Dónde se vio una caja buscada: la cara desde la que más se la leyó. */
+export interface RobotSearchFound {
+  Code: string;
+  Epc: string;
+  AisleNumber: number | null;
+  AisleId: string | null;
+  Side: string | null;
+  Tramo: string | null;
+  Segment: number | null;
+  RackId: string | null;
+  RackSide: string | null;
+  Readings: number;
+  MeanRssi: number;
+  FirstSeenAt: string;
+  LastSeenAt: string;
+}
+
+export type RobotSearchStatus = 'Running' | 'Done' | 'Stopped' | 'Rejected';
+
+/** Cómo va una búsqueda (`GET inventory/{id}/robot/search/{searchId}`). */
+export interface RobotSearch {
+  SearchId: string;
+  IdInventory: string;
+  IdDevice: number;
+  IdZone: number;
+  ZoneName: string | null;
+  Geofence: { Name: string; From: string; To: string } | null;
+  Status: RobotSearchStatus;
+  EndReason: string | null;
+  StartedAt: string;
+  EndedAt: string | null;
+  Ack: RobotCommandAck | null;
+  Total: number;
+  Found: RobotSearchFound[];
+  /** Lo que aún no apareció; terminada, lo que no se encontró en la zona. */
+  Missing: RobotSearchTarget[];
+}
+
+/** Una vez que una búsqueda vio una caja (en Buscar caja). */
+export interface RobotSearchSighting {
+  SearchId: string;
+  SeenAt: string;
+  AisleNumber: number | null;
+  Side: string | null;
+  Tramo: string | null;
+  Segment: number | null;
+  RackId: string | null;
+  RackSide: string | null;
+  Readings: number;
+}
+
+/** Un USDA (letras y dígitos, hasta 12) o un EPC (24 hexadecimales). */
+export function esCodigoValido(codigo: string): boolean {
+  const c = codigo.trim();
+  return /^[0-9A-Fa-f]{24}$/.test(c) || /^[A-Za-z0-9]{1,12}$/.test(c);
+}
+
+/** Los códigos de un texto: uno por línea, o separados por comas, espacios o punto y coma. Sin repetidos. */
+export function codigosDe(texto: string): string[] {
+  const vistos = new Set<string>();
+  return texto
+    .split(/[\s,;]+/)
+    .map((c) => c.trim().toUpperCase())
+    .filter((c) => c !== '' && !vistos.has(c) && (vistos.add(c), true));
+}
+
+const ESTADOS_DE_BUSQUEDA: Record<RobotSearchStatus, string> = {
+  Running: 'Buscando',
+  Done: 'Terminada',
+  Stopped: 'Detenida',
+  Rejected: 'Rechazada'
+};
+
+export function textoDeBusqueda(estado: RobotSearchStatus): string {
+  return ESTADOS_DE_BUSQUEDA[estado] ?? estado;
 }

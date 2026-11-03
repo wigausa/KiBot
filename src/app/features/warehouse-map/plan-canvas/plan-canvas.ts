@@ -75,6 +75,25 @@ export interface CaraResaltada {
   readonly side: string;
 }
 
+/** Un punto del recorrido del robot, en metros DEL PLANO (el backend ya lo trajo desde el del robot). */
+export interface PuntoDelRecorrido {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Dónde está el robot y hacia dónde mira, en el plano. `heading` en radianes, como `atan2`. */
+export interface RobotEnElPlano extends PuntoDelRecorrido {
+  readonly heading: number | null;
+}
+
+/** Cómo quedó un tramo del recorrido, para pintarlo sobre el eje de su pasillo. */
+export interface TramoDelRecorrido {
+  /** `P18`. */
+  readonly aisleId: string;
+  readonly tramo: 'INFERIOR' | 'SUPERIOR' | string;
+  readonly estado: 'completo' | 'parcial' | 'pendiente' | 'recorriendo';
+}
+
 /** Lo que mide la rejilla, para poder dibujar el marco aunque el plano esté vacío. */
 export interface RejillaDelPlano {
   readonly inferior: number;
@@ -149,7 +168,7 @@ function pasoDeEje(extension: number): number {
     '(document:keydown.escape)': 'cancelar()'
   },
   templateUrl: './plan-canvas.html',
-  styleUrl: './plan-canvas.scss'
+  styleUrls: ['./plan-canvas.scss', './plan-canvas.recorrido.scss']
 })
 export class PlanCanvas {
   readonly map = input.required<WarehouseMap>();
@@ -174,6 +193,67 @@ export class PlanCanvas {
 
   /** Las anclas que se van eligiendo: al pulsar la primera, al pasar por encima de otras y al soltar. */
   readonly geocercaCambia = output<GeocercaElegida>();
+
+  /**
+   * Por dónde pasó el robot, en metros del plano. Se dibuja dentro del espejo, como todo lo demás:
+   * con la numeración hacia la izquierda se refleja junto al plano y sigue cayendo en su pasillo.
+   */
+  readonly ruta = input<readonly PuntoDelRecorrido[]>([]);
+
+  /** Dónde está el robot ahora, o en el instante que se repite. Null: no se dibuja. */
+  readonly robot = input<RobotEnElPlano | null>(null);
+
+  /** Los tramos del recorrido, coloreados sobre el eje de su pasillo según cómo quedaron. */
+  readonly tramos = input<readonly TramoDelRecorrido[]>([]);
+
+  protected readonly puntosDeRuta = computed(() =>
+    this.ruta()
+      .map((p) => `${p.x},${this.yDe(p.y)}`)
+      .join(' ')
+  );
+
+  /**
+   * La flecha del robot: un triángulo de tamaño fijo en pantalla, con la punta hacia donde mira. Se
+   * calcula en metros del plano y luego se pasa a la Y de la pantalla, punto a punto: girarla con
+   * un `rotate` tras invertir la Y la haría mirar al revés.
+   */
+  protected readonly flechaDelRobot = computed(() => {
+    const r = this.robot();
+    if (r === null) return null;
+    const largo = this.trazo() * 30;
+    const h = r.heading ?? Math.PI / 2;
+    const punta = { x: r.x + largo * Math.cos(h), y: r.y + largo * Math.sin(h) };
+    const izquierda = { x: r.x + largo * 0.6 * Math.cos(h + 2.4), y: r.y + largo * 0.6 * Math.sin(h + 2.4) };
+    const derecha = { x: r.x + largo * 0.6 * Math.cos(h - 2.4), y: r.y + largo * 0.6 * Math.sin(h - 2.4) };
+    return {
+      cx: r.x,
+      cy: this.yDe(r.y),
+      conRumbo: r.heading !== null,
+      puntos: [punta, izquierda, derecha].map((p) => `${p.x},${this.yDe(p.y)}`).join(' ')
+    };
+  });
+
+  /** Cada tramo, como una línea sobre el eje de su pasillo: de `.1` a `.I` o de `.S` a `.3`. */
+  protected readonly lineasDeTramo = computed(() => {
+    const porPasillo = new Map(this.pasillos().map((a) => [a.AisleId, a]));
+    return this.tramos().flatMap((t) => {
+      const pasillo = porPasillo.get(t.aisleId);
+      if (!pasillo) return [];
+      const ancla = (codigo: string) => pasillo.Anchors.find((a) => codigoDeAncla(a) === codigo);
+      const [desde, hasta] = t.tramo.toUpperCase() === 'SUPERIOR' ? [ancla('S'), ancla('3')] : [ancla('1'), ancla('I')];
+      if (!desde || !hasta) return [];
+      return [
+        {
+          id: `${t.aisleId}-${t.tramo}`,
+          estado: t.estado,
+          x1: desde.X,
+          y1: this.yDe(desde.Y),
+          x2: hasta.X,
+          y2: this.yDe(hasta.Y)
+        }
+      ];
+    });
+  });
 
   private readonly clavesResaltadas = computed(
     () => new Set(this.resaltadas().map((c) => `${c.rackId}-${c.side}`))

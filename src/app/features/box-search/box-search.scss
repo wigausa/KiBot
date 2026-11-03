@@ -151,3 +151,26 @@
   gap: var(--kibot-spacing-1);
   color: var(--kibot-fg);
 }
+
+// Ir a «Buscar con el robot» con el código puesto: un enlace, no una acción, porque solo navega.
+.atajo {
+  align-self: flex-start;
+  font-size: var(--kibot-font-size-body);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-accent-strong);
+  text-decoration: underline;
+
+  &:focus-visible {
+    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+    outline-offset: var(--kibot-spacing-0);
+  }
+}
+
+// Lo que vio una búsqueda del robot: otra fuente, con su fecha, y no cambia dónde quedó la caja.
+.avistamiento {
+  margin: 0;
+  padding-left: var(--kibot-spacing-3);
+  border-left: var(--kibot-stroke-2) solid var(--kibot-accent);
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg);
+}

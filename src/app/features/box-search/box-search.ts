@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { DatePipe, PercentPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
@@ -30,7 +31,7 @@ export function rejillaDelMapa(mapa: WarehouseMap): RejillaDelPlano {
  */
 @Component({
   selector: 'kibot-box-search',
-  imports: [KiBotButton, KiBotErrorState, KiBotLoadingIndicator, PlanCanvas, DatePipe, PercentPipe],
+  imports: [KiBotButton, KiBotErrorState, KiBotLoadingIndicator, PlanCanvas, DatePipe, PercentPipe, RouterLink],
   providers: [BoxSearchStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './box-search.html',

@@ -11,7 +11,9 @@ import {
   RobotBatchView,
   RobotInventory,
   RobotProgress,
+  RobotSearch,
   RobotStatusView,
+  RobotTrack,
   textoDeRechazo
 } from './robot.models';
 
@@ -140,6 +142,39 @@ export class RobotApiService {
       if (error instanceof HttpErrorResponse && error.status === 404) return null;
       throw error;
     }
+  }
+
+  /**
+   * Manda al robot a buscar unas cajas (USDA o EPC) en una zona. El rechazo (409/400) trae
+   * `{ Reason, Detail, Search }`: se lee con `falloDeOrden`.
+   */
+  iniciarBusqueda(idInventory: string, idDevice: number, zona: number, codigos: readonly string[]): Promise<RobotSearch> {
+    return firstValueFrom(
+      this.http.post<RobotSearch>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/search`, {
+        Zone: zona,
+        Codes: codigos
+      })
+    );
+  }
+
+  /** Cómo va una búsqueda: lo encontrado (en vivo mientras corre) y lo que falta. */
+  busqueda(idInventory: string, searchId: string): Promise<RobotSearch> {
+    return firstValueFrom(
+      this.http.get<RobotSearch>(`${this.baseUrl}/inventory/${idInventory}/robot/search/${searchId}`)
+    );
+  }
+
+  /**
+   * Por dónde va (o fue) el robot en el plano del inventario. Sin `runId`, el recorrido abierto o el
+   * último; con `since` (ISO), solo los puntos posteriores, para ir sumando en vivo.
+   */
+  recorrido(idInventory: string, idDevice: number, runId?: string | null, since?: string | null): Promise<RobotTrack> {
+    const params: Record<string, string> = {};
+    if (runId) params['runId'] = runId;
+    if (since) params['since'] = since;
+    return firstValueFrom(
+      this.http.get<RobotTrack>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/track`, { params })
+    );
   }
 
   private orden(idInventory: string, idDevice: number, accion: 'pause' | 'cancel' | 'rth'): Promise<RobotBatchView> {

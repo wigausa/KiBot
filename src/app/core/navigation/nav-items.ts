@@ -17,7 +17,9 @@ export const KIBOT_NAV_ITEMS: readonly KiBotNavItem[] = [
   { path: 'inventarios', label: 'Inventarios', icon: 'inventory' },
   { path: 'control', label: 'Control', icon: 'control' },
   { path: 'buscar', label: 'Buscar', icon: 'search' },
+  { path: 'buscar-robot', label: 'Buscar con el robot', icon: 'robot' },
   { path: 'ubicacion', label: 'Ubicación', icon: 'location' },
+  { path: 'recorrido', label: 'Recorrido', icon: 'robot' },
   { path: 'estado', label: 'Estado', icon: 'status' },
   { path: 'zonas', label: 'Zonas', icon: 'zones' },
   { path: 'mapa', label: 'Mapa', icon: 'map' }

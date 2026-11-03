@@ -286,6 +286,31 @@
       </text>
     }
 
+    <!-- El recorrido del robot: los tramos sobre el eje, el rastro y la flecha. Dentro del espejo. -->
+    @for (linea of lineasDeTramo(); track linea.id) {
+      <line
+        [class]="'tramo-recorrido tramo-recorrido--' + linea.estado"
+        [attr.x1]="linea.x1"
+        [attr.y1]="linea.y1"
+        [attr.x2]="linea.x2"
+        [attr.y2]="linea.y2"
+        [attr.stroke-width]="trazo() * 12"
+      />
+    }
+    @if (ruta().length > 1) {
+      <polyline class="ruta" [attr.points]="puntosDeRuta()" [attr.stroke-width]="trazo() * 6" />
+    }
+    @if (flechaDelRobot(); as f) {
+      <g class="robot">
+        <circle class="robot__halo" [attr.cx]="f.cx" [attr.cy]="f.cy" [attr.r]="trazo() * 22" />
+        @if (f.conRumbo) {
+          <polygon class="robot__flecha" [attr.points]="f.puntos" [attr.stroke-width]="trazo() * 2" />
+        } @else {
+          <circle class="robot__flecha" [attr.cx]="f.cx" [attr.cy]="f.cy" [attr.r]="trazo() * 10" />
+        }
+      </g>
+    }
+
     @for (hueco of huecos(); track hueco.id) {
       <g class="hueco" [class.hueco--activo]="hueco.id === huecoActivo()">
         <rect

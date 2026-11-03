@@ -1,0 +1,172 @@
+<section class="recorrido">
+  <header class="recorrido__cabecera">
+    <h1>Recorrido</h1>
+    <p class="recorrido__nota">
+      Por dónde va el robot sobre el plano, con lo que manda en sus latidos. Cuando el recorrido termina, se puede repetir.
+    </p>
+  </header>
+
+  @switch (store.inventarios().status) {
+    @case ('loading') {
+      <kibot-loading-indicator label="Cargando inventarios" />
+    }
+    @case ('error') {
+      @if (store.inventarios(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+        }
+      }
+    }
+    @case ('ready') {
+      <div class="tarjeta elegir">
+        <label class="campo">
+          <span class="campo__etiqueta">Inventario</span>
+          <select class="campo__control" (change)="alElegirInventario($event)">
+            <option value="" [selected]="store.inventarioId() === null">Elige un inventario</option>
+            @if (store.inventarios(); as lista) {
+              @if (lista.status === 'ready') {
+                @for (inv of lista.value; track inv._id) {
+                  <option [value]="inv._id" [selected]="inv._id === store.inventarioId()">{{ inv.Name }}</option>
+                }
+              }
+            }
+          </select>
+        </label>
+
+        @if (store.inventarioId() !== null) {
+          <label class="campo">
+            <span class="campo__etiqueta">Robot</span>
+            <select class="campo__control" (change)="alElegirRobot($event)">
+              <option value="" [selected]="store.robotId() === null">Elige un robot</option>
+              @for (r of store.robots(); track r.IdDevice) {
+                <option [value]="r.IdDevice" [selected]="r.IdDevice === store.robotId()">{{ r.Name }}</option>
+              }
+            </select>
+          </label>
+          @if (store.robots().length === 0) {
+            <p class="dato">Este inventario no tiene robots.</p>
+          }
+        }
+      </div>
+
+      @if (store.recorrido(); as r) {
+        @if (r.status === 'loading') {
+          <kibot-loading-indicator [size]="32" label="Cargando el recorrido" />
+        }
+        @if (r.status === 'error') {
+          <kibot-error-state [message]="r.message" [details]="r.details" (retry)="store.cargarRecorrido()" />
+        }
+        @if (r.status === 'ready') {
+          <div class="vista">
+            <div class="tarjeta plano">
+              @if (store.mapa(); as m) {
+                @if (m.status === 'loading') {
+                  <kibot-loading-indicator [size]="32" label="Cargando el plano" />
+                }
+                @if (m.status === 'error') {
+                  <kibot-error-state [message]="m.message" [details]="m.details" [showRetry]="false" />
+                }
+                @if (m.status === 'ready' && rejilla(); as rejilla) {
+                  <plan-canvas
+                    [map]="m.value"
+                    [rejilla]="rejilla"
+                    [editable]="false"
+                    [ruta]="store.ruta()"
+                    [robot]="store.robot()"
+                    [tramos]="store.tramos()"
+                  />
+                }
+              }
+
+              @if (!store.abierto() && store.inicio() !== null) {
+                <div class="repeticion">
+                  @if (store.reproduciendo()) {
+                    <kibot-button variant="outline" size="small" (pressed)="store.pausar()">Pausar</kibot-button>
+                  } @else {
+                    <kibot-button size="small" (pressed)="store.reproducir()">Reproducir</kibot-button>
+                  }
+                  <input
+                    class="repeticion__barra"
+                    type="range"
+                    aria-label="Momento del recorrido"
+                    [min]="store.inicio()"
+                    [max]="store.fin()"
+                    step="1000"
+                    [value]="store.instante() ?? store.inicio()"
+                    (input)="alMoverBarra($event)"
+                  />
+                  <span class="dato repeticion__hora">{{ store.instante() | date: 'HH:mm:ss' }}</span>
+                  <select class="campo__control repeticion__velocidad" aria-label="Velocidad" (change)="alElegirVelocidad($event)">
+                    @for (v of velocidades; track v) {
+                      <option [value]="v" [selected]="v === store.velocidad()">{{ v }}×</option>
+                    }
+                  </select>
+                </div>
+              }
+            </div>
+
+            <aside class="tarjeta panel" aria-live="polite">
+              <p class="panel__estado" [class.panel__estado--vivo]="store.abierto()">
+                {{ store.abierto() ? 'En vivo' : 'Recorrido terminado' }}
+                @if (store.refrescoFallido()) {
+                  <span class="aviso">· sin conexión, reintentando</span>
+                }
+              </p>
+
+              @if (store.actual(); as p) {
+                <dl class="datos">
+                  <dt>Dónde</dt>
+                  <dd>{{ donde() }}</dd>
+                  <dt>Estado</dt>
+                  <dd>{{ estado(p.State) }}</dd>
+                  <dt>Tramo de la misión</dt>
+                  <dd>{{ p.MissionTramo ?? '—' }}</dd>
+                  <dt>Batería</dt>
+                  <dd>{{ p.BatteryPct === null ? '—' : (p.BatteryPct | number: '1.0-0') + ' %' }}</dd>
+                  <dt>Lecturas por segundo</dt>
+                  <dd>{{ p.ReadsPerS === null ? '—' : (p.ReadsPerS | number: '1.0-0') }}</dd>
+                  <dt>Hora</dt>
+                  <dd>{{ p.T | date: 'HH:mm:ss' }}</dd>
+                </dl>
+              } @else {
+                <p class="dato">Todavía no hay puntos de este recorrido: el robot no ha mandado latidos ni lecturas.</p>
+              }
+
+              <h2 class="panel__titulo">Tramos</h2>
+              @if (r.value.Tramos.length === 0) {
+                <p class="dato">Ninguno terminado todavía.</p>
+              } @else {
+                <ul class="tramos">
+                  @for (t of r.value.Tramos; track t.Aisle + t.Tramo) {
+                    <li class="tramos__fila">
+                      <span class="tramos__marca" [class.tramos__marca--completo]="t.Status?.toUpperCase() === 'COMPLETO'"></span>
+                      Pasillo {{ t.Aisle }} · {{ t.Tramo.toLowerCase() }}
+                      <span class="dato">{{ t.CoveredAt | date: 'HH:mm' }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+
+              <p class="dato calidad">
+                {{ store.puntos().length }} puntos ·
+                {{ r.value.Transform.Pairs }} anclas emparejadas
+                @if (r.value.Transform.Reflected) {
+                  · mapas reflejados
+                }
+              </p>
+              @if (r.value.Transform.Pairs === 0) {
+                <p class="aviso">El robot no mandó sus anclas o el plano no tiene: no se puede dibujar el recorrido.</p>
+              }
+              @if (store.desfasados() > 0) {
+                <p class="aviso">{{ store.desfasados() }} puntos caen lejos del segmento que decía el robot: el plano o las anclas no cuadran.</p>
+              }
+              @if (store.porAfin() > 0) {
+                <p class="dato">{{ store.porAfin() }} puntos fuera de las anclas (aproximados, ~1 m).</p>
+              }
+            </aside>
+          </div>
+        }
+      }
+    }
+  }
+</section>

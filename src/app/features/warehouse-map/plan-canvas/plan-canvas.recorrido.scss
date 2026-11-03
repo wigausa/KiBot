@@ -1,0 +1,50 @@
+// El recorrido del robot sobre el plano. Aparte de plan-canvas.scss, que ya va al limite del
+// presupuesto de estilos por componente.
+
+// El tramo sobre el eje de su pasillo, como en la repetición del robot: verde si quedó completo,
+// ámbar si parcial, blanco mientras lo recorre y gris lo que falta. Los tonos base y no los
+// "strong": sobre el asfalto oscuro del pasillo, los oscuros no se ven.
+.tramo-recorrido {
+  stroke-linecap: round;
+  stroke-opacity: 0.9;
+  pointer-events: none;
+}
+
+.tramo-recorrido--completo {
+  stroke: var(--kibot-success);
+}
+
+.tramo-recorrido--parcial {
+  stroke: var(--kibot-warning);
+}
+
+.tramo-recorrido--recorriendo {
+  stroke: var(--kibot-fg);
+}
+
+.tramo-recorrido--pendiente {
+  stroke: var(--kibot-line);
+}
+
+.ruta {
+  fill: none;
+  stroke: var(--kibot-error);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.robot {
+  pointer-events: none;
+}
+
+.robot__halo {
+  fill: var(--kibot-error);
+  fill-opacity: 0.25;
+}
+
+.robot__flecha {
+  fill: var(--kibot-error);
+  stroke: var(--kibot-fg);
+  stroke-linejoin: round;
+}

@@ -36,11 +36,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/box-search/box-search').then((m) => m.BoxSearch)
       },
       {
+        path: 'buscar-robot',
+        title: 'Buscar con el robot · KiBot',
+        data: { title: 'Buscar con el robot', icon: 'search' },
+        loadComponent: () =>
+          import('./features/robot-search/robot-search').then((m) => m.RobotSearchPage)
+      },
+      {
         path: 'ubicacion',
         title: 'Ubicación en tiempo real · KiBot',
         data: { title: 'Ubicación', icon: 'location' },
         loadComponent: () =>
           import('./features/robot-status/robot-location').then((m) => m.RobotLocation)
+      },
+      {
+        path: 'recorrido',
+        title: 'Recorrido del robot · KiBot',
+        data: { title: 'Recorrido', icon: 'robot' },
+        loadComponent: () => import('./features/robot-track/robot-track').then((m) => m.RobotTrack)
       },
       {
         path: 'estado',

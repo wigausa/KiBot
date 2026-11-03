@@ -558,4 +558,73 @@ describe('PlanCanvas', () => {
       expect(svg.querySelector('rect.geocerca')).toBeTruthy();   // la que ya había, P1.1 → P2.3
     });
   });
+
+  // --- el recorrido del robot -----------------------------------------------------------------
+
+  describe('recorrido del robot', () => {
+    it('sin recorrido no dibuja ni ruta ni robot', () => {
+      expect(svg.querySelector('polyline.ruta')).toBeNull();
+      expect(svg.querySelector('g.robot')).toBeNull();
+    });
+
+    it('dibuja la ruta en metros del plano, con la Y hacia arriba', async () => {
+      fixture.componentRef.setInput('ruta', [{ x: 1, y: 0.5 }, { x: 2.3, y: 2.6 }, { x: 3.6, y: 4 }]);
+      await fixture.whenStable();
+
+      // espejoY = 2·(-2) + 10 = 6, así que y = 0,5 se pinta en 5,5.
+      expect(svg.querySelector('polyline.ruta')!.getAttribute('points')).toBe('1,5.5 2.3,3.4 3.6,2');
+    });
+
+    it('la ruta va dentro del espejo: con la numeración hacia la izquierda se refleja con el plano', async () => {
+      fixture.componentRef.setInput('map', { ...mapa(), AisleNumberingTowards: 'izquierda' });
+      fixture.componentRef.setInput('ruta', [{ x: 1, y: 0.5 }, { x: 1, y: 2 }]);
+      await fixture.whenStable();
+
+      expect(svg.querySelector(':scope > g')!.contains(svg.querySelector('polyline.ruta'))).toBeTrue();
+    });
+
+    it('la flecha del robot apunta hacia donde mira, también con la Y invertida', async () => {
+      // Mirando hacia arriba en el plano (+Y): la punta queda más arriba en pantalla (Y menor).
+      fixture.componentRef.setInput('robot', { x: 1, y: 2, heading: Math.PI / 2 });
+      await fixture.whenStable();
+
+      const puntos = svg.querySelector('polygon.robot__flecha')!.getAttribute('points')!
+        .split(' ').map((p) => p.split(',').map(Number));
+      const centroY = 6 - 2;
+      expect(puntos[0][0]).toBeCloseTo(1, 6);
+      expect(puntos[0][1]).toBeLessThan(centroY);
+      expect(puntos[1][1]).toBeGreaterThan(centroY);
+    });
+
+    it('sin rumbo el robot es un punto', async () => {
+      fixture.componentRef.setInput('robot', { x: 1, y: 2, heading: null });
+      await fixture.whenStable();
+
+      expect(svg.querySelector('polygon.robot__flecha')).toBeNull();
+      expect(svg.querySelector('circle.robot__flecha')).toBeTruthy();
+    });
+
+    it('colorea cada tramo sobre el eje de su pasillo, entre sus anclas', async () => {
+      const conCodigos = mapa();
+      conCodigos.Aisles[0].Anchors = [
+        { Ordinal: 1, Code: '1', X: 1, Y: 0 },
+        { Ordinal: 2, Code: 'I', X: 1, Y: 2 },
+        { Ordinal: 3, Code: 'S', X: 1, Y: 3 },
+        { Ordinal: 4, Code: '3', X: 1, Y: 5.2 }
+      ];
+      fixture.componentRef.setInput('map', conCodigos);
+      fixture.componentRef.setInput('tramos', [
+        { aisleId: 'P1', tramo: 'INFERIOR', estado: 'completo' },
+        { aisleId: 'P1', tramo: 'SUPERIOR', estado: 'recorriendo' },
+        { aisleId: 'P9', tramo: 'INFERIOR', estado: 'completo' }   // no está en el plano: no se pinta
+      ]);
+      await fixture.whenStable();
+
+      const lineas = [...svg.querySelectorAll('line.tramo-recorrido')];
+      expect(lineas.length).toBe(2);
+      expect(lineas[0].classList).toContain('tramo-recorrido--completo');
+      expect([lineas[0].getAttribute('y1'), lineas[0].getAttribute('y2')]).toEqual(['6', '4']);
+      expect(lineas[1].classList).toContain('tramo-recorrido--recorriendo');
+    });
+  });
 });
