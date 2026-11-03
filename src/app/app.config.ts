@@ -10,6 +10,7 @@ import { environment } from '../environments/environment';
 import { API_BASE_URL, API_CREDENTIALS } from './core/http/api.config';
 import { apiInterceptor } from './core/http/api.interceptor';
 import { DevCredentialsService } from './core/http/dev-credentials.service';
+import { proveerLogin } from './core/auth/msal';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -26,8 +27,11 @@ export const appConfig: ApplicationConfig = {
     // test da otro valor en vez de tener que sustituir un módulo.
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
 
-    // La costura. El día que KiBot tenga su registro en B2C, esta línea pasa a
-    // `MsalCredentialsService` y no se toca ningún servicio, store ni pantalla.
-    { provide: API_CREDENTIALS, useClass: DevCredentialsService }
+    // La costura. Con `auth` en el entorno entra el login de B2C (`MsalCredentialsService`, con el
+    // app registration de Witag); sin él, el de desarrollo, y el proxy pone la identidad. Ningún
+    // servicio, store ni pantalla se entera de cuál es.
+    environment.auth
+      ? proveerLogin(environment.auth, environment.apimSubscriptionKey)
+      : { provide: API_CREDENTIALS, useClass: DevCredentialsService }
   ]
 };

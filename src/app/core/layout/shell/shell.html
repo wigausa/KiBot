@@ -46,6 +46,17 @@
           <span class="robot__meta">Bodega 7000</span>
         </span>
       </div>
+
+      @if (sesion.usuario; as usuario) {
+        <div class="sesion">
+          @if (expanded()) {
+            <span class="sesion__usuario" [attr.title]="usuario">{{ usuario }}</span>
+          }
+          <button type="button" class="sesion__salir" (click)="sesion.cerrar()">
+            {{ expanded() ? 'Cerrar sesión' : 'Salir' }}
+          </button>
+        </div>
+      }
     </div>
   </aside>
 

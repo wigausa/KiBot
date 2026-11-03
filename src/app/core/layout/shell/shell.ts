@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { KIBOT_NAV_ITEMS } from '../../navigation/nav-items';
+import { Sesion } from '../../auth/sesion';
 import { KiBotIcon } from '../../../shared/ui/kibot-icon/kibot-icon';
 import { WitagLogo } from '../../../shared/ui/witag-logo/witag-logo';
 import { ThemeToggle } from '../../../shared/ui/theme-toggle/theme-toggle';
@@ -24,6 +25,8 @@ const SIDEBAR_STORAGE_KEY = 'kibot-sidebar-expanded';
 })
 export class Shell {
   protected readonly navItems = KIBOT_NAV_ITEMS;
+  // Quién está dentro y cerrar sesión. Sin login (desarrollo local) no se pinta.
+  protected readonly sesion = inject(Sesion);
   protected readonly expanded = signal(this.readStoredExpanded());
 
   protected toggleSidebar(): void {
