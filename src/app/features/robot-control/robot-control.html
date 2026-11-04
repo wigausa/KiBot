@@ -103,7 +103,9 @@
               Iniciar recorrido
             </kibot-button>
           } @else {
-            @if (!store.enPausa() && !store.volviendo()) {
+            @if (store.enPausa()) {
+              <kibot-button [busy]="store.ocupado()" (pressed)="reanudar()">Reanudar</kibot-button>
+            } @else if (!store.volviendo() && !store.arrancando()) {
               <kibot-button variant="outline" [busy]="store.ocupado()" (pressed)="pausar()">Pausar</kibot-button>
             }
             <kibot-button variant="outline" tone="error" [busy]="store.ocupado()" (pressed)="cancelar()">
@@ -128,7 +130,7 @@
             <span class="insignia" [class.insignia--activa]="tanda.Status === 'Running' && !store.enPausa()">
               @switch (tanda.Status) {
                 @case ('Running') {
-                  {{ store.enPausa() ? 'En pausa' : store.volviendo() ? 'Volviendo al dock' : 'Recorriendo' }}
+                  {{ store.arrancando() ? 'Arrancando' : store.enPausa() ? 'En pausa' : store.volviendo() ? 'Volviendo al dock' : 'Recorriendo' }}
                 }
                 @case ('Done') {
                   Terminada
@@ -148,14 +150,22 @@
           </div>
 
           @if (store.enPausa()) {
-            <p class="aviso">En pausa. No se puede reanudar: cancela o mándalo al dock.</p>
+            <p class="aviso">En pausa. Puedes reanudar, cancelar o mandarlo al dock.</p>
+          }
+          @if (store.arrancando()) {
+            <p class="aviso">
+              El robot está preparando la misión. Se confirma cuando su latido la muestre en marcha; si en 2 minutos
+              no arranca, la tanda se detiene.
+            </p>
           }
 
           @if (tanda.Status === 'Stopped') {
-            <p class="aviso aviso--alerta">Se detuvo: {{ textoDeFinDeZona(tanda.StopReason) }}.</p>
+            <p class="aviso aviso--alerta">
+              Se detuvo: {{ textoDeFinDeZona(tanda.StopReason) }}{{ tanda.Zones[tanda.Current]?.EndDetail ? ' (' + tanda.Zones[tanda.Current].EndDetail + ')' : '' }}.
+            </p>
           }
           @if (tanda.LastAck; as ack) {
-            @if (ack.Status !== 'ACCEPTED') {
+            @if (ack.Status !== 'ACCEPTED' && ack.Status !== 'PENDING' && !(store.arrancando() && ack.Status === 'NO_RESPONSE')) {
               <p class="aviso aviso--alerta">
                 {{ ack.Status === 'NO_RESPONSE' ? textoDeRechazo('NO_RESPONSE') : textoDeRechazo(ack.Reason) }}{{ ack.Detail ? ': ' + ack.Detail : '' }}
               </p>
@@ -175,7 +185,7 @@
               <li class="secuencia__zona" [class.secuencia__zona--actual]="tanda.Status === 'Running' && i === tanda.Current">
                 <span>{{ zona.Name }} <span class="dato">{{ zona.From }} → {{ zona.To }}</span></span>
                 <span class="dato">
-                  {{ textoDeEstadoDeZona(zona.State) }}{{ zona.EndReason && zona.EndReason !== 'COMPLETED' ? ' · ' + textoDeFinDeZona(zona.EndReason) : '' }}
+                  {{ textoDeEstadoDeZona(zona.State) }}{{ zona.EndReason && zona.EndReason !== 'COMPLETED' ? ' · ' + textoDeFinDeZona(zona.EndReason) : '' }}{{ zona.EndDetail ? ' · ' + zona.EndDetail : '' }}
                 </span>
               </li>
             }

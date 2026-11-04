@@ -119,12 +119,12 @@ export interface BoxSearchResult {
 
 /**
  * Una tanda: varias zonas en orden. La nube manda un `START` por zona y encadena sola la siguiente
- * cuando la anterior termina con `COMPLETED`; con CANCEL, RTH, ERROR o un rechazo, se detiene.
- * <b>No hay reanudar</b>: de una pausa solo se sale cancelando o mandándolo al dock.
+ * cuando la anterior termina con `COMPLETED`; con CANCEL, RTH, ERROR, NOT_STARTED o un rechazo, se
+ * detiene. De una pausa se sale reanudando, cancelando o mandándolo al dock.
  */
 export type RobotBatchStatus = 'Running' | 'Done' | 'Stopped';
 export type RobotBatchZoneState = 'Pending' | 'Running' | 'Done' | 'Stopped' | 'Rejected';
-export type RobotCommand = 'START' | 'PAUSE' | 'CANCEL' | 'RTH';
+export type RobotCommand = 'START' | 'PAUSE' | 'RESUME' | 'CANCEL' | 'RTH';
 
 export interface RobotBatchZone {
   IdZone: number;
@@ -134,8 +134,13 @@ export interface RobotBatchZone {
   To: string;
   RunId: string | null;
   State: RobotBatchZoneState;
-  /** COMPLETED, CANCELLED, RTH, ERROR o TIMEOUT. Nulo mientras no termina. */
+  /** COMPLETED, CANCELLED, RTH, ERROR, TIMEOUT, REJECTED o NOT_STARTED. Nulo mientras no termina. */
   EndReason: string | null;
+  /**
+   * El motivo en texto que da el robot (firmware 2.0.0): `orden del operador: CANCEL`,
+   * `seta de emergencia: ...` o por qué falló. No viene en las tandas anteriores.
+   */
+  EndDetail?: string | null;
 }
 
 /** Lo que el robot entendió de un `START`: se enseña para que el encargado lo compare. */
@@ -143,15 +148,19 @@ export interface RobotCommandResolved {
   Aisles: number[];
   Tramos: string[];
   TramosTotal: number;
-  ReaderPowerDbm: number;
-  MaxSpeedMps: number;
+  ReaderPowerDbm: number | null;
+  MaxSpeedMps: number | null;
 }
 
-/** El acuse del robot a una orden. `NO_RESPONSE` lo pone la nube si el robot no contesta. */
+/**
+ * El acuse del robot a una orden. `PENDING`: entregada sin confirmar (en un `START`, la misión se
+ * lanzó y se confirma por el latido en 2 minutos). `NO_RESPONSE` lo pone la nube si el robot no
+ * contesta, o si el módulo no llegó a hablar con él (`Reason: ROBOT_UNREACHABLE`).
+ */
 export interface RobotCommandAck {
   CommandId: string;
   Command: RobotCommand;
-  Status: 'ACCEPTED' | 'REJECTED' | 'NO_RESPONSE';
+  Status: 'ACCEPTED' | 'REJECTED' | 'PENDING' | 'PREVIEW' | 'NO_RESPONSE';
   Reason: string | null;
   Detail: string | null;
   Resolved: RobotCommandResolved | null;
@@ -164,7 +173,7 @@ export interface RobotBatchView {
   IdInventory: string;
   IdDevice: number;
   Status: RobotBatchStatus;
-  /** CANCELLED, RTH, ERROR, REJECTED o TIMEOUT. Nulo si terminó bien. */
+  /** CANCELLED, RTH, ERROR, REJECTED, TIMEOUT o NOT_STARTED. Nulo si terminó bien. */
   StopReason: string | null;
   RequestedBy: string | null;
   StartedAt: string;
@@ -189,11 +198,23 @@ const RECHAZOS: Record<string, string> = {
   ROBOT_BUSY: 'El robot ya tiene un recorrido en marcha',
   NO_MISSION: 'El robot no tiene ningún recorrido en marcha',
   RUN_MISMATCH: 'La orden era para otro recorrido',
+  RUN_ID_USED: 'El robot ya usó ese recorrido',
+  NOT_PAUSED: 'El robot no está en pausa',
+  TERMINANDO: 'El robot ya terminó sus tramos',
   ESTOP: 'Seta de emergencia pulsada',
+  LOCALIZING: 'El robot se está relocalizando',
   BATTERY_LOW: 'Batería baja para salir',
   RFID_DOWN: 'El lector RFID no responde',
+  RFID_BUSY: 'El lector RFID está ocupado',
   CHASSIS_UNREACHABLE: 'El robot no llega a su chasis',
+  CHASSIS_STUCK: 'El chasis no se mueve',
+  DOCK_UNKNOWN: 'El robot no sabe dónde está el dock',
+  LAUNCH_FAILED: 'La misión no arrancó',
+  BAD_CLOUD_KEY: 'La clave de la nube no es válida',
+  CLOUD_KEY_NOT_SET: 'El robot no tiene la clave de la nube',
+  LOCKED: 'Demasiadas claves equivocadas: espera 2 minutos',
   BATCH_RUNNING: 'Ya hay una tanda en marcha',
+  ROBOT_UNREACHABLE: 'No se pudo hablar con el robot',
   NO_RESPONSE: 'El robot no contestó'
 };
 
@@ -203,7 +224,8 @@ const FINES: Record<string, string> = {
   RTH: 'Mandado volver al dock',
   ERROR: 'El robot dio un error',
   REJECTED: 'El robot rechazó la orden',
-  TIMEOUT: 'El robot dejó de dar noticias'
+  TIMEOUT: 'El robot dejó de dar noticias',
+  NOT_STARTED: 'El robot no llegó a arrancar'
 };
 
 const ESTADOS_DE_ZONA: Record<RobotBatchZoneState, string> = {
@@ -281,9 +303,9 @@ export interface RobotStatusMission {
   TramosTotal: number | null;
   /**
    * En qué punto está la misión (órdenes de la nube v1). `PAUSED` solo sale de aquí: la tanda no lo
-   * sabe. Nulo en los latidos de antes de que existieran las órdenes.
+   * sabe. `PREPARING` mientras arranca. Nulo en los latidos de antes de que existieran las órdenes.
    */
-  Status?: 'RUNNING' | 'PAUSED' | 'RETURNING' | null;
+  Status?: 'PREPARING' | 'RUNNING' | 'PAUSED' | 'RETURNING' | 'FINISHED' | null;
 }
 
 /** `X`/`Y` son del mapa del robot (Reeman), no del nuestro: para enseñar sirve la dirección. */

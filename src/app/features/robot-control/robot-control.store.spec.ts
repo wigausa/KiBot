@@ -53,7 +53,7 @@ function tanda(status: RobotBatchView['Status'], zonas: number[] = [1], cambios:
   };
 }
 
-function latido(mision: { RunId: string; Status: 'RUNNING' | 'PAUSED' | 'RETURNING' }): RobotStatusView {
+function latido(mision: { RunId: string; Status: 'PREPARING' | 'RUNNING' | 'PAUSED' | 'RETURNING' }): RobotStatusView {
   return {
     IdDevice: 7,
     DeviceName: 'R1',
@@ -106,6 +106,11 @@ class ApiFalsa {
 
   async pausar(): Promise<RobotBatchView> {
     this.ordenes.push('pause');
+    return this.tandaActual!;
+  }
+
+  async reanudar(): Promise<RobotBatchView> {
+    this.ordenes.push('resume');
     return this.tandaActual!;
   }
 
@@ -272,6 +277,43 @@ describe('RobotControlStore', () => {
     await store.refrescar();
 
     expect(store.enPausa()).toBeTrue();
+  });
+
+  it('Reanudar manda RESUME a la tanda en marcha', async () => {
+    api.tandaActual = tanda('Running', [1]);
+    api.latidoActual = latido({ RunId: 'run-1', Status: 'PAUSED' });
+    await conRobot();
+    await store.refrescar();
+    expect(store.enPausa()).toBeTrue();
+
+    await store.reanudar();
+
+    expect(api.ordenes).toEqual(['resume']);
+  });
+
+  it('un START en PENDING se ve «arrancando» hasta que el latido lo muestra en marcha', async () => {
+    const ack = { CommandId: 'c-1', Command: 'START' as const, Status: 'PENDING' as const, Reason: null,
+                  Detail: 'sigue preparandose', Resolved: null, At: '2026-11-04T10:00:00Z', RequestedBy: null };
+    api.tandaActual = tanda('Running', [1], { LastAck: ack });
+    await conRobot();
+    expect(store.arrancando()).toBeTrue();
+
+    api.latidoActual = latido({ RunId: 'run-1', Status: 'PREPARING' });
+    await store.refrescar();
+    expect(store.arrancando()).toBeTrue();
+
+    api.latidoActual = latido({ RunId: 'run-1', Status: 'RUNNING' });
+    await store.refrescar();
+    expect(store.arrancando()).toBeFalse();
+  });
+
+  it('un START aceptado no está «arrancando»', async () => {
+    const ack = { CommandId: 'c-1', Command: 'START' as const, Status: 'ACCEPTED' as const, Reason: null,
+                  Detail: null, Resolved: null, At: '2026-11-04T10:00:00Z', RequestedBy: null };
+    api.tandaActual = tanda('Running', [1], { LastAck: ack });
+    await conRobot();
+
+    expect(store.arrancando()).toBeFalse();
   });
 
   it('el sondeo trae la tanda: cuando la nube pasa a la zona siguiente, se ve', async () => {

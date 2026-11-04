@@ -79,12 +79,17 @@ export class RobotApiService {
     );
   }
 
-  /** Pausa la zona en curso. No hay reanudar: de la pausa se sale cancelando o volviendo al dock. */
+  /** Pausa la zona en curso. De la pausa se sale reanudando, cancelando o volviendo al dock. */
   pausar(idInventory: string, idDevice: number): Promise<RobotBatchView> {
     return this.orden(idInventory, idDevice, 'pause');
   }
 
-  /** Cancela la zona en curso y con ella la tanda: no se encadena la siguiente. */
+  /** Sigue la zona pausada donde se quedó (RESUME). Si no está en pausa, el robot contesta NOT_PAUSED. */
+  reanudar(idInventory: string, idDevice: number): Promise<RobotBatchView> {
+    return this.orden(idInventory, idDevice, 'resume');
+  }
+
+  /** Cancela la zona en curso y con ella la tanda: el robot se queda donde está y no se encadena la siguiente. */
   cancelar(idInventory: string, idDevice: number): Promise<RobotBatchView> {
     return this.orden(idInventory, idDevice, 'cancel');
   }
@@ -177,7 +182,7 @@ export class RobotApiService {
     );
   }
 
-  private orden(idInventory: string, idDevice: number, accion: 'pause' | 'cancel' | 'rth'): Promise<RobotBatchView> {
+  private orden(idInventory: string, idDevice: number, accion: 'pause' | 'resume' | 'cancel' | 'rth'): Promise<RobotBatchView> {
     return firstValueFrom(
       this.http.post<RobotBatchView>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/${accion}`, {})
     );
