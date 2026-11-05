@@ -9,7 +9,7 @@ import { RobotControlStore } from './robot-control.store';
 
 /**
  * Control del recorrido (B12): el encargado elige inventario, robot y zonas en orden, inicia la
- * tanda, ve cómo va y, si hace falta, la pausa, la cancela o manda el robot al dock.
+ * tanda, ve cómo va y, si hace falta, la pausa, la reanuda, la cancela o manda el robot al dock.
  *
  * <p>No decide nada: la pantalla enseña lo que dice el store, y el store lo que dice el backend.</p>
  */
@@ -49,13 +49,23 @@ export class RobotControl implements OnInit {
   // shared/ui, así que vale el nativo.
 
   protected pausar(): void {
-    if (confirm('¿Pausar el recorrido? No se puede reanudar: después solo queda cancelar o volver al dock.')) {
+    if (confirm('¿Pausar el recorrido? El robot se para donde esté; después se puede reanudar.')) {
       void this.store.pausar();
     }
   }
 
+  protected reanudar(): void {
+    if (confirm('¿Reanudar el recorrido? El robot sigue desde donde se quedó.')) {
+      void this.store.reanudar();
+    }
+  }
+
   protected cancelar(): void {
-    if (confirm('¿Cancelar el recorrido? Se detiene la tanda y no se recorren las zonas que faltan.')) {
+    if (
+      confirm(
+        '¿Cancelar el recorrido? El robot se queda donde está (no vuelve al dock), se detiene la tanda y no se recorren las zonas que faltan.'
+      )
+    ) {
       void this.store.cancelar();
     }
   }

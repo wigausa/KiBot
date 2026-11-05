@@ -19,7 +19,7 @@ export type EstadoDeOrden =
 
 /**
  * El estado de la pantalla de Control (B12): elegir inventario, robot y zonas en orden, iniciar la
- * tanda, ver el avance y pausarla, cancelarla o mandar el robot al dock.
+ * tanda, ver el avance y pausarla, reanudarla, cancelarla o mandar el robot al dock.
  *
  * <p>La tanda la lleva la nube: manda un `START` por zona y encadena la siguiente cuando la anterior
  * termina bien. Aquí solo se pide y se mira. La pausa no viene en la tanda sino en el latido del
@@ -100,9 +100,21 @@ export class RobotControlStore implements OnDestroy {
     return t && m && t.CurrentRunId !== null && m.RunId === t.CurrentRunId ? m : null;
   });
 
-  /** Pausada. No hay reanudar: desde aquí solo se cancela o se vuelve al dock. */
+  /** Pausada: se puede reanudar, cancelar o volver al dock. */
   readonly enPausa = computed(() => this.mision()?.Status === 'PAUSED');
   readonly volviendo = computed(() => this.mision()?.Status === 'RETURNING');
+
+  /**
+   * El `START` de la zona en curso quedó sin confirmar (`PENDING`, o sin respuesta) y el latido todavía
+   * no la ve en marcha. La nube espera 2 minutos: si no arranca, detiene la tanda (`NOT_STARTED`).
+   */
+  readonly arrancando = computed(() => {
+    const t = this.enMarcha();
+    const ack = t?.LastAck;
+    if (!t || !ack || ack.Command !== 'START' || (ack.Status !== 'PENDING' && ack.Status !== 'NO_RESPONSE')) return false;
+    const m = this.mision();
+    return m === null || !m.Status || m.Status === 'PREPARING';
+  });
 
   readonly ocupado = computed(() => this._accion().status === 'loading');
 
@@ -185,12 +197,17 @@ export class RobotControlStore implements OnDestroy {
     await this.ordenar(() => this.api.iniciarTanda(inv, robot, zonas));
   }
 
-  /** Pausa la zona en curso. Ojo: no hay reanudar. */
+  /** Pausa la zona en curso. Se puede reanudar después. */
   async pausar(): Promise<void> {
     await this.ordenEnMarcha((inv, robot) => this.api.pausar(inv, robot));
   }
 
-  /** Cancela la zona en curso y con ella la tanda entera. */
+  /** Sigue la zona pausada donde se quedó. */
+  async reanudar(): Promise<void> {
+    await this.ordenEnMarcha((inv, robot) => this.api.reanudar(inv, robot));
+  }
+
+  /** Cancela la zona en curso y con ella la tanda entera. El robot se queda donde está. */
   async cancelar(): Promise<void> {
     await this.ordenEnMarcha((inv, robot) => this.api.cancelar(inv, robot));
   }
