@@ -1,0 +1,91 @@
+# Avisa a InfraHub (wigausa/InfraHubWitag) para que despliegue KiBot, como hace WitagFrontend.
+#
+# KiBot se publica en la carpeta `kibot/` del sitio estático (contenedor `$web`) del storage de cada
+# tenant, junto a WitagFrontend; no hay Static Web App. InfraHub compila un build por tenant con
+# `npm run build:infrahub` (clientId del app de B2C del tenant y key de APIM) y registra
+# `https://<sitio>/kibot/` como redirect en ese app.
+#
+#   - push a `testing`        → InfraHub despliega en test (dummyclient41) al momento.
+#   - PR fusionado a `main`   → InfraHub solo lo anota (auto_deploy=false); prod se despliega a mano.
+#
+# Necesita el secreto INFRAHUB_DISPATCH_TOKEN: un PAT fine-grained con SOLO "Actions: Read and
+# write" sobre wigausa/InfraHubWitag. El repo es público, por eso no se usa un PAT con permisos de
+# contenido. Sin el secreto, compila y termina en verde con un aviso.
+name: Avisar a InfraHub
+
+on:
+  push:
+    branches: [testing]
+  pull_request:
+    branches: [main]
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Comprobación de que compila antes de avisar; el build que se publica lo hace InfraHub.
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compilar como lo hace InfraHub
+        env:
+          AUTH_CLIENT_ID: 00000000-0000-0000-0000-000000000000
+          KIBOT_APIM_KEY: ''
+        run: npm run build:infrahub
+
+  notify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Avisar a InfraHub
+        env:
+          GH_TOKEN: ${{ secrets.INFRAHUB_DISPATCH_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Falta el secreto INFRAHUB_DISPATCH_TOKEN: compiló, pero no se avisa a InfraHub."
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            ENVIRONMENT="prod"; AUTO_DEPLOY=false; SOURCE_REF="main"; SOURCE_COMMIT="$MERGE_SHA"
+          else
+            ENVIRONMENT="test"; AUTO_DEPLOY=true; SOURCE_REF="$REF_NAME"; SOURCE_COMMIT="$SHA"
+          fi
+
+          PAYLOAD=$(jq -cn \
+            --arg repository "$REPOSITORY" \
+            --arg ref "$SOURCE_REF" \
+            --arg commit "$SOURCE_COMMIT" \
+            --argjson auto "$AUTO_DEPLOY" \
+            '{source_repository: $repository, source_ref: $ref, source_commit: $commit, frontend_target: "kibot", auto_deploy: $auto}')
+          echo "$PAYLOAD"
+
+          gh workflow run deploy-functions.yml -R wigausa/InfraHubWitag --ref main \
+            -f environment="$ENVIRONMENT" \
+            -f dispatch_kind=frontend-source-updated \
+            -f dispatch_payload="$PAYLOAD"
+
+          {
+            echo "### Aviso enviado a InfraHub"
+            echo "- Entorno: $ENVIRONMENT (auto_deploy: $AUTO_DEPLOY)"
+            echo "- Ref: $SOURCE_REF @ ${SOURCE_COMMIT:0:7}"
+          } >> "$GITHUB_STEP_SUMMARY"

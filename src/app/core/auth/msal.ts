@@ -21,15 +21,27 @@ export function proveerLogin(auth: AuthConfig, claveApim: string | null): Enviro
   return makeEnvironmentProviders([proveedores, provideAppInitializer(() => iniciarSesion(inject(MSAL)))]);
 }
 
+/**
+ * Adonde vuelve B2C: el origen más la ruta del `<base href>`.
+ *
+ * <p>En local la base es `/` y queda `http://localhost:8101`, como antes. Desplegado por InfraHub,
+ * KiBot vive en la carpeta `kibot/` del sitio estático del tenant (la raíz es de WitagFrontend) y
+ * queda `https://<sitio>/kibot/`, con la barra final. Esa URL exacta es la que InfraHub registra
+ * como redirect SPA en el app de B2C.</p>
+ */
+export function urlDeVuelta(): string {
+  const ruta = new URL(document.baseURI).pathname;
+  return ruta === '/' ? window.location.origin : window.location.origin + ruta;
+}
+
 export function crearMsal(auth: AuthConfig): PublicClientApplication {
   return new PublicClientApplication({
     auth: {
       clientId: auth.clientId,
       authority: auth.authority,
       knownAuthorities: [...auth.knownAuthorities],
-      // El origen, sin ruta: es lo que se registra en B2C (`http://localhost:8101`, la URL de la SWA).
-      redirectUri: window.location.origin,
-      postLogoutRedirectUri: window.location.origin
+      redirectUri: urlDeVuelta(),
+      postLogoutRedirectUri: urlDeVuelta()
     },
     // Como WitagFrontend: la sesión sobrevive a cerrar la pestaña.
     cache: { cacheLocation: BrowserCacheLocation.LocalStorage }

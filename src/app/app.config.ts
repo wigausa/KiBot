@@ -4,7 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
 
 import { environment } from '../environments/environment';
 import { API_BASE_URL, API_CREDENTIALS } from './core/http/api.config';
@@ -19,7 +19,12 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     // `withComponentInputBinding` alimenta los inputs de los componentes de
     // ruta desde `data` (lo usa ModulePlaceholder para su título e ícono).
-    provideRouter(routes, withComponentInputBinding()),
+    // `withHashLocation`: desplegado, KiBot vive en `/kibot/` dentro del sitio estático del tenant
+    // y el 404 de esa cuenta de storage devuelve el `index.html` de la raíz, que es WitagFrontend.
+    // Con rutas `/kibot/#/…` el servidor siempre entrega `/kibot/index.html` y recargar una
+    // pantalla no abre la otra aplicación. La vuelta de B2C (`#code=…`) la procesa MSAL en el
+    // `APP_INITIALIZER` de `proveerLogin`, antes de la primera navegación del router.
+    provideRouter(routes, withComponentInputBinding(), withHashLocation()),
 
     provideHttpClient(withFetch(), withInterceptors([apiInterceptor])),
 

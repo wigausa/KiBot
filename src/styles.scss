@@ -1,5 +1,6 @@
 // Estilos globales de KiBot. Los tokens del design system entran solo por aquí.
-@use "styles/fonts";
+// La tipografía (@font-face de Poppins) va en `public/fonts/poppins.css`, enlazada desde
+// `index.html`: sus URL tienen que ser relativas al <base href> (`/kibot/` en InfraHub).
 @use "styles/tokens";
 
 html,
