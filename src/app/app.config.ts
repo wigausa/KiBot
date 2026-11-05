@@ -23,6 +23,9 @@ export const appConfig: ApplicationConfig = {
     // y el 404 de esa cuenta de storage devuelve el `index.html` de la raíz, que es WitagFrontend.
     // Con rutas `/kibot/index.html#/…` se pide siempre ese archivo y recargar una pantalla no abre
     // la otra aplicación (ni el service worker de WitagFrontend la intercepta; ver `urlDeVuelta`).
+    // La URL conserva `index.html` porque `build:infrahub` compila con `--base-href
+    // /kibot/index.html`: el router escribe solo `#/ruta` y el navegador la completa contra el
+    // `<base href>`. Con `/kibot/` quedaría `/kibot/#/ruta`.
     // La vuelta de B2C (`#code=…`) la procesa MSAL en el `APP_INITIALIZER` de `proveerLogin`, antes
     // de la primera navegación del router.
     provideRouter(routes, withComponentInputBinding(), withHashLocation()),

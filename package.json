@@ -10,7 +10,7 @@
     "start:local": "ng serve --host 0.0.0.0 --port 8101 --poll 2000 --live-reload --proxy-config proxy.local.conf.js",
     "start:test": "ng serve -c test-local --port 8101",
     "build:test": "ng build -c test",
-    "build:infrahub": "ng build -c production --base-href /kibot/ --define \"KIBOT_CLIENT_ID='$AUTH_CLIENT_ID'\" --define \"KIBOT_APIM_KEY='$KIBOT_APIM_KEY'\""
+    "build:infrahub": "ng build -c production --base-href /kibot/index.html --define \"KIBOT_CLIENT_ID='$AUTH_CLIENT_ID'\" --define \"KIBOT_APIM_KEY='$KIBOT_APIM_KEY'\""
   },
   "prettier": {
     "printWidth": 100,

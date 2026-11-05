@@ -11,6 +11,11 @@ describe('urlDeVuelta', () => {
     );
   });
 
+  it('desplegado con la base de build:infrahub (kibot/index.html), vuelve a ese archivo', () => {
+    const base = 'https://stwitagtestdummyclient41.z20.web.core.windows.net/kibot/index.html';
+    expect(urlDeVuelta(base)).toBe(base);
+  });
+
   it('sin <base>, desde el index.html de la carpeta, da la misma URL', () => {
     expect(urlDeVuelta('https://sitio.example/kibot/index.html#/robots')).toBe(
       'https://sitio.example/kibot/index.html'
