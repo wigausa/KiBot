@@ -22,16 +22,19 @@ export function proveerLogin(auth: AuthConfig, claveApim: string | null): Enviro
 }
 
 /**
- * Adonde vuelve B2C: el origen más la ruta del `<base href>`.
+ * Adonde vuelve B2C: el `index.html` de la carpeta del `<base href>`.
  *
  * <p>En local la base es `/` y queda `http://localhost:8101`, como antes. Desplegado por InfraHub,
- * KiBot vive en la carpeta `kibot/` del sitio estático del tenant (la raíz es de WitagFrontend) y
- * queda `https://<sitio>/kibot/`, con la barra final. Esa URL exacta es la que InfraHub registra
- * como redirect SPA en el app de B2C.</p>
+ * KiBot vive en la carpeta `kibot/` del sitio estático del tenant y queda
+ * `https://<sitio>/kibot/index.html`. Con `index.html` y no `kibot/` a secas: la raíz es de
+ * WitagFrontend, y su service worker (alcance `/`) contesta con su propio `index.html` a toda
+ * navegación sin extensión, así que en un navegador que ya abrió WitagFrontend la vuelta a
+ * `/kibot/` acabaría en WitagFrontend. Esa URL exacta es la que InfraHub registra como redirect SPA
+ * en el app de B2C.</p>
  */
-export function urlDeVuelta(): string {
-  const ruta = new URL(document.baseURI).pathname;
-  return ruta === '/' ? window.location.origin : window.location.origin + ruta;
+export function urlDeVuelta(base: string = document.baseURI): string {
+  const url = new URL('index.html', base);
+  return url.pathname === '/index.html' ? url.origin : url.origin + url.pathname;
 }
 
 export function crearMsal(auth: AuthConfig): PublicClientApplication {

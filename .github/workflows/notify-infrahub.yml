@@ -3,7 +3,8 @@
 # KiBot se publica en la carpeta `kibot/` del sitio estático (contenedor `$web`) del storage de cada
 # tenant, junto a WitagFrontend; no hay Static Web App. InfraHub compila un build por tenant con
 # `npm run build:infrahub` (clientId del app de B2C del tenant y key de APIM) y registra
-# `https://<sitio>/kibot/` como redirect en ese app.
+# `https://<sitio>/kibot/index.html` como redirect en ese app. Se entra por esa misma URL: a
+# `/kibot/` a secas la intercepta el service worker de WitagFrontend (ver `urlDeVuelta`).
 #
 #   - push a `testing`        → InfraHub despliega en test (dummyclient41) al momento.
 #   - PR fusionado a `main`   → InfraHub solo lo anota (auto_deploy=false); prod se despliega a mano.
