@@ -4,6 +4,15 @@ import { Injectable, signal } from '@angular/core';
 const BOOT_ENTRY_PATHS = new Set(['/', '/inicio']);
 
 /**
+ * La ruta de la app en la URL de carga. Con `withHashLocation` va en el hash (`#/inicio`), no en
+ * `location.pathname`, que desplegado es `/kibot/index.html`. Sin hash, la app arranca en Inicio.
+ */
+export function rutaInicial(hash: string): string {
+  const ruta = hash.replace(/^#/, '').split(/[?#]/)[0];
+  return ruta === '' ? '/' : ruta;
+}
+
+/**
  * Decide si corre la secuencia de arranque (cortina + spinner de marca).
  *
  * La cortina es el encendido de la pantalla del robot, no una transición de
@@ -16,7 +25,7 @@ const BOOT_ENTRY_PATHS = new Set(['/', '/inicio']);
 @Injectable({ providedIn: 'root' })
 export class AppBootService {
   private readonly startedOnHome =
-    typeof location === 'undefined' || BOOT_ENTRY_PATHS.has(location.pathname);
+    typeof location === 'undefined' || BOOT_ENTRY_PATHS.has(rutaInicial(location.hash));
 
   private readonly booted = signal(false);
 
