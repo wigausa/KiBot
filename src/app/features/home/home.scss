@@ -1,106 +1,249 @@
+// Solo tokens de KiBot. Página, tarjeta, insignias y barra son las compartidas (src/styles/_ui.scss).
+
 :host {
   display: block;
-  height: 100%;
+  min-height: 100%;
 }
 
-// ── Contenido ──────────────────────────────────────────────────────────────
 .home {
+}
+
+// ── El saludo ──────────────────────────────────────────────────────────────
+// Sobre el gradiente de marca (Tertiary): es la única superficie de identidad de la pantalla.
+.hero {
   position: relative;
-  display: grid;
-  place-items: center;
-  height: 100%;
-  min-height: 100%;
-  padding: var(--kibot-spacing-7) var(--kibot-spacing-6);
   overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-5);
+  padding: var(--kibot-spacing-7);
+  border-radius: var(--kibot-radius-7);
+  background: var(--kibot-brand-gradient);
+  color: var(--kibot-on-brand);
 }
 
 // Halo de marca: respira igual que el splash de Android (SvgShapeBoxSplash).
-.home__halo {
+.hero__halo {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(
-      circle at 78% 24%,
-      color-mix(in srgb, var(--kibot-brand-magenta) 26%, transparent) 0%,
-      transparent 62%
-    ),
-    radial-gradient(
-      circle at 18% 78%,
-      color-mix(in srgb, var(--kibot-brand-aqua) 20%, transparent) 0%,
-      transparent 58%
-    );
-  animation: kibot-breathe calc(var(--kibot-motion-pulse) * 3) var(--kibot-ease-standard) infinite
-    alternate;
+    radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--kibot-brand-magenta) 34%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 10% 90%, color-mix(in srgb, var(--kibot-brand-aqua) 24%, transparent) 0%, transparent 55%);
+  animation: kibot-breathe calc(var(--kibot-motion-pulse) * 3) var(--kibot-ease-standard) infinite alternate;
+  pointer-events: none;
 }
 
-.home__content {
+.hero__texto,
+.hero__estado {
   position: relative;
+}
+
+.hero__eyebrow {
+  margin: 0 0 var(--kibot-spacing-2);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kibot-color-primary-200);
+}
+
+.hero__saludo {
+  margin: 0;
+  font-size: var(--kibot-font-size-heading2);
+  font-weight: var(--kibot-font-weight-bold);
+  line-height: 1.25;
+}
+
+.hero__sub {
+  margin: var(--kibot-spacing-2) 0 0;
+  color: rgb(255 255 255 / 78%);
+}
+
+.hero__estado {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kibot-spacing-2) var(--kibot-spacing-4);
+  padding: var(--kibot-spacing-3) var(--kibot-spacing-4);
+  border-radius: var(--kibot-radius-full);
+  background: rgb(255 255 255 / 12%);
+  font-size: var(--kibot-font-size-subtitle);
+}
+
+.hero__robot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.hero__dato {
+  color: rgb(255 255 255 / 85%);
+}
+
+.punto {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-color-neutral-400);
+}
+
+.punto--ok {
+  background: var(--kibot-success);
+  box-shadow: 0 0 0 4px rgb(58 182 116 / 30%);
+}
+
+// ── El recorrido en curso ──────────────────────────────────────────────────
+.en-curso {
+  color: inherit;
+  text-decoration: none;
+  gap: var(--kibot-spacing-3);
+  transition: border-color var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover {
+    border-color: var(--kibot-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
+}
+
+.en-curso__cabecera {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--kibot-spacing-3);
-  text-align: center;
 }
 
-// Entrada escalonada: cada bloque sube y aparece detrás del anterior.
-.home__eyebrow,
-.home__logo,
-.home__title,
-.home__subtitle {
+.en-curso__zona {
+  flex: 1;
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.en-curso__porcentaje {
+  font-size: var(--kibot-font-size-heading4);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.en-curso__ir {
+  align-self: flex-end;
+  color: var(--kibot-accent-strong);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+// ── Los módulos ────────────────────────────────────────────────────────────
+.modulos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--kibot-spacing-4);
+
+  li {
+    display: flex;
+  }
+}
+
+.modulo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--kibot-spacing-4);
+  min-height: 6.5rem;
+  padding: var(--kibot-spacing-5);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-7);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
+  text-decoration: none;
+  transition:
+    border-color var(--kibot-motion-fast) var(--kibot-ease-standard),
+    transform var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover {
+    border-color: var(--kibot-accent);
+    transform: translateY(-2px);
+
+    .modulo__flecha {
+      color: var(--kibot-accent-strong);
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
+}
+
+.modulo__icono {
+  --kibot-icon-size: 30px;
+
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-accent-wash);
+  color: var(--kibot-accent-strong);
+}
+
+.modulo__texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-1);
+}
+
+.modulo__titulo {
+  font-size: var(--kibot-font-size-caption);
+  font-weight: var(--kibot-font-weight-bold);
+  line-height: 1.3;
+}
+
+.modulo__descripcion {
+  font-size: var(--kibot-font-size-subtitle);
+  line-height: 1.45;
+  color: var(--kibot-fg-muted);
+}
+
+.modulo__flecha {
+  --kibot-icon-size: 20px;
+
+  flex: none;
+  color: var(--kibot-fg-muted);
+  transition:
+    color var(--kibot-motion-fast) var(--kibot-ease-standard),
+    transform var(--kibot-motion-fast) var(--kibot-ease-standard);
+}
+
+// Entrada escalonada al terminar el arranque.
+.hero,
+.modulos li {
   opacity: 0;
-  transform: translateY(var(--kibot-spacing-5));
+  transform: translateY(var(--kibot-spacing-4));
   transition:
     opacity var(--kibot-motion-slow) var(--kibot-ease-standard),
     transform var(--kibot-motion-slow) var(--kibot-ease-settle);
 }
 
 .home--revealed {
-  .home__eyebrow,
-  .home__logo,
-  .home__title,
-  .home__subtitle {
+  .hero,
+  .modulos li {
     opacity: 1;
     transform: none;
   }
 
-  .home__logo {
-    transition-delay: var(--kibot-motion-fast);
+  .modulos li {
+    transition-delay: calc(var(--kibot-motion-fast) * (var(--i, 0) + 1));
   }
-
-  .home__title {
-    transition-delay: calc(var(--kibot-motion-fast) * 2);
-  }
-
-  .home__subtitle {
-    transition-delay: calc(var(--kibot-motion-fast) * 3);
-  }
-}
-
-.home__eyebrow {
-  margin: 0;
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-  letter-spacing: 0.12em;
-  color: var(--kibot-accent-strong);
-}
-
-.home__logo {
-  margin-block: var(--kibot-spacing-2);
-}
-
-.home__title {
-  margin: 0;
-  font-size: var(--kibot-font-size-heading1);
-  font-weight: var(--kibot-font-weight-bold);
-  line-height: 1.15;
-  color: var(--kibot-fg);
-}
-
-.home__subtitle {
-  margin: 0;
-  font-size: var(--kibot-font-size-caption);
-  font-weight: var(--kibot-font-weight-light);
-  color: var(--kibot-fg-muted);
 }
 
 // ── Cortina de arranque ────────────────────────────────────────────────────
@@ -109,7 +252,7 @@
 .curtain {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 70;
   display: grid;
   place-items: center;
   background: var(--kibot-brand-gradient);
@@ -138,7 +281,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home__halo {
+  .hero__halo {
     animation: none;
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
@@ -12,6 +12,9 @@ import { RobotTrackStore, VELOCIDADES, Velocidad } from './robot-track.store';
 /**
  * Recorrido: por dónde va el robot sobre el plano, en vivo, y su repetición cuando termina. Como la
  * repetición del ingeniero, pero sobre NUESTRO plano y con lo que llega a la nube (los latidos).
+ *
+ * <p>Desde noviembre de 2026 vive dentro de Control (pestaña «Recorrido en el plano»): con
+ * `embebido`, el inventario y el robot llegan por `input` y no hay selector ni título propios.</p>
  */
 @Component({
   selector: 'kibot-robot-track',
@@ -24,6 +27,25 @@ import { RobotTrackStore, VELOCIDADES, Velocidad } from './robot-track.store';
 export class RobotTrack implements OnInit {
   protected readonly store = inject(RobotTrackStore);
   protected readonly velocidades = VELOCIDADES;
+
+  /** Embebido: lo elegido en Control. */
+  readonly inventarioId = input<string | null>(null);
+  readonly robotId = input<number | null>(null);
+  /** Un recorrido concreto (el último de la zona elegida). Sin él, el abierto o el último del robot. */
+  readonly runId = input<string | null>(null);
+  readonly embebido = input(false);
+
+  constructor() {
+    // Embebido, lo que llega de fuera manda: al cambiar, se carga ese recorrido.
+    effect(() => {
+      const inv = this.inventarioId();
+      const robot = this.robotId();
+      const run = this.runId();
+      const listo = this.store.inventarios().status === 'ready';
+      if (!this.embebido() || !listo) return;
+      untracked(() => void this.seguir(inv, robot, run));
+    });
+  }
 
   protected readonly rejilla = computed(() => {
     const m = this.store.mapa();
@@ -41,6 +63,17 @@ export class RobotTrack implements OnInit {
 
   ngOnInit(): void {
     void this.store.cargar();
+  }
+
+  private async seguir(inv: string | null, robot: number | null, run: string | null): Promise<void> {
+    if (inv !== this.store.inventarioId() || robot !== this.store.robotId()) {
+      // El recorrido pedido se fija ANTES de elegir: así la primera carga ya es la de la zona.
+      this.store.runId.set(run);
+      if (inv !== this.store.inventarioId()) await this.store.elegirInventario(inv);
+      if (robot !== this.store.robotId()) await this.store.elegirRobot(robot);
+    } else {
+      await this.store.elegirRecorrido(run);
+    }
   }
 
   protected alElegirInventario(evento: Event): void {

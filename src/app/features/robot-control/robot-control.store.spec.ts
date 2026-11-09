@@ -130,10 +130,17 @@ class ApiFalsa {
     return this.latidoActual;
   }
 
-  async progreso(): Promise<RobotProgress> {
+  zonasDeProgreso: (number | null)[] = [];
+
+  async progreso(_inv: string, zona: number | null = null): Promise<RobotProgress> {
     this.progresos++;
+    this.zonasDeProgreso.push(zona);
+    // Por zona: la 1 lleva 2 de 4 tramos y la 3, 1 de 4.
+    const tramos = zona === 1 ? { TramosDone: 2, TramosTotal: 4, RunId: 'run-z1' } : zona === 3 ? { TramosDone: 1, TramosTotal: 4, RunId: 'run-z3' } : {};
     return {
       IdInventory: 'inv-1',
+      IdZone: zona,
+      ...tramos,
       TotalSides: 10,
       CoveredSides: 4,
       Readings: 120,
@@ -179,6 +186,25 @@ describe('RobotControlStore', () => {
 
     // La puerta no recorre, y el robot que está en dos zonas es UN robot.
     expect(store.robots()).toEqual([{ IdDevice: 7, Name: 'R1' }]);
+  });
+
+  it('un recorrido que no salió de KiBot (latido con misión) se sigue y no deja iniciar otro', async () => {
+    api.latidoActual = latido({ RunId: 'run-manual', Status: 'RUNNING' });
+    await conRobot();
+    store.verZona(1);
+
+    expect(store.recorridoSinTanda()).toEqual({ runId: 'run-manual' });
+    expect(store.botones().iniciar).toBeFalse();
+    expect(store.botones().motivo).toContain('no se inició desde KiBot');
+    // El sondeo sigue: una segunda vuelta vuelve a pedir el avance.
+    const antes = api.progresos;
+    await store.refrescar();
+    expect(api.progresos).toBeGreaterThan(antes);
+  });
+
+  it('sin tanda ni misión viva, no hay recorrido que seguir', async () => {
+    await conRobot();
+    expect(store.recorridoSinTanda()).toBeNull();
   });
 
   it('no deja iniciar sin zonas marcadas', async () => {
@@ -387,5 +413,87 @@ describe('RobotControlStore', () => {
 
     expect(store.robotId()).toBeNull();
     expect(store.zonasMarcadas().length).toBe(0);
+  });
+
+  // --- Control por zona (2026-11-06) ---------------------------------------------------------
+
+  it('la pestaña de una zona trae el avance de esa zona', async () => {
+    await conRobot();
+    store.verZona(1);
+    await new Promise((r) => setTimeout(r));
+
+    expect(api.zonasDeProgreso).toContain(1);
+    expect(store.progresoDeLaVista()?.RunId).toBe('run-z1');
+    expect(store.avanceDeLaVista()).toBe(50);
+  });
+
+  it('Iniciar en la pestaña de una zona manda una tanda con solo esa zona', async () => {
+    await conRobot();
+    store.verZona(3);
+
+    expect(store.botones().iniciar).toBeTrue();
+    expect(store.botones().pausar).toBeFalse();
+    expect(store.botones().motivo).toContain('Inicia el recorrido');
+
+    await store.iniciarZona(3);
+    expect(api.zonasEnviadas).toEqual([[3]]);
+  });
+
+  it('sin recorrido, Pausar, Detener y Volver a casa salen apagados', async () => {
+    await conRobot();
+    store.verZona(1);
+    const b = store.botones();
+    expect([b.pausar, b.detener, b.casa]).toEqual([false, false, false]);
+  });
+
+  it('con la tanda en marcha en esa zona se puede pausar, detener y mandar a casa, pero no iniciar', async () => {
+    api.tandaActual = tanda('Running', [1]);
+    await conRobot();
+    store.verZona(1);
+
+    const b = store.botones();
+    expect([b.iniciar, b.pausar, b.detener, b.casa]).toEqual([false, true, true, true]);
+  });
+
+  it('en pausa, Iniciar pasa a ser Reanudar', async () => {
+    api.tandaActual = tanda('Running', [1]);
+    api.latidoActual = latido({ RunId: 'run-1', Status: 'PAUSED' });
+    await conRobot();
+    store.verZona(1);
+    await store.refrescar();
+
+    const b = store.botones();
+    expect(b.iniciar).toBeTrue();
+    expect(b.reanudar).toBeTrue();
+    expect(b.pausar).toBeFalse();
+  });
+
+  it('la pestaña de otra zona dice dónde está el robot y apaga los botones', async () => {
+    api.tandaActual = tanda('Running', [1]);
+    await conRobot();
+    store.verZona(5);
+
+    const b = store.botones();
+    expect([b.iniciar, b.pausar, b.detener, b.casa]).toEqual([false, false, false, false]);
+    expect(b.motivo).toContain('«Zona 1»');
+  });
+
+  it('General suma los tramos de todas las zonas de la tanda', async () => {
+    api.tandaActual = tanda('Running', [1, 3]);
+    await conRobot();
+    store.verZona(null);
+    await store.refrescar();
+
+    // (2 + 1) de (4 + 4) tramos.
+    expect(store.avanceDeLaVista()).toBeCloseTo(37.5, 5);
+    expect(store.zonasDeGeneral()).toEqual([1, 3]);
+  });
+
+  it('una zona que va en la tanda general lo dice', async () => {
+    api.tandaActual = tanda('Running', [1, 3]);
+    await conRobot();
+    store.verZona(3);
+
+    expect(store.parteDeGeneral()).toEqual({ numero: 2, total: 2, enMarcha: true });
   });
 });

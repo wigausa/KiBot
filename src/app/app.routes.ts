@@ -1,9 +1,18 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { RedirectFunction, Router, Routes } from '@angular/router';
 
 /**
- * Arquitectura por módulo/ruta: el shell (sidebar + contenido) es la ruta
- * raíz y cada módulo entra como hija lazy. El orden y los paths son los
- * mismos de `KIBOT_NAV_ITEMS`, que es lo que pinta el sidebar.
+ * Una ruta vieja que ahora es una pestaña de otro módulo: lleva allí conservando sus query params
+ * (`?inv=&code=` de Buscar con el robot, por ejemplo) y añadiendo `?tab=`.
+ */
+function aPestana(destino: string, tab: string): RedirectFunction {
+  return ({ queryParams }) =>
+    inject(Router).createUrlTree([`/${destino}`], { queryParams: { ...queryParams, tab } });
+}
+
+/**
+ * Arquitectura por módulo/ruta: el shell (riel + contenido) es la ruta raíz y cada módulo entra como
+ * hija lazy. Los módulos son los de `KIBOT_NAV_ITEMS`, que es lo que pinta el riel.
  */
 export const routes: Routes = [
   {
@@ -19,61 +28,36 @@ export const routes: Routes = [
       {
         path: 'inventarios',
         title: 'Inventarios · KiBot',
-        data: { title: 'Inventarios', icon: 'inventory' },
         loadComponent: () => import('./features/inventories/inventories').then((m) => m.Inventories)
       },
       {
         path: 'control',
         title: 'Control del recorrido · KiBot',
-        data: { title: 'Control', icon: 'control' },
         loadComponent: () =>
           import('./features/robot-control/robot-control').then((m) => m.RobotControl)
       },
       {
         path: 'buscar',
-        title: 'Buscar caja · KiBot',
-        data: { title: 'Buscar', icon: 'search' },
-        loadComponent: () => import('./features/box-search/box-search').then((m) => m.BoxSearch)
-      },
-      {
-        path: 'buscar-robot',
-        title: 'Buscar con el robot · KiBot',
-        data: { title: 'Buscar con el robot', icon: 'search' },
-        loadComponent: () =>
-          import('./features/robot-search/robot-search').then((m) => m.RobotSearchPage)
-      },
-      {
-        path: 'ubicacion',
-        title: 'Ubicación en tiempo real · KiBot',
-        data: { title: 'Ubicación', icon: 'location' },
-        loadComponent: () =>
-          import('./features/robot-status/robot-location').then((m) => m.RobotLocation)
-      },
-      {
-        path: 'recorrido',
-        title: 'Recorrido del robot · KiBot',
-        data: { title: 'Recorrido', icon: 'robot' },
-        loadComponent: () => import('./features/robot-track/robot-track').then((m) => m.RobotTrack)
+        title: 'Buscar cajas · KiBot',
+        loadComponent: () => import('./features/search/search').then((m) => m.Search)
       },
       {
         path: 'estado',
         title: 'Estado del equipo y alertas · KiBot',
-        data: { title: 'Estado', icon: 'status' },
         loadComponent: () => import('./features/robot-status/robot-status').then((m) => m.RobotStatus)
       },
       {
-        path: 'zonas',
-        title: 'Zonas · KiBot',
-        data: { title: 'Zonas', icon: 'zones' },
-        loadComponent: () => import('./features/zones/zones').then((m) => m.Zones)
+        path: 'planos',
+        title: 'Planos y zonas · KiBot',
+        loadComponent: () => import('./features/maps-zones/maps-zones').then((m) => m.MapsZones)
       },
-      {
-        path: 'mapa',
-        title: 'Plano de bodega · KiBot',
-        data: { title: 'Mapa', icon: 'map' },
-        loadComponent: () =>
-          import('./features/warehouse-map/warehouse-map').then((m) => m.WarehouseMap)
-      }
+
+      // Rutas de antes de noviembre de 2026: ahora son pestañas.
+      { path: 'buscar-robot', redirectTo: aPestana('buscar', 'robot') },
+      { path: 'ubicacion', redirectTo: aPestana('control', 'ubicacion') },
+      { path: 'recorrido', redirectTo: aPestana('control', 'recorrido') },
+      { path: 'zonas', redirectTo: aPestana('planos', 'zonas') },
+      { path: 'mapa', redirectTo: aPestana('planos', 'planos') }
     ]
   },
   { path: '**', redirectTo: '' }

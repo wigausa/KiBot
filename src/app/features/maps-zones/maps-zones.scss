@@ -1,0 +1,66 @@
+// Solo tokens de KiBot. Página, tarjeta e insignias son las compartidas (src/styles/_ui.scss).
+
+.compania {
+  max-width: 24rem;
+}
+
+.planos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--kibot-spacing-3);
+}
+
+.plano {
+  cursor: pointer;
+  transition:
+    border-color var(--kibot-motion-fast) var(--kibot-ease-standard),
+    transform var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover {
+    border-color: var(--kibot-accent);
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-1);
+  padding: var(--kibot-spacing-4);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface-variant);
+}
+
+.plano__nombre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-2);
+}
+
+.plano__ver {
+  margin-top: var(--kibot-spacing-1);
+  color: var(--kibot-accent-strong);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.leyenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+}
+
+.lienzo {
+  min-height: 24rem;
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  overflow: hidden;
+}

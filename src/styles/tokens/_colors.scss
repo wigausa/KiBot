@@ -5,11 +5,12 @@
 // ---------------------------------------------------------------------------
 
 :root {
-  // Primary (Magenta/Violeta)
-  --kibot-color-primary-base: #e190ff;
-  --kibot-color-primary-alpha-50: rgb(217 116 255 / 50%); // corregido: D974FF @ 50% (ver nota DESIGN.md)
-  --kibot-color-primary-100: #e8acff;
-  --kibot-color-primary-200: #d974ff;
+  // Primary (Magenta/Violeta) — Sistema de diseño Witag (2026-11): Primary = 100 = #D974FF,
+  // 200 = #E190FF (más claro: estado active), 400 = #AE5DCC (hover), 500 = #824699.
+  --kibot-color-primary-base: #d974ff;
+  --kibot-color-primary-alpha-50: rgb(217 116 255 / 50%);
+  --kibot-color-primary-100: #d974ff;
+  --kibot-color-primary-200: #e190ff;
   --kibot-color-primary-400: #ae5dcc;
   --kibot-color-primary-500: #824699;
 

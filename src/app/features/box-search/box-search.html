@@ -1,10 +1,12 @@
-<section class="buscar">
-  <header class="buscar__cabecera">
-    <h1>Buscar caja</h1>
-    <p class="buscar__nota">
-      Por el código USDA que lleva impreso o por su EPC. Solo cuando el recorrido del robot ha terminado.
-    </p>
-  </header>
+<section class="buscar" [class.buscar--embebido]="embebido()">
+  @if (!embebido()) {
+    <header class="buscar__cabecera">
+      <h1>Buscar caja</h1>
+      <p class="buscar__nota">
+        Por el código USDA que lleva impreso o por su EPC. Solo cuando el recorrido del robot ha terminado.
+      </p>
+    </header>
+  }
 
   @switch (store.inventarios().status) {
     @case ('loading') {
@@ -19,6 +21,7 @@
     }
     @case ('ready') {
       <form class="tarjeta" (submit)="alBuscar($event)">
+        @if (!embebido()) {
         <label class="campo">
           <span class="campo__etiqueta">Inventario</span>
           <select class="campo__control" (change)="alElegirInventario($event)">
@@ -32,6 +35,13 @@
             }
           </select>
         </label>
+        }
+
+        @if (store.inventarioId() === null) {
+          <p class="aviso">Elige arriba el inventario en el que buscar.</p>
+        } @else if (embebido() && store.zonaId() === null) {
+          <p class="aviso">Elige arriba la zona en la que buscar.</p>
+        }
 
         @if (store.inventarioId() !== null) {
           @switch (store.estado().status) {
@@ -57,7 +67,7 @@
                   <kibot-button variant="outline" size="small" (pressed)="store.consultarEstado()">
                     Comprobar de nuevo
                   </kibot-button>
-                  <a class="atajo" routerLink="/buscar-robot" [queryParams]="{ inv: store.inventarioId(), code: store.codigo() || null }">
+                  <a class="atajo" routerLink="/buscar" [queryParams]="{ tab: 'robot', inv: store.inventarioId(), code: store.codigo() || null }">
                     Mandar al robot a buscarla
                   </a>
                 </div>
@@ -77,7 +87,7 @@
                     (input)="alEscribir($event)"
                   />
                 </label>
-                <kibot-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.resultado().status === 'loading'">
+                <kibot-button type="submit" [disabled]="!store.puedeBuscar() || (embebido() && store.zonaId() === null)" [busy]="store.resultado().status === 'loading'">
                   Buscar
                 </kibot-button>
               </div>
@@ -99,7 +109,7 @@
 
             @if (r.value.Locations.length === 0) {
               <p class="sin-ver">El robot no leyó esta caja en este inventario.</p>
-              <a class="atajo" routerLink="/buscar-robot" [queryParams]="{ inv: store.inventarioId(), code: r.value.Usda ?? r.value.Code }">
+              <a class="atajo" routerLink="/buscar" [queryParams]="{ tab: 'robot', inv: store.inventarioId(), code: r.value.Usda ?? r.value.Code }">
                 Mandar al robot a buscarla
               </a>
             }

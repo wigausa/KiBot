@@ -1,11 +1,16 @@
-<section class="control">
-  <header class="control__cabecera">
-    <h1>Control del recorrido</h1>
-    <p class="control__nota">
-      Elige el inventario, el robot y las zonas que va a recorrer, en orden. El robot las recorre una tras otra y
-      pasa a la siguiente cuando termina la anterior.
-    </p>
+<section class="pagina control">
+  <header class="pagina__cabecera">
+    <div>
+      <p class="pagina__antetitulo">Control</p>
+      <h1>Control del recorrido</h1>
+      <p class="pagina__nota">
+        Elige el inventario y la zona. En «General» puedes recorrer varias zonas seguidas; en la pestaña de una zona,
+        solo esa. En cada una ves el avance, dónde está el robot y su ruta en el plano.
+      </p>
+    </div>
   </header>
+
+  <kibot-robot-context-bar />
 
   @switch (store.inventarios().status) {
     @case ('loading') {
@@ -19,209 +24,244 @@
       }
     }
     @case ('ready') {
-      <div class="tarjeta">
-        <label class="campo">
-          <span class="campo__etiqueta">Inventario</span>
-          <select class="campo__control" (change)="alElegirInventario($event)" [disabled]="store.enMarcha() !== null">
-            <option value="" [selected]="store.inventarioId() === null">Elige un inventario abierto</option>
-            @if (store.inventarios(); as lista) {
-              @if (lista.status === 'ready') {
-                @for (inv of lista.value; track inv._id) {
-                  <option [value]="inv._id" [selected]="inv._id === store.inventarioId()">{{ inv.Name }}</option>
-                }
-              }
-            }
-          </select>
-        </label>
-
-        @if (store.inventarioId() !== null) {
-          @if (store.robots().length === 0) {
-            <p class="aviso">Este inventario no tiene ningún robot asignado.</p>
-          } @else {
-            <label class="campo">
-              <span class="campo__etiqueta">Robot</span>
-              <select class="campo__control" (change)="alElegirRobot($event)" [disabled]="store.enMarcha() !== null">
-                <option value="" [selected]="store.robotId() === null">Elige un robot</option>
-                @for (robot of store.robots(); track robot.IdDevice) {
-                  <option [value]="robot.IdDevice" [selected]="robot.IdDevice === store.robotId()">{{ robot.Name }}</option>
-                }
-              </select>
-            </label>
-          }
-        }
-
-        @if (store.robotId() !== null) {
-          <fieldset class="zonas" [disabled]="store.enMarcha() !== null">
-            <legend class="campo__etiqueta">Zonas que va a recorrer</legend>
-            @for (zona of store.zonas(); track zona.IdZone) {
-              <label class="zona">
-                <input
-                  type="checkbox"
-                  [checked]="store.ordenDe(zona.IdZone) !== null"
-                  (change)="store.alternarZona(zona.IdZone)"
-                />
-                <span>{{ zona.Name }}</span>
-                @if (store.ordenDe(zona.IdZone); as n) {
-                  <span class="orden" [attr.aria-label]="'Puesto ' + n + ' del recorrido'">{{ n }}</span>
-                }
-              </label>
-            }
-          </fieldset>
-
-          @if (store.zonasEnOrden().length > 1 && store.enMarcha() === null) {
-            <div class="campo">
-              <span class="campo__etiqueta">Orden del recorrido</span>
-              <ol class="secuencia">
-                @for (zona of store.zonasEnOrden(); track zona.IdZone; let primera = $first, ultima = $last) {
-                  <li class="secuencia__zona">
-                    <span>{{ zona.Name }}</span>
-                    <span class="secuencia__mover">
-                      <button type="button" class="enlace" [disabled]="primera" (click)="store.moverZona(zona.IdZone, -1)"
-                              [attr.aria-label]="'Subir ' + zona.Name">Subir</button>
-                      <button type="button" class="enlace" [disabled]="ultima" (click)="store.moverZona(zona.IdZone, 1)"
-                              [attr.aria-label]="'Bajar ' + zona.Name">Bajar</button>
-                    </span>
-                  </li>
-                }
-              </ol>
-            </div>
-          }
-        }
-
-        @if (store.tanda().status === 'loading') {
-          <kibot-loading-indicator [size]="32" label="Consultando la tanda" />
-        }
-        @if (store.tanda(); as t) {
-          @if (t.status === 'error') {
-            <kibot-error-state [message]="t.message" [details]="t.details" [showRetry]="false" />
-          }
-        }
-
-        <div class="acciones">
-          @if (store.enMarcha() === null) {
-            <kibot-button [disabled]="!store.puedeIniciar()" [busy]="store.ocupado()" (pressed)="store.iniciar()">
-              Iniciar recorrido
-            </kibot-button>
-          } @else {
-            @if (store.enPausa()) {
-              <kibot-button [busy]="store.ocupado()" (pressed)="reanudar()">Reanudar</kibot-button>
-            } @else if (!store.volviendo() && !store.arrancando()) {
-              <kibot-button variant="outline" [busy]="store.ocupado()" (pressed)="pausar()">Pausar</kibot-button>
-            }
-            <kibot-button variant="outline" tone="error" [busy]="store.ocupado()" (pressed)="cancelar()">
-              Cancelar
-            </kibot-button>
-            @if (!store.volviendo()) {
-              <kibot-button variant="outline" [busy]="store.ocupado()" (pressed)="volverAlDock()">Volver al dock</kibot-button>
-            }
-          }
+      @if (sinInventarioAbierto()) {
+        <div class="vacio">
+          <span class="vacio__icono" aria-hidden="true">📋</span>
+          <h2>Aún no hay un inventario abierto</h2>
+          <p>Crea un inventario para elegir el plano, las zonas y el robot antes de iniciar el recorrido.</p>
+          <kibot-button size="large" (pressed)="nuevoInventario()">Nuevo inventario</kibot-button>
         </div>
+      } @else if (contexto.inventario() !== null && !contexto.abierto()) {
+        <p class="aviso">
+          «{{ contexto.inventario()?.Name }}» está cerrado: ya no se recorre. Sus resultados están en Inventarios y en
+          Buscar.
+        </p>
+      } @else if (store.inventarioId() === null) {
+        <p class="aviso">Elige arriba el inventario que vas a recorrer.</p>
+      } @else if (store.robots().length === 0) {
+        <p class="aviso">Este inventario no tiene ningún robot asignado.</p>
+      } @else {
+        <!-- Zonas: General y una por zona. -->
+        <kibot-tabs
+          class="zonas"
+          label="Zonas del inventario"
+          [tabs]="pestanasDeZona()"
+          [activa]="pestanaDeZona()"
+          (cambia)="irAZona($event)"
+        />
 
-        @if (store.accion(); as a) {
-          @if (a.status === 'error') {
-            <kibot-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
-          }
-        }
-      </div>
-
-      @if (store.ultima(); as tanda) {
-        <div class="tarjeta estado" aria-live="polite">
-          <div class="estado__fila">
-            <span class="insignia" [class.insignia--activa]="tanda.Status === 'Running' && !store.enPausa()">
-              @switch (tanda.Status) {
-                @case ('Running') {
-                  {{ store.arrancando() ? 'Arrancando' : store.enPausa() ? 'En pausa' : store.volviendo() ? 'Volviendo al dock' : 'Recorriendo' }}
-                }
-                @case ('Done') {
-                  Terminada
-                }
-                @default {
-                  Detenida
-                }
-              }
-            </span>
-            @if (store.zonaEnCurso(); as z) {
-              <span class="dato dato--fuerte">Zona {{ z.numero }} de {{ z.total }} · {{ z.zona.Name }}</span>
-            }
-            <span class="dato">Inició {{ tanda.StartedAt | date: 'short' }}</span>
-            @if (tanda.Status === 'Done') {
-              <span class="dato">La ubicación de las cajas estará lista en unos minutos.</span>
-            }
+        <div class="tarjeta panel-zona">
+          <div class="panel-zona__cabecera">
+            <h2>{{ store.zonaVista() === null ? 'Recorrido general' : nombreDeZona() }}</h2>
+            <kibot-tabs label="Vistas" [tabs]="vistas" [activa]="vista()" (cambia)="irAVista($event)" />
           </div>
 
-          @if (store.enPausa()) {
-            <p class="aviso">En pausa. Puedes reanudar, cancelar o mandarlo al dock.</p>
-          }
-          @if (store.arrancando()) {
-            <p class="aviso">
-              El robot está preparando la misión. Se confirma cuando su latido la muestre en marcha; si en 2 minutos
-              no arranca, la tanda se detiene.
+          @if (store.parteDeGeneral(); as g) {
+            <p class="insignia insignia--info parte">
+              Parte del recorrido general · zona {{ g.numero }} de {{ g.total }}
             </p>
           }
 
-          @if (tanda.Status === 'Stopped') {
-            <p class="aviso aviso--alerta">
-              Se detuvo: {{ textoDeFinDeZona(tanda.StopReason) }}{{ tanda.Zones[tanda.Current]?.EndDetail ? ' (' + tanda.Zones[tanda.Current].EndDetail + ')' : '' }}.
-            </p>
-          }
-          @if (tanda.LastAck; as ack) {
-            @if (ack.Status !== 'ACCEPTED' && ack.Status !== 'PENDING' && !(store.arrancando() && ack.Status === 'NO_RESPONSE')) {
-              <p class="aviso aviso--alerta">
-                {{ ack.Status === 'NO_RESPONSE' ? textoDeRechazo('NO_RESPONSE') : textoDeRechazo(ack.Reason) }}{{ ack.Detail ? ': ' + ack.Detail : '' }}
-              </p>
+          @switch (vista()) {
+            <!-- ============ UBICACIÓN ============ -->
+            @case ('ubicacion') {
+              @if (ubicacionEnTanda(); as texto) {
+                <p class="aviso">{{ texto }}</p>
+              }
+              @if (store.robotId(); as robot) {
+                <kibot-robot-location [robotId]="robot" [embebido]="true" />
+              }
             }
-            @if (tanda.Status === 'Running' && ack.Resolved; as r) {
-              <p class="dato">
-                El robot entendió: pasillos {{ r.Aisles.join(', ') }} · {{ r.TramosTotal }} tramos
-                @if (r.Tramos.length > 0) {
-                  ({{ r.Tramos.join(', ') }})
-                }
-              </p>
-            }
-          }
 
-          <ol class="secuencia">
-            @for (zona of tanda.Zones; track zona.IdZone; let i = $index) {
-              <li class="secuencia__zona" [class.secuencia__zona--actual]="tanda.Status === 'Running' && i === tanda.Current">
-                <span>{{ zona.Name }} <span class="dato">{{ zona.From }} → {{ zona.To }}</span></span>
-                <span class="dato">
-                  {{ textoDeEstadoDeZona(zona.State) }}{{ zona.EndReason && zona.EndReason !== 'COMPLETED' ? ' · ' + textoDeFinDeZona(zona.EndReason) : '' }}{{ zona.EndDetail ? ' · ' + zona.EndDetail : '' }}
-                </span>
-              </li>
-            }
-          </ol>
-
-          @if (store.progreso(); as p) {
-            <dl class="cifras">
-              <div>
-                <dt>Lecturas</dt>
-                <dd>{{ p.Readings | number }}</dd>
-              </div>
-              <div>
-                <dt>Última lectura</dt>
-                <dd>{{ p.LastReadAt ? (p.LastReadAt | date: 'mediumTime') : '—' }}</dd>
-              </div>
-              @if (p.TramosTotal) {
-                <div>
-                  <dt>Tramos</dt>
-                  <dd>{{ p.TramosDone ?? 0 }} de {{ p.TramosTotal }}</dd>
+            <!-- ============ RECORRIDO EN EL PLANO ============ -->
+            @case ('recorrido') {
+              @if (runDeLaVista(); as run) {
+                <kibot-robot-track
+                  [inventarioId]="store.inventarioId()"
+                  [robotId]="store.robotId()"
+                  [runId]="run"
+                  [embebido]="true"
+                />
+              } @else {
+                <div class="vacio">
+                  <span class="vacio__icono" aria-hidden="true">🗺️</span>
+                  <h2>{{ store.zonaVista() === null ? 'Todavía no hay recorrido general' : 'Esta zona todavía no se ha recorrido' }}</h2>
+                  <p>Cuando el robot la recorra, aquí verás su ruta sobre el plano y podrás repetirla.</p>
                 </div>
               }
-              <div>
-                <dt>Caras recorridas</dt>
-                <dd>{{ p.CoveredSides }} de {{ p.TotalSides }}</dd>
+            }
+
+            <!-- ============ EN CURSO ============ -->
+            @default {
+              @if (store.zonaVista() === null) {
+                <div class="campo">
+                  <span class="campo__etiqueta">Zonas del recorrido, en orden</span>
+                  <kibot-multiselect
+                    etiqueta="Zonas del recorrido"
+                    placeholder="Elige las zonas que va a recorrer"
+                    [opciones]="opcionesDeZonas()"
+                    [seleccionadas]="store.zonasMarcadas()"
+                    [ordenado]="true"
+                    [deshabilitado]="store.enMarcha() !== null"
+                    (cambia)="fijarZonas($event)"
+                  />
+                  <span class="campo__ayuda">El número es su turno: el robot pasa a la siguiente al terminar la anterior.</span>
+                </div>
+              }
+
+              <!-- Estado y avance: siempre a la vista, a 0 % si no ha empezado. -->
+              <div class="progreso" aria-live="polite">
+                <div class="progreso__cabecera">
+                  @if (store.ultima(); as tanda) {
+                    @if (store.zonaVista() === null || store.tandaDeLaVista() || store.parteDeGeneral()) {
+                      <span class="insignia"
+                            [class.insignia--activa]="tanda.Status === 'Running' && !store.enPausa() && !store.arrancando()"
+                            [class.insignia--aviso]="store.enPausa() || store.arrancando()"
+                            [class.insignia--error]="tanda.Status === 'Stopped'">
+                        @switch (tanda.Status) {
+                          @case ('Running') {
+                            {{ store.arrancando() ? 'Arrancando' : store.enPausa() ? 'En pausa' : store.volviendo() ? 'Volviendo a casa' : 'Recorriendo' }}
+                          }
+                          @case ('Done') {
+                            Terminado
+                          }
+                          @default {
+                            Detenido
+                          }
+                        }
+                      </span>
+                    } @else if (store.recorridoSinTanda()) {
+                      <span class="insignia insignia--activa" title="No se inició desde KiBot">Recorriendo · sin orden de KiBot</span>
+                    } @else {
+                      <span class="insignia" [class.insignia--ok]="store.progresoDeLaVista()?.Closed">{{ textoSinTanda() }}</span>
+                    }
+                  } @else if (store.recorridoSinTanda()) {
+                    <span class="insignia insignia--activa" title="No se inició desde KiBot">Recorriendo · sin orden de KiBot</span>
+                  } @else {
+                    <span class="insignia" [class.insignia--ok]="store.progresoDeLaVista()?.Closed">{{ textoSinTanda() }}</span>
+                  }
+                  @if (store.zonaEnCurso(); as z) {
+                    @if (store.tandaDeLaVista()) {
+                      <span class="progreso__zona">Zona {{ z.numero }} de {{ z.total }} · {{ z.zona.Name }}</span>
+                    }
+                  }
+                </div>
+
+                <div class="progreso__cifra">
+                  <span class="progreso__porcentaje">{{ store.avanceDeLaVista() | number: '1.0-0' }} %</span>
+                  <span class="dato">
+                    @if (store.zonaVista() !== null) {
+                      @if (store.progresoDeLaVista(); as p) {
+                        @if (p.TramosTotal) {
+                          {{ p.TramosDone ?? 0 }} de {{ p.TramosTotal }} tramos
+                        } @else {
+                          {{ p.CoveredSides }} de {{ p.TotalSides }} caras
+                        }
+                      } @else {
+                        Sin datos todavía
+                      }
+                    } @else {
+                      {{ filasDeGeneral().length }} {{ filasDeGeneral().length === 1 ? 'zona' : 'zonas' }}
+                    }
+                  </span>
+                </div>
+                <div class="barra barra--grande" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                     [attr.aria-valuenow]="store.avanceDeLaVista() | number: '1.0-0'" aria-label="Avance del recorrido">
+                  <div class="barra__relleno" [style.width.%]="store.avanceDeLaVista()"></div>
+                </div>
               </div>
-            </dl>
-            <div
-              class="barra"
-              role="progressbar"
-              [attr.aria-valuenow]="avance() | number: '1.0-0'"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              [attr.aria-label]="p.TramosTotal ? 'Tramos de la ruta hechos' : 'Caras recorridas'"
-            >
-              <div class="barra__relleno" [style.width.%]="avance()"></div>
-            </div>
+
+              <!-- General: una fila por zona. -->
+              @if (store.zonaVista() === null && filasDeGeneral().length > 0) {
+                <ol class="filas">
+                  @for (f of filasDeGeneral(); track f.id) {
+                    <li class="fila" [class.fila--actual]="f.actual">
+                      <span class="fila__orden">{{ f.numero }}</span>
+                      <span class="fila__nombre">{{ f.nombre }}</span>
+                      <div class="barra fila__barra"><div class="barra__relleno" [style.width.%]="f.avance"></div></div>
+                      <span class="fila__pct">{{ f.avance | number: '1.0-0' }} %</span>
+                      <span class="fila__estado">{{ f.estado }}</span>
+                    </li>
+                  }
+                </ol>
+              }
+
+              <!-- Cifras de la zona. -->
+              @if (store.zonaVista() !== null) {
+                @if (store.progresoDeLaVista(); as p) {
+                  <dl class="cifras">
+                    <div>
+                      <dt>Lecturas</dt>
+                      <dd>{{ p.Readings | number }}</dd>
+                    </div>
+                    <div>
+                      <dt>Última lectura</dt>
+                      <dd>{{ p.LastReadAt ? (p.LastReadAt | date: 'short') : '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Tramos</dt>
+                      <dd>{{ p.TramosTotal ? (p.TramosDone ?? 0) + ' de ' + p.TramosTotal : '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Caras recorridas</dt>
+                      <dd>{{ p.CoveredSides }} de {{ p.TotalSides }}</dd>
+                    </div>
+                  </dl>
+                }
+              }
+
+              <!-- Avisos de la tanda. -->
+              @if (store.ultima(); as tanda) {
+                @if (store.zonaVista() === null || store.tandaDeLaVista() || store.parteDeGeneral()) {
+                  @if (store.arrancando()) {
+                    <p class="aviso">
+                      El robot está preparando la misión. Se confirma cuando su latido la muestre en marcha; si en 2 minutos
+                      no arranca, la tanda se detiene.
+                    </p>
+                  }
+                  @if (tanda.Status === 'Done') {
+                    <p class="aviso">Terminado. La ubicación de las cajas estará lista en unos minutos en Buscar.</p>
+                  }
+                  @if (tanda.Status === 'Stopped') {
+                    <p class="aviso aviso--error">
+                      Se detuvo: {{ textoDeFinDeZona(tanda.StopReason) }}{{ tanda.Zones[tanda.Current]?.EndDetail ? ' (' + tanda.Zones[tanda.Current].EndDetail + ')' : '' }}.
+                    </p>
+                  }
+                  @if (tanda.LastAck; as ack) {
+                    @if (ack.Status !== 'ACCEPTED' && ack.Status !== 'PENDING' && !(store.arrancando() && ack.Status === 'NO_RESPONSE')) {
+                      <p class="aviso aviso--error">
+                        {{ ack.Status === 'NO_RESPONSE' ? textoDeRechazo('NO_RESPONSE') : textoDeRechazo(ack.Reason) }}{{ ack.Detail ? ': ' + ack.Detail : '' }}
+                      </p>
+                    }
+                  }
+                }
+              }
+
+              <!-- Las cuatro órdenes, siempre a la vista. -->
+              <div class="botones">
+                <kibot-button size="large" [disabled]="!store.botones().iniciar" [busy]="store.ocupado()" (pressed)="iniciar()">
+                  <kibot-icon name="play" /> {{ store.botones().reanudar ? 'Reanudar' : 'Iniciar' }}
+                </kibot-button>
+                <kibot-button size="large" variant="outline" [disabled]="!store.botones().pausar" (pressed)="pausar()">
+                  <kibot-icon name="pause" /> Pausar
+                </kibot-button>
+                <kibot-button size="large" tone="error" [disabled]="!store.botones().detener" (pressed)="cancelar()">
+                  <kibot-icon name="stop" /> Detener
+                </kibot-button>
+                <kibot-button size="large" variant="outline" tone="secondary" [disabled]="!store.botones().casa" (pressed)="volverAlDock()">
+                  <kibot-icon name="dock" /> Volver a casa
+                </kibot-button>
+              </div>
+              @if (store.botones().motivo; as motivo) {
+                <p class="campo__ayuda motivo">{{ motivo }}</p>
+              }
+
+              @if (store.accion(); as a) {
+                @if (a.status === 'error') {
+                  <kibot-error-state [message]="a.message" [details]="a.details" [showRetry]="false" />
+                }
+              }
+            }
           }
         </div>
       }

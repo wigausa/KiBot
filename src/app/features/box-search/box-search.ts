@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
 import { DatePipe, PercentPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -28,6 +28,9 @@ export function rejillaDelMapa(mapa: WarehouseMap): RejillaDelPlano {
 
 /**
  * Buscar caja (B12): por el USDA impreso o por el EPC, y solo con el recorrido terminado.
+ *
+ * <p>Desde noviembre de 2026 es la pestaña «En el último recorrido» de Buscar: con `embebido`, el
+ * inventario llega por `input` (el elegido arriba) y no hay selector ni título propios.</p>
  */
 @Component({
   selector: 'kibot-box-search',
@@ -39,6 +42,32 @@ export function rejillaDelMapa(mapa: WarehouseMap): RejillaDelPlano {
 })
 export class BoxSearch implements OnInit {
   protected readonly store = inject(BoxSearchStore);
+
+  readonly inventarioId = input<string | null>(null);
+  /** Embebido: la zona elegida arriba. La búsqueda va filtrada por ella. */
+  readonly zonaId = input<number | null>(null);
+  readonly embebido = input(false);
+
+  constructor() {
+    effect(() => {
+      const inv = this.inventarioId();
+      const listo = this.store.inventarios().status === 'ready';
+      if (!this.embebido() || !listo) return;
+      untracked(() => {
+        if (inv !== this.store.inventarioId()) void this.store.elegirInventario(inv);
+      });
+    });
+
+    effect(() => {
+      const zona = this.zonaId();
+      untracked(() => {
+        if (zona === this.store.zonaId()) return;
+        this.store.zonaId.set(zona);
+        // Un resultado de otra zona ya no vale: se vuelve a buscar con la nueva.
+        if (this.store.resultado().status === 'ready') void this.store.buscar();
+      });
+    });
+  }
 
   protected readonly rejilla = computed(() => {
     const m = this.store.mapa();
@@ -60,6 +89,7 @@ export class BoxSearch implements OnInit {
 
   protected alBuscar(evento: Event): void {
     evento.preventDefault();
+    if (this.embebido() && this.store.zonaId() === null) return;
     void this.store.buscar();
   }
 

@@ -1,0 +1,453 @@
+// ---------------------------------------------------------------------------
+// Piezas visuales compartidas por todas las pantallas (sistema de diseño Witag).
+//
+// Antes cada pantalla declaraba su propia `.tarjeta`, `.campo`, `.insignia`… con
+// pequeñas diferencias. Aquí vive UNA versión; una pantalla solo añade lo suyo.
+// Solo tokens (src/styles/tokens): nada de colores, tamaños ni radios sueltos.
+// ---------------------------------------------------------------------------
+
+// --- Página -----------------------------------------------------------------
+
+// El contenedor de cada módulo: márgenes, ancho y separación entre bloques.
+.pagina {
+  min-height: 100%;
+  padding-inline: var(--kibot-spacing-7);
+  padding-block: var(--kibot-spacing-6) var(--kibot-spacing-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-6);
+
+  @media (max-width: 40rem) {
+    padding-inline: var(--kibot-spacing-4);
+  }
+}
+
+.pagina--estrecha {
+  max-width: 48rem;
+}
+
+.pagina__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-4);
+
+  h1 {
+    margin: 0;
+    font-size: var(--kibot-font-size-heading3);
+    font-weight: var(--kibot-font-weight-bold);
+    line-height: 1.3;
+    color: var(--kibot-fg);
+  }
+}
+
+// La línea pequeña sobre el título: a qué módulo pertenece la pantalla.
+.pagina__antetitulo {
+  margin: 0 0 var(--kibot-spacing-1);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kibot-accent-strong);
+}
+
+.pagina__nota {
+  margin: var(--kibot-spacing-1) 0 0;
+  font-size: var(--kibot-font-size-body);
+  line-height: 1.5;
+  color: var(--kibot-fg-muted);
+  max-width: 48rem;
+}
+
+// --- Tarjeta ----------------------------------------------------------------
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-4);
+  padding: var(--kibot-spacing-6);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-7);
+  background: var(--kibot-surface);
+
+  > h2,
+  > header h2 {
+    margin: 0;
+    font-size: var(--kibot-font-size-heading4);
+    font-weight: var(--kibot-font-weight-bold);
+    line-height: 1.35;
+  }
+}
+
+.tarjeta__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+
+  h2 {
+    margin: 0;
+    font-size: var(--kibot-font-size-heading4);
+    font-weight: var(--kibot-font-weight-bold);
+  }
+}
+
+// --- Campos de formulario -----------------------------------------------------
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+}
+
+.campo__etiqueta {
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg-muted);
+}
+
+.campo__control {
+  min-height: 2.75rem;
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
+  font: inherit;
+  font-size: var(--kibot-font-size-body);
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    // background-color y no el atajo `background`: el atajo borraría el no-repeat de la flecha.
+    background-color: var(--kibot-surface-variant);
+    color: var(--kibot-fg-muted);
+    cursor: not-allowed;
+  }
+}
+
+// Desplegables: sin la flecha del sistema; una propia, Primary, que cambia con el tema.
+select.campo__control {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: calc(var(--kibot-spacing-3) + 1.5rem);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23824699' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat !important;
+  background-position: right var(--kibot-spacing-3) center !important;
+  background-size: 1rem !important;
+  cursor: pointer;
+  transition:
+    border-color var(--kibot-motion-fast) var(--kibot-ease-standard),
+    box-shadow var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover:not(:disabled) {
+    border-color: var(--kibot-accent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--kibot-accent);
+    box-shadow: 0 0 0 3px var(--kibot-accent-wash);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  optgroup {
+    font-weight: var(--kibot-font-weight-bold);
+    color: var(--kibot-fg-muted);
+  }
+
+  option {
+    font-weight: var(--kibot-font-weight-regular);
+    color: var(--kibot-fg);
+    background: var(--kibot-surface);
+  }
+}
+
+@mixin flecha-clara {
+  select.campo__control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23E190FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    @include flecha-clara;
+  }
+}
+
+:root[data-theme="dark"] {
+  @include flecha-clara;
+}
+
+// Campos de texto: el mismo hover y foco que los desplegables.
+input.campo__control,
+textarea.campo__control {
+  &:hover:not(:disabled) {
+    border-color: var(--kibot-accent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--kibot-accent);
+    box-shadow: 0 0 0 3px var(--kibot-accent-wash);
+  }
+}
+
+.campo__ayuda {
+  margin: 0;
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+// --- Chips (elegir zonas, filtros) ------------------------------------------
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kibot-spacing-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
+  min-height: 2.5rem;
+  padding: var(--kibot-spacing-1) var(--kibot-spacing-4);
+  border: var(--kibot-stroke-0) solid var(--kibot-line);
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-surface);
+  color: var(--kibot-fg);
+  font: inherit;
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--kibot-motion-fast) var(--kibot-ease-standard),
+    border-color var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  // Chip con casilla dentro (zonas): la casilla queda oculta, el chip es el control.
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover:not(.chip--bloqueado) {
+    border-color: var(--kibot-accent);
+  }
+
+  &:has(input:focus-visible),
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
+}
+
+.chip--activo,
+.chip:has(input:checked) {
+  border-color: var(--kibot-accent);
+  background: var(--kibot-accent-wash);
+  color: var(--kibot-accent-strong);
+}
+
+.chip--bloqueado,
+.chip:has(input:disabled) {
+  background: var(--kibot-surface-variant);
+  color: var(--kibot-fg-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+// El número de orden dentro de un chip (zonas de una tanda).
+.chip__orden {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-accent);
+  color: var(--kibot-on-brand);
+  font-size: var(--kibot-font-size-subtitle);
+}
+
+// --- Insignias (estados) ----------------------------------------------------
+
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kibot-spacing-1);
+  padding: var(--kibot-spacing-1) var(--kibot-spacing-3);
+  border-radius: var(--kibot-radius-2);
+  background: var(--kibot-surface-variant);
+  color: var(--kibot-fg-muted);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.insignia--activa,
+.insignia--ok {
+  background: color-mix(in srgb, var(--kibot-success) 16%, transparent);
+  color: var(--kibot-success-text);
+}
+
+.insignia--aviso {
+  background: color-mix(in srgb, var(--kibot-warning) 18%, transparent);
+  color: var(--kibot-warning-text);
+}
+
+.insignia--error {
+  background: color-mix(in srgb, var(--kibot-error) 14%, transparent);
+  color: var(--kibot-error-text);
+}
+
+.insignia--info {
+  background: var(--kibot-accent-wash);
+  color: var(--kibot-accent-strong);
+}
+
+// --- Textos y avisos ----------------------------------------------------------
+
+.aviso {
+  margin: 0;
+  color: var(--kibot-fg-muted);
+  font-size: var(--kibot-font-size-body);
+  line-height: 1.5;
+}
+
+.aviso--error {
+  color: var(--kibot-error-text);
+}
+
+.dato {
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kibot-spacing-3);
+}
+
+// Un estado vacío: icono grande, qué falta y qué hacer.
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--kibot-spacing-3);
+  padding: var(--kibot-spacing-9) var(--kibot-spacing-6);
+  border: var(--kibot-stroke-0) dashed var(--kibot-line);
+  border-radius: var(--kibot-radius-7);
+  background: var(--kibot-surface);
+
+  h2 {
+    margin: 0;
+    font-size: var(--kibot-font-size-heading4);
+    font-weight: var(--kibot-font-weight-bold);
+  }
+
+  p {
+    margin: 0;
+    max-width: 32rem;
+    color: var(--kibot-fg-muted);
+  }
+}
+
+.vacio__icono {
+  display: inline-grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-accent-wash);
+  color: var(--kibot-accent-strong);
+  font-size: 1.75rem;
+}
+
+// --- Cifras y barra de avance -----------------------------------------------
+
+.cifras {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--kibot-spacing-4);
+
+  dt {
+    font-size: var(--kibot-font-size-subtitle);
+    color: var(--kibot-fg-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--kibot-font-size-heading4);
+    font-weight: var(--kibot-font-weight-bold);
+    color: var(--kibot-fg);
+  }
+}
+
+.barra {
+  height: 0.75rem;
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-surface-variant);
+  overflow: hidden;
+}
+
+.barra__relleno {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--kibot-accent);
+  transition: width var(--kibot-motion-base) var(--kibot-ease-standard);
+}
+
+// --- Botón «enlace» (acción terciaria en texto) --------------------------------
+
+.enlace {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--kibot-accent-strong);
+  font: inherit;
+  font-weight: var(--kibot-font-weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
+}
+
+// --- color de una zona ---------------------------------------------------------------------
+// La muestra que acompaña al nombre de una zona en una lista o leyenda: el mismo color con el que
+// la pinta el plano (`--kibot-zona-N`, ver plan-canvas).
+.muestra {
+  display: inline-block;
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 4px;
+  background: var(--kibot-zona-0);
+}
+
+@for $i from 0 through 5 {
+  .muestra--c#{$i} {
+    background: var(--kibot-zona-#{$i});
+  }
+}

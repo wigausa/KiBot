@@ -7,7 +7,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--kibot-spacing-6);
-  max-width: 48rem;
+}
+
+// Dentro de Control: sin márgenes propios, los pone la página que lo contiene.
+.estado--embebido {
+  min-height: 0;
+  padding: 0;
+  max-width: none;
+  gap: var(--kibot-spacing-4);
 }
 
 .estado__cabecera h1 {
@@ -110,7 +117,7 @@
 }
 
 .grave {
-  color: var(--kibot-error-strong);
+  color: var(--kibot-error-text);
 }
 
 .mision {
@@ -122,7 +129,7 @@
 .avisos {
   margin: 0;
   padding-left: var(--kibot-spacing-5);
-  color: var(--kibot-error-strong);
+  color: var(--kibot-error-text);
   font-size: var(--kibot-font-size-body);
   font-weight: var(--kibot-font-weight-bold);
 }

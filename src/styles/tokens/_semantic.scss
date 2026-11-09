@@ -10,39 +10,85 @@
 // ---------------------------------------------------------------------------
 
 :root {
+  // Las listas nativas (desplegables, calendario) siguen el tema.
+  color-scheme: light;
   --kibot-page: var(--kibot-color-neutral-100); // #F2F2F2 — fondo de pantalla
   --kibot-surface: var(--kibot-color-neutral-white); // #FFFFFF — cards, sheets
   --kibot-surface-variant: var(--kibot-color-neutral-100); // #F2F2F2 — superficie anidada
   --kibot-line: var(--kibot-color-neutral-200); // #E3E3E3 — dividers, bordes
   --kibot-fg: var(--kibot-color-neutral-500); // #03030B — texto principal
-  --kibot-accent: var(--kibot-color-primary-base); // #E190FF — acento de marca
-  // `accent` es un tono pastel pensado para fondos/washes: como TEXTO o ícono
-  // sobre superficie clara no llega a AA (#E190FF sobre #FFF ≈ 1.7:1). Para
-  // esos casos existe `accent-strong` (Primary 500 en claro, Primary 100 en
-  // oscuro). Ver DESIGN.md sección 10, gap de contraste del acento.
+  --kibot-accent: var(--kibot-color-primary-base); // #D974FF — acento de marca (CTA, activo, foco)
+  // `accent` como TEXTO o ícono sobre superficie clara no llega a AA (#D974FF
+  // sobre #FFF ≈ 2.4:1). Para esos casos existe `accent-strong` (Primary 500
+  // en claro, Primary 200 en oscuro). Ver DESIGN.md sección 10.
   --kibot-accent-strong: var(--kibot-color-primary-500); // #824699
+  --kibot-accent-hover: var(--kibot-color-primary-400); // #AE5DCC
+  --kibot-accent-active: var(--kibot-color-primary-200); // #E190FF
+  --kibot-accent-wash: rgb(217 116 255 / 14%); // fondo suave de lo seleccionado (Primary con opacidad)
+  // Texto sobre un relleno de Primary o Secondary: navy en los dos modos (blanco no llega a AA).
+  --kibot-on-accent: var(--kibot-color-tertiary-base); // #1B1451
+
+  // Secondary: acciones secundarias y destacados. No compite con el Primary.
+  --kibot-secondary: var(--kibot-color-secondary-base); // #29ABE2
+  --kibot-secondary-hover: var(--kibot-color-secondary-400); // #2189B5
+  --kibot-secondary-active: var(--kibot-color-secondary-100); // #54BCE8
+  --kibot-secondary-strong: var(--kibot-color-secondary-500); // #196788 (como texto)
+
+  // Riel de navegación: Tertiary (navy) en los dos modos, como el mockup.
+  --kibot-rail: var(--kibot-color-tertiary-base); // #1B1451
+  --kibot-rail-hover: var(--kibot-color-tertiary-100); // #2B2277
+  --kibot-on-rail: var(--kibot-color-neutral-white);
+  --kibot-on-rail-muted: rgb(255 255 255 / 68%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --kibot-page: var(--kibot-color-neutral-500); // #03030B
     --kibot-surface: var(--kibot-color-tertiary-500); // #0E0A34
     --kibot-surface-variant: var(--kibot-color-tertiary-400); // #140E40
     --kibot-line: rgb(255 255 255 / 10%); // White @ 10%
     --kibot-fg: var(--kibot-color-neutral-white); // #FFFFFF
-    --kibot-accent: var(--kibot-color-primary-100); // #E8ACFF
-    --kibot-accent-strong: var(--kibot-color-primary-100);
+    --kibot-accent: var(--kibot-color-primary-base); // #D974FF
+    --kibot-accent-strong: var(--kibot-color-primary-200); // #E190FF
+    --kibot-rail: var(--kibot-color-tertiary-400); // #140E40
   }
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --kibot-page: var(--kibot-color-neutral-500);
   --kibot-surface: var(--kibot-color-tertiary-500);
   --kibot-surface-variant: var(--kibot-color-tertiary-400);
   --kibot-line: rgb(255 255 255 / 10%);
   --kibot-fg: var(--kibot-color-neutral-white);
-  --kibot-accent: var(--kibot-color-primary-100);
-  --kibot-accent-strong: var(--kibot-color-primary-100);
+  --kibot-accent: var(--kibot-color-primary-base);
+  --kibot-accent-strong: var(--kibot-color-primary-200);
+  --kibot-rail: var(--kibot-color-tertiary-400);
+}
+
+// Un color por zona en el plano (Geocercas y la ventana del plano), para ver lo ocupado. Solo de la
+// paleta de marca; Secondary y Tertiary delante porque el Primary ya pinta las celdas.
+:root {
+  --kibot-zona-0: var(--kibot-color-secondary-base); // #29ABE2
+  --kibot-zona-1: var(--kibot-color-tertiary-50); // #3D30A0
+  --kibot-zona-2: var(--kibot-color-primary-500); // #824699
+  --kibot-zona-3: var(--kibot-color-secondary-500); // #196788
+  --kibot-zona-4: var(--kibot-color-primary-400); // #AE5DCC
+  --kibot-zona-5: var(--kibot-color-secondary-50); // #7FCDEE
+}
+
+// En oscuro, el índigo y el azul profundo se pierden sobre el navy: pasan a tonos claros.
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kibot-zona-1: var(--kibot-color-primary-200); // #E190FF
+    --kibot-zona-3: var(--kibot-color-secondary-100); // #54BCE8
+  }
+}
+
+:root[data-theme="dark"] {
+  --kibot-zona-1: var(--kibot-color-primary-200);
+  --kibot-zona-3: var(--kibot-color-secondary-100);
 }
 
 // Colores de estado — NO cambian entre claro/oscuro (DESIGN.md sección 6).
@@ -54,6 +100,25 @@
   --kibot-success-strong: var(--kibot-color-success-200);
   --kibot-warning: var(--kibot-color-warning-base);
   --kibot-warning-strong: var(--kibot-color-warning-200);
+
+  // El TEXTO de un estado sobre la superficie: oscuro en claro, claro en oscuro (contraste AA).
+  --kibot-error-text: var(--kibot-color-error-200);
+  --kibot-success-text: var(--kibot-color-success-200);
+  --kibot-warning-text: var(--kibot-color-warning-200);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kibot-error-text: var(--kibot-color-error-100);
+    --kibot-success-text: var(--kibot-color-success-100);
+    --kibot-warning-text: var(--kibot-color-warning-100);
+  }
+}
+
+:root[data-theme="dark"] {
+  --kibot-error-text: var(--kibot-color-error-100);
+  --kibot-success-text: var(--kibot-color-success-100);
+  --kibot-warning-text: var(--kibot-color-warning-100);
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +141,7 @@
   // Contenido sobre el gradiente de marca: blanco en ambos modos, porque el
   // gradiente siempre es Tertiary oscuro.
   --kibot-on-brand: var(--kibot-color-neutral-white);
-  --kibot-brand-magenta: var(--kibot-color-primary-200); // #D974FF
+  --kibot-brand-magenta: var(--kibot-color-primary-base); // #D974FF
   --kibot-brand-aqua: var(--kibot-color-secondary-base); // #29ABE2
 
   // Gradiente de marca (equivale a `witagGradients.brand` de Android):

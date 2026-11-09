@@ -31,7 +31,11 @@ export type KiBotIconName =
   | 'chevron-right'
   | 'sun'
   | 'moon'
-  | 'robot';
+  | 'robot'
+  | 'play'
+  | 'pause'
+  | 'stop'
+  | 'dock';
 
 @Component({
   selector: 'kibot-icon',
@@ -53,6 +57,22 @@ export type KiBotIconName =
           <path d="M2.8 10.4 12 3.4l9.2 7" />
           <path d="M5 9.7v10.9h14V9.7" />
           <rect x="10" y="13.4" width="4" height="4" rx="0.5" fill="currentColor" stroke="none" />
+        }
+
+        <!-- Órdenes del recorrido (Control): iniciar, pausar, detener y volver a casa. -->
+        @case ('play') {
+          <path d="M7.5 4.8v14.4L19.2 12 7.5 4.8Z" fill="currentColor" />
+        }
+        @case ('pause') {
+          <rect x="6.4" y="4.8" width="3.8" height="14.4" rx="1" fill="currentColor" stroke="none" />
+          <rect x="13.8" y="4.8" width="3.8" height="14.4" rx="1" fill="currentColor" stroke="none" />
+        }
+        @case ('stop') {
+          <rect x="5.4" y="5.4" width="13.2" height="13.2" rx="1.6" fill="currentColor" stroke="none" />
+        }
+        @case ('dock') {
+          <path d="M3.4 11.2 12 4.2l8.6 7" />
+          <path d="M5.8 9.6v10.2h4.4v-5.2h3.6v5.2h4.4V9.6" />
         }
 
         <!-- Inventarios: la hoja del conteo, con sus casillas marcadas. -->

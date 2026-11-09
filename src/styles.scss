@@ -2,6 +2,7 @@
 // La tipografía (@font-face de Poppins) va en `public/fonts/poppins.css`, enlazada desde
 // `index.html`: sus URL tienen que ser relativas al <base href> (`/kibot/` en InfraHub).
 @use "styles/tokens";
+@use "styles/ui";
 
 html,
 body {

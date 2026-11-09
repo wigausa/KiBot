@@ -10,6 +10,7 @@ import {
   BoxSearchStatus,
   RobotBatchView,
   RobotInventory,
+  RobotOccupancy,
   RobotProgress,
   RobotSearch,
   RobotStatusView,
@@ -54,9 +55,14 @@ export class RobotApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /** Los inventarios abiertos a los que tiene acceso quien mira. */
+  /**
+   * Los inventarios a los que tiene acceso quien mira, abiertos y cerrados: Buscar y la repetición
+   * del recorrido también sirven con uno cerrado. Quien solo quiere los abiertos filtra por `EndDate`.
+   */
   inventarios(): Promise<RobotInventory[]> {
-    return firstValueFrom(this.http.get<RobotInventory[]>(`${this.baseUrl}/GetInventories`));
+    return firstValueFrom(
+      this.http.get<RobotInventory[]>(`${this.baseUrl}/GetInventories`, { params: { includeClosed: true } })
+    );
   }
 
   /** La tanda en marcha del robot, o la última. `null` si nunca tuvo ninguna (el backend responde 404). */
@@ -99,9 +105,18 @@ export class RobotApiService {
     return this.orden(idInventory, idDevice, 'rth');
   }
 
-  progreso(idInventory: string): Promise<RobotProgress> {
+  /** El avance del inventario o, con `zona`, el de esa zona: su último recorrido y solo sus caras. */
+  progreso(idInventory: string, zona: number | null = null): Promise<RobotProgress> {
+    const params: Record<string, string> = zona === null ? {} : { zone: String(zona) };
     return firstValueFrom(
-      this.http.get<RobotProgress>(`${this.baseUrl}/inventory/${idInventory}/robot/progress`)
+      this.http.get<RobotProgress>(`${this.baseUrl}/inventory/${idInventory}/robot/progress`, { params })
+    );
+  }
+
+  /** La ocupación del inventario: lo calculado del último recorrido y cada cara con su zona. */
+  ocupacion(idInventory: string): Promise<RobotOccupancy> {
+    return firstValueFrom(
+      this.http.get<RobotOccupancy>(`${this.baseUrl}/inventory/${idInventory}/robot/occupancy`)
     );
   }
 
@@ -112,11 +127,13 @@ export class RobotApiService {
     );
   }
 
-  /** Busca una caja por su USDA o su EPC. Con el recorrido sin terminar, el backend responde 409. */
-  buscarCaja(idInventory: string, codigo: string): Promise<BoxSearchResult> {
+  /** Busca una caja por su USDA o su EPC; con `zona`, solo dónde quedó dentro de esa zona. Con el recorrido sin terminar, el backend responde 409. */
+  buscarCaja(idInventory: string, codigo: string, zona: number | null = null): Promise<BoxSearchResult> {
+    const params: Record<string, string> = zona === null ? {} : { zone: String(zona) };
     return firstValueFrom(
       this.http.get<BoxSearchResult>(
-        `${this.baseUrl}/inventory/${idInventory}/robot/box/${encodeURIComponent(codigo.trim())}`
+        `${this.baseUrl}/inventory/${idInventory}/robot/box/${encodeURIComponent(codigo.trim())}`,
+        { params }
       )
     );
   }

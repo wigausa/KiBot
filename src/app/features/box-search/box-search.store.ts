@@ -34,6 +34,8 @@ export class BoxSearchStore {
 
   readonly inventarioId = signal<string | null>(null);
   readonly codigo = signal('');
+  /** La zona en la que se busca (Buscar por inventario y zona). Nula: en todo el inventario. */
+  readonly zonaId = signal<number | null>(null);
 
   readonly inventario = computed(() => {
     const lista = this._inventarios();
@@ -104,7 +106,7 @@ export class BoxSearchStore {
 
     this._resultado.set({ status: 'loading' });
     try {
-      const resultado = await this.api.buscarCaja(inv, this.codigo());
+      const resultado = await this.api.buscarCaja(inv, this.codigo(), this.zonaId());
       if (this.inventarioId() !== inv) return;
       this._resultado.set({ status: 'ready', value: resultado });
       if (resultado.Locations.length > 0) await this.cargarMapa();

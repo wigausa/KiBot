@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
+import { KiBotConfirm } from '../../shared/ui/kibot-confirm/kibot-confirm';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { rejillaDelMapa } from '../box-search/box-search';
@@ -13,6 +14,9 @@ import { RobotSearchStore } from './robot-search.store';
 /**
  * Buscar con el robot: mandarlo a buscar unas cajas concretas en una zona y ver en vivo cuáles
  * encuentra. No toca el inventario.
+ *
+ * <p>Desde noviembre de 2026 es la pestaña «Con el robot» de Buscar: con `embebido`, el inventario y
+ * el robot llegan por `input` (los elegidos arriba). La zona y las cajas se eligen aquí.</p>
  */
 @Component({
   selector: 'kibot-robot-search',
@@ -25,6 +29,40 @@ import { RobotSearchStore } from './robot-search.store';
 export class RobotSearchPage implements OnInit {
   protected readonly store = inject(RobotSearchStore);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly confirmador = inject(KiBotConfirm);
+
+  readonly inventarioId = input<string | null>(null);
+  readonly robotId = input<number | null>(null);
+  /** Embebido: la zona elegida arriba (el robot busca en una sola zona). */
+  readonly zonaId = input<number | null>(null);
+  readonly embebido = input(false);
+
+  constructor() {
+    effect(() => {
+      const inv = this.inventarioId();
+      const robot = this.robotId();
+      const listo = this.store.inventarios().status === 'ready';
+      if (!this.embebido() || !listo) return;
+      untracked(() => {
+        if (this.store.enMarcha()) return; // con una búsqueda andando no se cambia de inventario
+        const abierto = this.store.abiertos().some((i) => i._id === inv) ? inv : null;
+        if (abierto !== this.store.inventarioId()) this.store.elegirInventario(abierto);
+        if (robot !== null && this.store.robots().some((r) => r.IdDevice === robot)) this.store.robotId.set(robot);
+      });
+    });
+
+    effect(() => {
+      const zona = this.zonaId();
+      const listo = this.store.inventarios().status === 'ready';
+      const inv = this.store.inventarioId();
+      if (!this.embebido() || !listo || inv === null) return;
+      untracked(() => {
+        if (this.store.enMarcha()) return;
+        const valida = this.store.zonas().some((z) => z.IdZone === zona) ? zona : null;
+        if (valida !== this.store.zonaId()) this.store.zonaId.set(valida);
+      });
+    });
+  }
 
   protected readonly rejilla = computed(() => {
     const m = this.store.mapa();
@@ -63,8 +101,8 @@ export class RobotSearchPage implements OnInit {
     void this.store.buscar();
   }
 
-  protected confirmar(pregunta: string, accion: () => Promise<void>): void {
-    if (window.confirm(pregunta)) void accion();
+  protected async confirmar(pregunta: string, accion: () => Promise<void>, aceptar = 'Sí', peligro = false): Promise<void> {
+    if (await this.confirmador.preguntar({ titulo: pregunta, mensaje: '', aceptar, peligro })) await accion();
   }
 
   /** «Pasillo 28 · lado B · inferior · segmento 6». */

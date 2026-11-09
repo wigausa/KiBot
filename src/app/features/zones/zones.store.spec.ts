@@ -7,7 +7,7 @@ import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
 import { mapaDePrueba } from './mapa-de-prueba';
 import { ZonesApiService } from './zones-api.service';
 import { ZonesStore } from './zones.store';
-import { ExternalZoneConfig, ManualZone, MapSaveResult, MapSummary, ZoneOption } from './zones.models';
+import { ExternalZoneConfig, ManualZone, MapSaveResult, MapSummary, ZonaEnUso, ZoneOption } from './zones.models';
 
 /** Un doble a mano: lo que se prueba es el store, no HTTP. */
 class ApiFalsa {
@@ -33,6 +33,10 @@ class ApiFalsa {
       { ID: 10, NAME: 'Cocina', COMPANY_ID: 1, ACTIVE: true },
       { ID: 20, NAME: 'Sala', COMPANY_ID: 1, ACTIVE: true }
     ];
+  }
+  enUso: ZonaEnUso[] = [];
+  async zonasEnUso(): Promise<ZonaEnUso[]> {
+    return this.enUso;
   }
   async planoVigente(): Promise<WarehouseMap> {
     return structuredClone(this.mapa);
@@ -134,6 +138,34 @@ describe('ZonesStore', () => {
     expect(store.desde()).toBe('P1.S');
     expect(store.hasta()).toBe('P2.3');
     expect(store.resaltadas().map((c) => c.rackId)).toEqual(['P1-P2-sup', 'P1-P2-sup']);
+  });
+
+  it('una zona que ya usó un inventario queda fija: ni anclas precargadas ni se puede guardar', async () => {
+    api.mapa.Zones = [{ IdZone: 10, Name: 'Cocina', Shape: 'rect', Points: [{ X: 0, Y: 10.25 }, { X: 3.56, Y: 18.5 }] }];
+    api.enUso = [{ IdZone: 10, Inventories: ['Octubre'] }];
+    await store.elegirPlano('map-1');
+
+    store.elegirZona(10);
+    store.desde.set('P1.1');
+    store.hasta.set('P2.I');
+
+    expect(store.zonaFija()).toEqual(['Octubre']);
+    expect(store.puedeGuardarGeocerca()).toBeFalse();
+    expect(store.zonasPintadas().find((z) => z.idZone === 10)?.fija).toBeTrue();
+    // Sigue resaltada la que tiene, para verla.
+    expect(store.resaltadas().length).toBeGreaterThan(0);
+  });
+
+  it('una zona usada pero sin geocerca en este plano se puede situar', async () => {
+    api.enUso = [{ IdZone: 10, Inventories: ['Octubre'] }];
+    await store.elegirPlano('map-1');
+
+    store.elegirZona(10);
+    store.desde.set('P1.1');
+    store.hasta.set('P2.I');
+
+    expect(store.zonaFija()).toBeNull();
+    expect(store.puedeGuardarGeocerca()).toBeTrue();
   });
 
   it('no deja guardar una geocerca con un par de anclas que el robot no sabe recorrer', async () => {

@@ -4,6 +4,7 @@ import { CompanyStore } from '../../core/company/company.store';
 import { apiFailure } from '../../core/http/api-error';
 import { WarehouseMap, WarehouseMapZone } from '../warehouse-map/warehouse-map.models';
 import { Async } from '../warehouse-map/warehouse-map.store';
+import { ZonaPintada, zonasPintadasDe } from '../warehouse-map/plan-canvas/plan-canvas';
 import {
   Ancla,
   anclasDeLaGeocerca,
@@ -23,6 +24,7 @@ import {
   ManualZone,
   MapSaveResult,
   MapSummary,
+  ZonaEnUso,
   ZoneOption
 } from './zones.models';
 
@@ -91,6 +93,13 @@ export class ZonesStore {
   private readonly _mapa = signal<Async<WarehouseMap>>(OCIOSO);
   readonly mapa = this._mapa.asReadonly();
 
+  /**
+   * Las zonas de este plano que ya usó algún inventario, con los nombres de esos inventarios. Su
+   * geocerca está fija (el backend lo exige): moverla haría que el mismo id fuese otra superficie.
+   */
+  private readonly _enUso = signal<ReadonlyMap<number, readonly string[]>>(new Map());
+  readonly enUso = this._enUso.asReadonly();
+
   readonly planoId = signal<string | null>(null);
   readonly zonaId = signal<number | null>(null);
   readonly desde = signal<string | null>(null);
@@ -116,14 +125,43 @@ export class ZonesStore {
     return m && id !== null ? (m.Zones ?? []).find((z) => z.IdZone === id && z.Points.length >= 2) ?? null : null;
   });
 
-  /** Las zonas del plano con su geocerca, para la lista: «Cocina · P1.1 → P3.I». */
+  /**
+   * Las zonas que ya tienen geocerca en este plano, cada una con su color: así se ve lo ocupado y no
+   * se dibuja otra encima. La elegida va con el borde discontinuo.
+   */
+  readonly zonasPintadas = computed<ZonaPintada[]>(() => {
+    const m = this.mapaListo();
+    const elegida = this.zonaId();
+    return m
+      ? zonasPintadasDe(m, (id) => this.nombreDeZona(id)).map((z) => ({
+          ...z,
+          actual: z.idZone === elegida,
+          fija: this._enUso().has(z.idZone)
+        }))
+      : [];
+  });
+
+  /**
+   * Si la zona elegida tiene ya geocerca en este plano y algún inventario la usó: los nombres de
+   * esos inventarios. Entonces no se puede mover; para otra superficie, otra zona.
+   */
+  readonly zonaFija = computed<readonly string[] | null>(() => {
+    const id = this.zonaId();
+    if (id === null || this.geocercaActual() === null) return null;
+    return this._enUso().get(id) ?? null;
+  });
+
+  /** Las zonas del plano con su geocerca, para la lista: «Cocina · P1.1 → P3.I», con su color. */
   readonly geocercasDelPlano = computed(() => {
     const m = this.mapaListo();
     if (!m) return [];
+    const colores = new Map(this.zonasPintadas().map((z) => [z.idZone, z.color]));
     return (m.Zones ?? []).map((z) => {
       const par = anclasDeLaGeocerca(this.anclas(), z);
       return {
         idZone: z.IdZone,
+        color: colores.get(z.IdZone) ?? null,
+        fija: this._enUso().has(z.IdZone),
         nombre: this.nombreDeZona(z.IdZone) ?? z.Name,
         anclas: par ? `${par[0].etiqueta} → ${par[1].etiqueta}` : 'dibujada a mano',
         racks: racksDentro(m, z.Points).length
@@ -177,6 +215,7 @@ export class ZonesStore {
   readonly puedeGuardarGeocerca = computed(
     () =>
       this.zonaId() !== null &&
+      this.zonaFija() === null &&
       this.puntos() !== null &&
       !this.parInvalido() &&
       this.racksQueEntran() > 0 &&
@@ -395,6 +434,7 @@ export class ZonesStore {
   async elegirPlano(mapId: string | null): Promise<void> {
     this.planoId.set(mapId);
     this.limpiarGeocerca();
+    this._enUso.set(new Map());
     if (mapId === null) {
       this._mapa.set(OCIOSO);
       return;
@@ -402,8 +442,14 @@ export class ZonesStore {
 
     this._mapa.set({ status: 'loading' });
     try {
-      const mapa = await this.api.planoVigente(mapId);
-      if (this.planoId() === mapId) this._mapa.set({ status: 'ready', value: mapa });
+      // Si no llegan las zonas en uso, la pantalla deja intentarlo y el backend lo rechaza igual.
+      const [mapa, enUso] = await Promise.all([
+        this.api.planoVigente(mapId),
+        this.api.zonasEnUso(mapId).catch((): ZonaEnUso[] => [])
+      ]);
+      if (this.planoId() !== mapId) return;
+      this._enUso.set(new Map(enUso.map((z) => [z.IdZone, z.Inventories])));
+      this._mapa.set({ status: 'ready', value: mapa });
     } catch (error) {
       this._mapa.set({ status: 'error', ...apiFailure(error) });
     }
@@ -413,7 +459,8 @@ export class ZonesStore {
   elegirZona(idZone: number | null): void {
     this.zonaId.set(idZone);
     this._guardado.set(OCIOSO);
-    const actual = this.geocercaActual();
+    // Una fija no se mueve: sin anclas elegidas, el lienzo no entra en modo geocerca.
+    const actual = this.zonaFija() === null ? this.geocercaActual() : null;
     const par = actual ? anclasDeLaGeocerca(this.anclas(), actual) : null;
     this.desde.set(par?.[0].etiqueta ?? null);
     this.hasta.set(par?.[1].etiqueta ?? null);
