@@ -75,6 +75,44 @@ export interface CaraResaltada {
   readonly side: string;
 }
 
+/**
+ * Una zona que ya tiene geocerca en el plano, pintada con su color para ver qué está ocupado y no
+ * dibujar otra encima (las geocercas no pueden solaparse).
+ */
+export interface ZonaPintada {
+  readonly idZone: number;
+  readonly nombre: string;
+  /** 0 a {@link COLORES_DE_ZONA}-1: el mismo número da el mismo color en todas las pantallas. */
+  readonly color: number;
+  readonly puntos: readonly { X: number; Y: number }[];
+  /** La que se está editando: se dibuja con borde discontinuo. */
+  readonly actual?: boolean;
+  /** Ya la usó un inventario: su geocerca no se mueve. Borde más grueso. */
+  readonly fija?: boolean;
+}
+
+/** Cuántos colores distintos hay para las zonas; a partir de ahí se repiten. */
+export const COLORES_DE_ZONA = 6;
+
+/**
+ * Las zonas con geocerca de un plano, cada una con su color. El color sale del orden por `IdZone`,
+ * así que una zona tiene el mismo en Geocercas y en la ventana del plano.
+ */
+export function zonasPintadasDe(
+  map: WarehouseMap,
+  nombre: (idZone: number) => string | null = () => null
+): ZonaPintada[] {
+  return [...(map.Zones ?? [])]
+    .filter((z) => z.Points.length >= 2)
+    .sort((a, b) => a.IdZone - b.IdZone)
+    .map((z, i) => ({
+      idZone: z.IdZone,
+      nombre: nombre(z.IdZone) ?? z.Name,
+      color: i % COLORES_DE_ZONA,
+      puntos: z.Points
+    }));
+}
+
 /** Un punto del recorrido del robot, en metros DEL PLANO (el backend ya lo trajo desde el del robot). */
 export interface PuntoDelRecorrido {
   readonly x: number;
@@ -182,7 +220,37 @@ export class PlanCanvas {
    */
   readonly resaltadas = input<readonly CaraResaltada[]>([]);
 
+  /** Las zonas que ya tienen geocerca, cada una con su color y su nombre encima. */
+  readonly zonas = input<readonly ZonaPintada[]>([]);
+
   readonly accion = output<PlanCanvasAction>();
+
+  /** El rectángulo de cada zona pintada, en coordenadas del lienzo, con el sitio de su nombre. */
+  protected readonly rectangulosDeZona = computed(() =>
+    this.zonas().map((z) => {
+      const xs = z.puntos.map((p) => p.X);
+      const ys = z.puntos.map((p) => p.Y);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      const ancho = Math.max(...xs) - x;
+      const fondo = Math.max(...ys) - y;
+      return {
+        id: z.idZone,
+        nombre: z.nombre,
+        clase:
+          `zona-pintada zona-pintada--c${z.color}` +
+          (z.actual ? ' zona-pintada--actual' : '') +
+          (z.fija ? ' zona-pintada--fija' : ''),
+        x,
+        y: this.yDe(y, fondo),
+        ancho,
+        fondo,
+        // El nombre, centrado y justo dentro del borde de arriba.
+        nombreX: x + ancho / 2,
+        nombreY: this.yDe(y + fondo) + this.tamanoDeNumero() * 1.2
+      };
+    })
+  );
 
   /**
    * La geocerca que se está eligiendo, por las etiquetas de sus anclas (`P1.1`, `P3.I`). Con algo

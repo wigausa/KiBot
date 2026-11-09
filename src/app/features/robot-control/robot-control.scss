@@ -1,223 +1,157 @@
-// Solo tokens de KiBot (src/styles/tokens): nada de colores, tamanos ni radios sueltos.
+// Solo tokens de KiBot (src/styles/tokens): nada de colores, tamaños ni radios sueltos.
+// Página, tarjeta, campos, insignias, cifras y barra son las compartidas (src/styles/_ui.scss).
 
-.control {
-  min-height: 100%;
-  padding-inline: var(--kibot-spacing-7);
-  padding-block: var(--kibot-spacing-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-6);
-  max-width: 48rem;
-}
+// --- La zona que se mira -----------------------------------------------------------
 
-.control__cabecera h1 {
-  margin: 0;
-  font-size: var(--kibot-font-size-heading3);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg);
-}
-
-.control__nota {
-  margin: var(--kibot-spacing-1) 0 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg-muted);
-}
-
-.tarjeta {
-  display: flex;
-  flex-direction: column;
+.panel-zona {
   gap: var(--kibot-spacing-5);
-  padding: var(--kibot-spacing-6);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
 }
 
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-2);
-}
-
-.campo__etiqueta {
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg-muted);
-}
-
-.campo__control {
-  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
-  color: var(--kibot-fg);
-  font: inherit;
-  font-size: var(--kibot-font-size-body);
-
-  &:focus-visible {
-    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
-    outline-offset: var(--kibot-spacing-0);
-  }
-}
-
-.zonas {
-  margin: 0;
-  padding: 0;
-  border: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kibot-spacing-3) var(--kibot-spacing-6);
-
-  legend {
-    margin-bottom: var(--kibot-spacing-2);
-    padding: 0;
-  }
-}
-
-.zona {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kibot-spacing-2);
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg);
-  cursor: pointer;
-
-  input {
-    accent-color: var(--kibot-accent-strong);
-  }
-}
-
-.aviso {
-  margin: 0;
-  color: var(--kibot-fg-muted);
-  font-size: var(--kibot-font-size-body);
-}
-
-.acciones {
-  display: flex;
-  gap: var(--kibot-spacing-3);
-}
-
-.estado__fila {
+.panel-zona__cabecera {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--kibot-spacing-3);
-}
 
-.insignia {
-  padding: var(--kibot-spacing-1) var(--kibot-spacing-3);
-  border-radius: var(--kibot-radius-2, var(--kibot-radius-6));
-  background: var(--kibot-surface-variant);
-  color: var(--kibot-fg-muted);
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-}
-
-.insignia--activa {
-  background: var(--kibot-success);
-  color: var(--kibot-on-brand);
-}
-
-.dato {
-  font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-fg-muted);
-}
-
-.cifras {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--kibot-spacing-4);
-
-  dt {
-    font-size: var(--kibot-font-size-subtitle);
-    color: var(--kibot-fg-muted);
-  }
-
-  dd {
+  h2 {
     margin: 0;
     font-size: var(--kibot-font-size-heading4);
     font-weight: var(--kibot-font-weight-bold);
-    color: var(--kibot-fg);
+  }
+
+  kibot-tabs {
+    flex: 0 1 34rem;
   }
 }
 
-.barra {
-  height: var(--kibot-spacing-2);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface-variant);
-  overflow: hidden;
-}
-
-.barra__relleno {
-  height: 100%;
-  background: var(--kibot-accent-strong);
-  transition: width var(--kibot-motion-fast) var(--kibot-ease-standard);
-}
-
-// El puesto de una zona marcada en el recorrido.
-.orden {
-  min-width: var(--kibot-spacing-5);
-  padding: 0 var(--kibot-spacing-1);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-accent-strong);
-  color: var(--kibot-on-brand);
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-  text-align: center;
-}
-
-.secuencia {
+.parte {
+  align-self: flex-start;
   margin: 0;
-  padding-left: var(--kibot-spacing-5);
+}
+
+// --- El avance en grande -----------------------------------------------------------
+
+.progreso {
   display: flex;
   flex-direction: column;
-  gap: var(--kibot-spacing-2);
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg);
-}
-
-.secuencia__zona > span:first-child {
-  margin-right: var(--kibot-spacing-3);
-}
-
-.secuencia__zona--actual {
-  font-weight: var(--kibot-font-weight-bold);
-}
-
-.secuencia__mover {
-  display: inline-flex;
   gap: var(--kibot-spacing-3);
 }
 
-.enlace {
+.progreso__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kibot-spacing-3);
+}
+
+.progreso__zona {
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
+}
+
+.progreso__cifra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-2);
+}
+
+.progreso__porcentaje {
+  font-size: var(--kibot-font-size-heading2);
+  font-weight: var(--kibot-font-weight-bold);
+  line-height: 1.2;
+  color: var(--kibot-fg);
+}
+
+.barra--grande {
+  height: 1rem;
+}
+
+// --- General: una fila por zona ----------------------------------------------------
+
+.filas {
+  margin: 0;
   padding: 0;
-  border: none;
-  background: none;
-  color: var(--kibot-accent-strong);
-  font: inherit;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 14rem) 1fr 3.5rem minmax(6rem, auto);
+  align-items: center;
+  gap: var(--kibot-spacing-3);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface-variant);
+
+  @media (max-width: 40rem) {
+    grid-template-columns: auto 1fr 3.5rem;
+
+    .fila__barra,
+    .fila__estado {
+      grid-column: 2 / -1;
+    }
+  }
+}
+
+.fila--actual {
+  box-shadow: inset 0 0 0 2px var(--kibot-accent);
+}
+
+.fila__orden {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--kibot-radius-full);
+  background: var(--kibot-accent);
+  color: var(--kibot-on-accent);
   font-size: var(--kibot-font-size-subtitle);
   font-weight: var(--kibot-font-weight-bold);
-  cursor: pointer;
-
-  &:disabled {
-    // Como kibot-button: DESIGN.md no define el deshabilitado.
-    opacity: 0.45;
-    cursor: default;
-  }
-
-  &:focus-visible {
-    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
-    outline-offset: var(--kibot-spacing-0);
-  }
 }
 
-.aviso--alerta {
-  color: var(--kibot-warning-strong);
-}
-
-.dato--fuerte {
-  color: var(--kibot-fg);
+.fila__nombre {
   font-weight: var(--kibot-font-weight-bold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fila__barra {
+  height: 0.5rem;
+}
+
+.fila__pct {
+  text-align: right;
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.fila__estado {
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+// --- Las cuatro órdenes ------------------------------------------------------------
+
+.botones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--kibot-spacing-3);
+
+  kibot-button {
+    display: flex;
+  }
+
+  kibot-icon {
+    --kibot-icon-size: 20px;
+  }
+}
+
+.motivo {
+  margin-top: calc(-1 * var(--kibot-spacing-2));
 }

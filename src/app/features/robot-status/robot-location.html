@@ -1,11 +1,18 @@
-<section class="estado">
-  <header class="estado__cabecera">
-    <h1>Ubicación en tiempo real</h1>
-    <p class="estado__nota">
-      Dónde está cada robot según su último latido. El segmento va como lo numera el robot: en el tramo superior
-      sigue la cuenta del inferior.
+<section class="estado" [class.estado--embebido]="embebido()">
+  @if (!embebido()) {
+    <header class="estado__cabecera">
+      <h1>Ubicación en tiempo real</h1>
+      <p class="estado__nota">
+        Dónde está cada robot según su último latido. El segmento va como lo numera el robot: en el tramo superior
+        sigue la cuenta del inferior.
+      </p>
+    </header>
+  } @else {
+    <p class="campo__ayuda">
+      Dónde está el robot según su último latido. El segmento va como lo numera el robot: en el tramo superior sigue la
+      cuenta del inferior.
     </p>
-  </header>
+  }
 
   @switch (store.robots().status) {
     @case ('loading') {
@@ -28,7 +35,7 @@
         <p class="aviso" role="status">No se pudo actualizar: lo que se ve puede no ser lo último.</p>
       }
 
-      @for (fila of store.filas(); track fila.IdDevice) {
+      @for (fila of filas(); track fila.IdDevice) {
         <article class="tarjeta" aria-live="polite">
           <div class="tarjeta__fila">
             <h2 class="tarjeta__titulo">{{ fila.Name }}</h2>
@@ -65,7 +72,7 @@
           }
         </article>
       } @empty {
-        <p class="aviso">No hay ningún robot en tus inventarios.</p>
+        <p class="aviso">{{ robotId() === null ? 'No hay ningún robot en tus inventarios.' : 'Este robot todavía no ha mandado ningún latido.' }}</p>
       }
     }
   }

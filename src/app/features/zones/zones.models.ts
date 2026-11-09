@@ -5,6 +5,13 @@
  */
 
 /** Una zona del catálogo manual (`InventoryZone/Manual`). Lo que la identifica es `ID`. */
+/** Una zona del plano que ya usó algún inventario: su geocerca no se puede mover. */
+export interface ZonaEnUso {
+  IdZone: number;
+  /** Los nombres de los inventarios que la usaron. */
+  Inventories: string[];
+}
+
 export interface ManualZone {
   ID: number;
   NAME: string;

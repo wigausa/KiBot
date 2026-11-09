@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
@@ -162,6 +162,9 @@ function planoEnBlanco(companyId: number | null = null): WarehousePlan {
   styleUrl: './warehouse-map.scss'
 })
 export class WarehouseMap {
+  /** Dentro de «Planos y zonas»: sin el título de página propio. */
+  readonly embebido = input(false);
+
   protected readonly store = inject(WarehouseMapStore);
   protected readonly companias = inject(CompanyStore);
   protected readonly modo = signal<Modo>('lienzo');

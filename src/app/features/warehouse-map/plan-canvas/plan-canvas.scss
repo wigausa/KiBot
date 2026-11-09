@@ -151,6 +151,38 @@
   fill: var(--kibot-accent-strong);
 }
 
+// --- zonas ya situadas ----------------------------------------------------------------------
+// Un color por zona, de la paleta de marca (Secondary y Tertiary primero: el Primary ya es el de
+// las celdas y el de la geocerca que se está eligiendo). Se repiten a partir de la sexta.
+
+.zona-pintada {
+  --zona: var(--kibot-zona-0);
+  pointer-events: none;
+}
+
+@for $i from 0 through 5 {
+  .zona-pintada--c#{$i} {
+    --zona: var(--kibot-zona-#{$i});
+  }
+}
+
+.zona-pintada__area {
+  fill: var(--zona);
+  fill-opacity: 0.28;
+  stroke: var(--zona);
+}
+
+.zona-pintada--actual .zona-pintada__area {
+  fill-opacity: 0.12;
+  stroke-dasharray: 1 0.6;
+}
+
+.zona-pintada__nombre {
+  fill: var(--zona);
+  stroke: var(--kibot-surface);
+  font-weight: 600;
+}
+
 // --- elegir una geocerca ------------------------------------------------------------------
 
 .geocerca {
@@ -239,7 +271,7 @@
 
 .controles .quitar {
   border-color: var(--kibot-error-strong);
-  color: var(--kibot-error-strong);
+  color: var(--kibot-error-text);
 }
 
 .seleccion,
@@ -544,7 +576,7 @@
 
 .largo--quitar {
   border-color: var(--kibot-error);
-  color: var(--kibot-error-strong);
+  color: var(--kibot-error-text);
 }
 
 .tramo {

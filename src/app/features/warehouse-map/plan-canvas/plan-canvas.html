@@ -219,6 +219,34 @@
       />
     }
 
+    <!-- Las zonas que ya tienen geocerca, cada una con su color: lo ocupado no se puede volver a usar. -->
+    @for (z of rectangulosDeZona(); track z.id) {
+      <g [attr.class]="z.clase">
+        <rect
+          class="zona-pintada__area"
+          [attr.x]="z.x"
+          [attr.y]="z.y"
+          [attr.width]="z.ancho"
+          [attr.height]="z.fondo"
+          [attr.stroke-width]="trazo() * (z.clase.includes('--fija') ? 8 : 4)"
+        >
+          <title>{{ z.nombre }}{{ z.clase.includes('--fija') ? ' · fija (ya se usó en un inventario)' : '' }}</title>
+        </rect>
+        <text
+          class="zona-pintada__nombre"
+          [attr.x]="z.nombreX"
+          [attr.y]="z.nombreY"
+          [attr.transform]="derecho(z.nombreX)"
+          [attr.font-size]="tamanoDeNumero()"
+          text-anchor="middle"
+          paint-order="stroke fill"
+          [attr.stroke-width]="trazo() * 6"
+        >
+          {{ z.nombre }}
+        </text>
+      </g>
+    }
+
     <!-- La geocerca que se está eligiendo: de un ancla a la otra, en vivo mientras se arrastra. -->
     @if (rectanguloDeGeocerca(); as g) {
       <rect

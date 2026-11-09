@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../../core/http/api.config';
-import { CreateInventoryRequest, Device, Inventory } from './inventories.models';
+import { CreateInventoryRequest, Device, EditInventoryRequest, Inventory } from './inventories.models';
 
 /**
  * Crear, listar y cerrar inventarios. Los caminos son los de Witag; el único cambio de backend fue
@@ -23,6 +23,14 @@ export class InventoriesApiService {
 
   crear(inventario: CreateInventoryRequest): Promise<Inventory> {
     return firstValueFrom(this.http.post<Inventory>(`${this.baseUrl}/CreateInventory`, inventario));
+  }
+
+  /**
+   * Cambia solo el nombre y las zonas de un inventario abierto (`PATCH inventory/{id}`). El plano y
+   * los robots no cambian: el backend pone los robots del inventario en cada zona nueva.
+   */
+  editar(id: string, cambios: EditInventoryRequest): Promise<Inventory> {
+    return firstValueFrom(this.http.patch<Inventory>(`${this.baseUrl}/inventory/${id}`, cambios));
   }
 
   cerrar(id: string): Promise<unknown> {

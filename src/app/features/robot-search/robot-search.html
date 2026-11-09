@@ -1,10 +1,12 @@
-<section class="buscar-robot">
-  <header class="buscar-robot__cabecera">
-    <h1>Buscar con el robot</h1>
-    <p class="buscar-robot__nota">
-      Manda el robot a una zona a buscar cajas concretas. Se ve en vivo lo que va encontrando. No cambia el inventario.
-    </p>
-  </header>
+<section class="buscar-robot" [class.buscar-robot--embebido]="embebido()">
+  @if (!embebido()) {
+    <header class="buscar-robot__cabecera">
+      <h1>Buscar con el robot</h1>
+      <p class="buscar-robot__nota">
+        Manda el robot a una zona a buscar cajas concretas. Se ve en vivo lo que va encontrando. No cambia el inventario.
+      </p>
+    </header>
+  }
 
   @switch (store.inventarios().status) {
     @case ('loading') {
@@ -20,6 +22,7 @@
     @case ('ready') {
       <form class="tarjeta" (submit)="alBuscar($event)">
         <div class="fila">
+          @if (!embebido()) {
           <label class="campo">
             <span class="campo__etiqueta">Inventario</span>
             <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirInventario($event)">
@@ -30,7 +33,10 @@
             </select>
           </label>
 
+          }
+
           @if (store.inventarioId() !== null) {
+            @if (!embebido()) {
             <label class="campo">
               <span class="campo__etiqueta">Robot</span>
               <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirRobot($event)">
@@ -40,7 +46,9 @@
                 }
               </select>
             </label>
+            }
 
+            @if (!embebido()) {
             <label class="campo">
               <span class="campo__etiqueta">Zona</span>
               <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirZona($event)">
@@ -50,11 +58,14 @@
                 }
               </select>
             </label>
+            }
           }
         </div>
 
         @if (store.abiertos().length === 0) {
           <p class="dato">No hay inventarios abiertos: el robot solo busca dentro de uno abierto.</p>
+        } @else if (embebido() && store.inventarioId() === null) {
+          <p class="aviso">Elige arriba un inventario abierto y su robot: el robot solo busca dentro de uno abierto.</p>
         }
 
         <label class="campo">
@@ -81,15 +92,15 @@
           </kibot-button>
           @if (store.enMarcha()) {
             <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Pausar la búsqueda? Después solo se podrá cancelar o volver al dock.', store.pausar.bind(store))">
+              (pressed)="confirmar('¿Pausar la búsqueda? Después solo se podrá cancelar o volver al dock.', store.pausar.bind(store), 'Pausar')">
               Pausar
             </kibot-button>
             <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Cancelar la búsqueda?', store.cancelar.bind(store))">
+              (pressed)="confirmar('¿Cancelar la búsqueda?', store.cancelar.bind(store), 'Cancelar búsqueda', true)">
               Cancelar
             </kibot-button>
             <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Mandar el robot al dock?', store.volverAlDock.bind(store))">
+              (pressed)="confirmar('¿Mandar el robot al dock?', store.volverAlDock.bind(store), 'Volver al dock')">
               Volver al dock
             </kibot-button>
           }

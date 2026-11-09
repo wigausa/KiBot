@@ -23,6 +23,13 @@ export interface CreateInventoryRequest {
   Zones: { IdZone: number; Name: string; Devices: number[] }[];
 }
 
+/** El cuerpo de `PATCH inventory/{id}`: lo que no venga se queda como está. */
+export interface EditInventoryRequest {
+  Name?: string;
+  /** Los ids de las zonas que debe tener, en orden. */
+  Zones?: number[];
+}
+
 /**
  * Un dispositivo de `GET puerta` (camelCase: es de los endpoints viejos). Solo interesa lo que
  * permite saber si es un robot y de qué compañía.

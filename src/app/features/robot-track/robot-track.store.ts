@@ -67,6 +67,8 @@ export class RobotTrackStore implements OnDestroy {
 
   readonly inventarioId = signal<string | null>(null);
   readonly robotId = signal<number | null>(null);
+  /** Un recorrido concreto (el último de una zona, en Control). Nulo: el abierto o el último del robot. */
+  readonly runId = signal<string | null>(null);
 
   /** El instante que se repite, en ms. Null: en vivo, el último punto. */
   readonly instante = signal<number | null>(null);
@@ -173,7 +175,7 @@ export class RobotTrackStore implements OnDestroy {
 
     this._recorrido.set({ status: 'loading' });
     try {
-      const recorrido = await this.api.recorrido(inv, dev);
+      const recorrido = await this.api.recorrido(inv, dev, this.runId());
       if (inv !== this.inventarioId() || dev !== this.robotId()) return;
       this._recorrido.set({ status: 'ready', value: recorrido });
       this._puntos.set(conInstante(recorrido.Points));
@@ -185,6 +187,15 @@ export class RobotTrackStore implements OnDestroy {
       if (inv === this.inventarioId() && dev === this.robotId())
         this._recorrido.set({ status: 'error', ...apiFailure(error) });
     }
+  }
+
+  /** Cambia al recorrido de una zona (o al del robot, con `null`) y lo carga. */
+  async elegirRecorrido(runId: string | null): Promise<void> {
+    if (runId === this.runId()) return;
+    this.parar();
+    this.runId.set(runId);
+    this.limpiar();
+    await this.cargarRecorrido();
   }
 
   /** Los puntos nuevos desde el último. Si el recorrido cerró, para y deja la repetición lista. */

@@ -2,10 +2,12 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { CompanyStore } from '../../core/company/company.store';
+import { RobotApiService } from '../robot/robot-api.service';
+import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
 import { ZonesApiService } from '../zones/zones-api.service';
 import { MapSummary } from '../zones/zones.models';
 import { InventoriesApiService } from './inventories-api.service';
-import { CreateInventoryRequest, Device, Inventory } from './inventories.models';
+import { CreateInventoryRequest, Device, EditInventoryRequest, Inventory } from './inventories.models';
 import { InventoriesStore } from './inventories.store';
 
 function plano(id: string, zonas: { IdZone: number; Name: string }[]): MapSummary {
@@ -18,6 +20,7 @@ function dispositivo(id: number, tipo: string, compania: number): Device {
 
 class ApiFalsa {
   creados: CreateInventoryRequest[] = [];
+  editados: { id: string; cambios: EditInventoryRequest }[] = [];
   cerrados: string[] = [];
   lista: Inventory[] = [
     {
@@ -26,10 +29,30 @@ class ApiFalsa {
       StartDate: '2026-10-01T08:00:00Z',
       EndDate: null,
       MapId: 'ocupado',
+      MapVersion: 2,
       Zones: [{ IdZone: 30, Name: 'Patio', CompanyId: 1 }],
       Devices: [{ IdDevice: 41, Name: 'D41', Type: 'Robot' }]
     },
-    { _id: 'ajeno', Name: 'De otra', StartDate: '', EndDate: null, Zones: [{ IdZone: 99, Name: 'X', CompanyId: 2 }] }
+    { _id: 'ajeno', Name: 'De otra', StartDate: '', EndDate: null, Zones: [{ IdZone: 99, Name: 'X', CompanyId: 2 }] },
+    {
+      _id: 'sin-robot',
+      Name: 'De portales',
+      StartDate: '',
+      EndDate: null,
+      Zones: [{ IdZone: 50, Name: 'Andén', CompanyId: 1 }],
+      Devices: [{ IdDevice: 42, Name: 'Portal', Type: 'Portal Inventario' }]
+    },
+    {
+      _id: 'cerrado',
+      Name: 'Septiembre',
+      StartDate: '2026-09-01T08:00:00Z',
+      EndDate: '2026-09-30T08:00:00Z',
+      MapId: 'ocupado',
+      MapVersion: 1,
+      // Al cerrar, el backend vacía los dispositivos: se reconoce por el plano.
+      Zones: [{ IdZone: 30, Name: 'Patio', CompanyId: 1 }],
+      Devices: []
+    }
   ];
 
   async inventarios(): Promise<Inventory[]> {
@@ -38,6 +61,10 @@ class ApiFalsa {
   async crear(i: CreateInventoryRequest): Promise<Inventory> {
     this.creados.push(i);
     return { _id: 'nuevo', Name: i.Name, StartDate: '', EndDate: null };
+  }
+  async editar(id: string, cambios: EditInventoryRequest): Promise<Inventory> {
+    this.editados.push({ id, cambios });
+    return { ...this.lista[0], Name: cambios.Name ?? this.lista[0].Name };
   }
   async cerrar(id: string): Promise<unknown> {
     this.cerrados.push(id);
@@ -65,18 +92,39 @@ class ZonasFalsa {
   }
 }
 
+/** La versión 2 del plano «ocupado», la que congeló «Octubre»: Patio y Jardín con geocerca, Huerto sin ella. */
+class RobotFalso {
+  pedidos: [string, number][] = [];
+  async mapa(mapId: string, version: number): Promise<WarehouseMap> {
+    this.pedidos.push([mapId, version]);
+    const punto = (x: number) => ({ X: x, Y: 0 });
+    return {
+      MapId: mapId,
+      Version: version,
+      Zones: [
+        { IdZone: 30, Name: 'Patio', Shape: 'rect', Points: [punto(0), punto(5)] },
+        { IdZone: 31, Name: 'Jardín', Shape: 'rect', Points: [punto(5), punto(9)] },
+        { IdZone: 32, Name: 'Huerto', Shape: 'rect', Points: [] }
+      ]
+    } as unknown as WarehouseMap;
+  }
+}
+
 describe('InventoriesStore', () => {
   let store: InventoriesStore;
   let api: ApiFalsa;
+  let robot: RobotFalso;
 
   beforeEach(async () => {
     api = new ApiFalsa();
+    robot = new RobotFalso();
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         InventoriesStore,
         { provide: InventoriesApiService, useValue: api },
         { provide: ZonesApiService, useValue: new ZonasFalsa() },
+        { provide: RobotApiService, useValue: robot },
         { provide: CompanyStore, useValue: { companiaId: signal<number | null>(1) } }
       ]
     });
@@ -98,8 +146,9 @@ describe('InventoriesStore', () => {
     ]);
   });
 
-  it('lista solo los inventarios de la compañía', () => {
+  it('lista solo los inventarios de la compañía que llevan robot, abiertos y cerrados', () => {
     expect(store.abiertos().map((i) => i._id)).toEqual(['abierto']);
+    expect(store.cerrados().map((i) => i._id)).toEqual(['cerrado']);
   });
 
   it('crea el inventario con cada robot en cada zona elegida', async () => {
@@ -143,6 +192,37 @@ describe('InventoriesStore', () => {
     expect(store.confirmandoCierre()).toBe('abierto');
 
     await store.cerrar(inventario);
+    expect(api.cerrados).toEqual(['abierto']);
+  });
+
+  it('editar ofrece las zonas con geocerca en la versión que congeló el inventario', async () => {
+    await store.abrirEdicion(store.abiertos()[0]);
+
+    expect(robot.pedidos).toEqual([['ocupado', 2]]);
+    expect(store.zonasEditables().map((z) => z.nombre)).toEqual(['Patio', 'Jardín']);
+    expect(store.editZonas()).toEqual([30]);
+    expect(store.puedeGuardarEdicion()).toBeFalse(); // sin cambios no hay nada que guardar
+  });
+
+  it('editar manda solo el nombre y las zonas, en orden', async () => {
+    await store.abrirEdicion(store.abiertos()[0]);
+    store.editNombre.set('  Octubre bis ');
+    store.alternarZonaEditada(31);
+
+    expect(await store.guardarEdicion()).toBeTrue();
+    expect(api.editados).toEqual([{ id: 'abierto', cambios: { Name: 'Octubre bis', Zones: [30, 31] } }]);
+  });
+
+  it('editar no deja el inventario sin zonas', async () => {
+    await store.abrirEdicion(store.abiertos()[0]);
+    store.alternarZonaEditada(30);
+
+    expect(store.editZonas()).toEqual([]);
+    expect(store.puedeGuardarEdicion()).toBeFalse();
+  });
+
+  it('cerrarYa cierra sin el doble paso (ya preguntó el diálogo)', async () => {
+    await store.cerrarYa(store.abiertos()[0]);
     expect(api.cerrados).toEqual(['abierto']);
   });
 });

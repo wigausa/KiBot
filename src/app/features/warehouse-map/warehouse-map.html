@@ -1,7 +1,11 @@
-<section class="mapa">
+<section class="mapa" [class.mapa--embebido]="embebido()">
   <header class="mapa__cabecera">
     <div>
-      <h1>Plano de bodega</h1>
+      @if (!embebido()) {
+        <h1>Plano de bodega</h1>
+      } @else {
+        <h2 class="mapa__titulo">Nuevo plano</h2>
+      }
       <p class="mapa__nota">
         Dibújalo o pégalo como JSON. Son dos formas de tocar el mismo plano.
       </p>

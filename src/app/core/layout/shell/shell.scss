@@ -1,7 +1,7 @@
 // Anchos del riel: son dimensiones de layout, no spacing, por eso viven como
 // custom properties locales del shell y no en la escala de tokens.
 :host {
-  --kibot-sidebar-collapsed: 76px;
+  --kibot-sidebar-collapsed: 104px;
   --kibot-sidebar-expanded: 248px;
 
   display: block;
@@ -12,6 +12,8 @@
 .shell {
   display: grid;
   grid-template-columns: var(--kibot-sidebar-collapsed) 1fr;
+  // Una fila del alto de la pantalla: sin esto la fila crece con el contenido y el scroll no aparece.
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
   background: var(--kibot-page);
   transition: grid-template-columns var(--kibot-motion-slow) var(--kibot-ease-standard);
@@ -21,12 +23,20 @@
   grid-template-columns: var(--kibot-sidebar-expanded) 1fr;
 }
 
+// El riel es navy (Tertiary) en los dos modos, como el mockup. Dentro, los tokens de texto y
+// superficie se redefinen para que lo que se pinte aquí (el cambio de tema, la sesión) lea bien.
 .sidebar {
+  min-height: 0;
+  --kibot-fg: var(--kibot-on-rail);
+  --kibot-fg-muted: var(--kibot-on-rail-muted);
+  --kibot-surface-variant: var(--kibot-rail-hover);
+  --kibot-line: rgb(255 255 255 / 12%);
+
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--kibot-surface);
-  border-right: var(--kibot-stroke-0) solid var(--kibot-line);
+  background: var(--kibot-rail);
+  color: var(--kibot-on-rail);
 }
 
 .sidebar__top {
@@ -34,7 +44,6 @@
   align-items: center;
   min-height: 72px;
   padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
-  border-bottom: var(--kibot-stroke-0) solid var(--kibot-line);
 }
 
 .brand {
@@ -49,57 +58,79 @@
   background: transparent;
   cursor: pointer;
   transition: background var(--kibot-motion-fast) var(--kibot-ease-standard);
-}
 
-.brand:hover {
-  background: var(--kibot-surface-variant);
+  &:hover {
+    background: var(--kibot-rail-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
 }
 
 .sidebar__nav {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--kibot-spacing-3) var(--kibot-spacing-3) var(--kibot-spacing-2);
+  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: var(--kibot-spacing-1);
+  gap: var(--kibot-spacing-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .nav__item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--kibot-spacing-3);
-  // 36 de ícono + 8 de padding arriba y abajo.
   min-height: 52px;
   padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
   border-radius: var(--kibot-radius-6);
-  color: var(--kibot-fg);
+  color: var(--kibot-on-rail-muted);
   font-size: var(--kibot-font-size-body);
   font-weight: var(--kibot-font-weight-regular);
   text-decoration: none;
   transition:
     background var(--kibot-motion-fast) var(--kibot-ease-standard),
     color var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover {
+    background: var(--kibot-rail-hover);
+    color: var(--kibot-on-rail);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
+  }
 }
 
-.nav__item:hover {
-  background: var(--kibot-surface-variant);
-}
-
+// Activo: fondo con el Primary suave y el texto e icono en Primary claro, que sobre navy sí contrasta.
 .nav__item--active {
-  background: color-mix(in srgb, var(--kibot-accent) 22%, transparent);
-  color: var(--kibot-accent-strong);
+  background: rgb(217 116 255 / 18%);
+  color: var(--kibot-color-primary-200);
   font-weight: var(--kibot-font-weight-bold);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: var(--kibot-spacing-3);
+    inset-inline-start: calc(-1 * var(--kibot-spacing-3));
+    width: 4px;
+    border-radius: 0 var(--kibot-radius-full) var(--kibot-radius-full) 0;
+    background: var(--kibot-accent);
+  }
 }
 
 .nav__icon {
-  --kibot-icon-size: 36px;
+  --kibot-icon-size: 30px;
 
   flex-shrink: 0;
 }
@@ -107,6 +138,7 @@
 .nav__label {
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar__footer {
@@ -115,49 +147,6 @@
   gap: var(--kibot-spacing-2);
   padding: var(--kibot-spacing-3);
   border-top: var(--kibot-stroke-0) solid var(--kibot-line);
-}
-
-.robot {
-  display: flex;
-  align-items: center;
-  gap: var(--kibot-spacing-2);
-  padding: var(--kibot-spacing-2);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface-variant);
-}
-
-.robot__avatar {
-  --kibot-icon-size: 20px;
-
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--kibot-radius-5);
-  // El gradiente de marca es oscuro en ambos modos, por eso el ícono va en
-  // `on-brand` y no en `fg` (que se invertiría en oscuro).
-  background: var(--kibot-brand-gradient);
-  color: var(--kibot-on-brand);
-}
-
-.robot__details {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.robot__name {
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg);
-  white-space: nowrap;
-}
-
-.robot__meta {
-  font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-fg-muted);
-  white-space: nowrap;
 }
 
 // Usuario del login de B2C y su salida. Solo existe con login.
@@ -170,64 +159,126 @@
 
 .sesion__usuario {
   font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-fg-muted);
+  color: var(--kibot-on-rail-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .sesion__salir {
+  min-height: 2.5rem;
   padding: var(--kibot-spacing-1) var(--kibot-spacing-2);
   border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-4);
+  border-radius: var(--kibot-radius-6);
   background: transparent;
-  color: var(--kibot-fg);
+  color: var(--kibot-on-rail);
   font: inherit;
   font-size: var(--kibot-font-size-subtitle);
   cursor: pointer;
 
   &:hover {
-    background: var(--kibot-surface-variant);
+    background: var(--kibot-rail-hover);
   }
 
   &:focus-visible {
-    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
+    outline: 2px solid var(--kibot-accent);
     outline-offset: 2px;
   }
 }
 
 // ── Estado comprimido ──────────────────────────────────────────────────────
-// Solo íconos: las etiquetas colapsan a 0 en vez de ocultarse de golpe, para
-// que la transición de ancho del riel no corte el texto.
+// Como el mockup: icono y, debajo, el nombre corto. Se lee sin tener que expandir.
 .shell:not(.shell--expanded) {
   .nav__item {
+    flex-direction: column;
     justify-content: center;
-    gap: 0;
-    padding-inline: var(--kibot-spacing-2);
+    gap: var(--kibot-spacing-1);
+    min-height: 68px;
+    padding: var(--kibot-spacing-2) var(--kibot-spacing-1);
+    text-align: center;
+  }
+
+  .nav__icon {
+    --kibot-icon-size: 26px;
   }
 
   .nav__label {
-    width: 0;
-    opacity: 0;
+    max-width: 100%;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .sidebar__footer {
     align-items: center;
     padding-inline: var(--kibot-spacing-2);
   }
+}
 
-  .robot {
-    background: transparent;
-    padding: 0;
-  }
-
-  .robot__details {
-    display: none;
-  }
+// Contenido + mini-reproductor: el reproductor queda pegado abajo y el contenido scrollea encima.
+.principal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .content {
-  min-width: 0;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
+}
+
+// En pantallas estrechas el riel pasa abajo, como una barra de pestañas.
+@media (max-width: 40rem) {
+  .shell,
+  .shell--expanded {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .principal {
+    height: auto;
+    min-height: 0;
+  }
+
+  .sidebar {
+    order: 2;
+    flex-direction: row;
+  }
+
+  .sidebar__top,
+  .sidebar__footer {
+    display: none;
+  }
+
+  .sidebar__nav {
+    padding: var(--kibot-spacing-1);
+    overflow-x: auto;
+  }
+
+  .nav {
+    flex-direction: row;
+    gap: var(--kibot-spacing-1);
+  }
+
+  .shell .nav__item {
+    flex-direction: column;
+    gap: var(--kibot-spacing-1);
+    min-width: 4.5rem;
+    min-height: 56px;
+    padding: var(--kibot-spacing-1);
+    font-size: 0.75rem;
+  }
+
+  .nav__item--active::before {
+    display: none;
+  }
+
+  .shell .nav__label {
+    width: auto;
+    opacity: 1;
+  }
 }

@@ -9,9 +9,9 @@
         (click)="toggleSidebar()"
       >
         @if (expanded()) {
-          <witag-logo variant="full" [width]="132" alt="Witag" />
+          <witag-logo variant="full" tone="on-brand" [width]="132" alt="Witag" />
         } @else {
-          <witag-logo variant="icon" [width]="40" alt="Witag" />
+          <witag-logo variant="icon" tone="on-brand" [width]="40" alt="Witag" />
         }
       </button>
     </div>
@@ -24,7 +24,8 @@
               class="nav__item"
               [routerLink]="item.path"
               routerLinkActive="nav__item--active"
-              [attr.title]="expanded() ? null : item.label"
+              ariaCurrentWhenActive="page"
+              [attr.title]="expanded() ? null : item.titulo"
             >
               <kibot-icon class="nav__icon" [name]="item.icon" />
               <span class="nav__label">{{ item.label }}</span>
@@ -36,16 +37,6 @@
 
     <div class="sidebar__footer">
       <kibot-theme-toggle [showLabel]="expanded()" />
-
-      <div class="robot">
-        <span class="robot__avatar" aria-hidden="true">
-          <kibot-icon name="robot" />
-        </span>
-        <span class="robot__details">
-          <span class="robot__name">KiBot</span>
-          <span class="robot__meta">Bodega 7000</span>
-        </span>
-      </div>
 
       @if (sesion.usuario; as usuario) {
         <div class="sesion">
@@ -60,7 +51,14 @@
     </div>
   </aside>
 
-  <main class="content">
-    <router-outlet />
-  </main>
+  <div class="principal">
+    <main class="content">
+      <router-outlet />
+    </main>
+    @if (!enControl()) {
+      <kibot-mini-player />
+    }
+  </div>
 </div>
+
+<kibot-confirm-host />

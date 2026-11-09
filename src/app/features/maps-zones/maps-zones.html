@@ -1,0 +1,132 @@
+<section class="pagina">
+  <header class="pagina__cabecera">
+    <div>
+      <p class="pagina__antetitulo">Planos y zonas</p>
+      <h1>Planos y zonas</h1>
+      <p class="pagina__nota">
+        Lo que se prepara antes de crear un inventario: el plano de la bodega, sus zonas y dónde está cada zona en el
+        plano (su geocerca). Una zona sin geocerca no entra en un inventario del robot.
+      </p>
+    </div>
+  </header>
+
+  <div class="compania">
+    <kibot-company-picker />
+  </div>
+
+  <kibot-tabs label="Secciones de Planos y zonas" [tabs]="pestanas" [activa]="tab()" (cambia)="irA($event)" />
+
+  @if (tab() === 'planos') {
+    @if (companias.companiaId() === null) {
+      <p class="aviso">Elige arriba la compañía para ver sus planos.</p>
+    } @else {
+      @switch (planos().status) {
+        @case ('loading') {
+          <kibot-loading-indicator label="Cargando los planos" />
+        }
+        @case ('error') {
+          @if (planos(); as e) {
+            @if (e.status === 'error') {
+              <kibot-error-state [message]="e.message" [details]="e.details" (retry)="cargarPlanos()" />
+            }
+          }
+        }
+        @case ('ready') {
+          @if (planos(); as lista) {
+            @if (lista.status === 'ready') {
+              <div class="tarjeta">
+                <div class="tarjeta__cabecera">
+                  <h2>Planos de la compañía</h2>
+                  @if (!dibujando()) {
+                    <kibot-button size="small" (pressed)="dibujando.set(true)">Nuevo plano</kibot-button>
+                  }
+                </div>
+                @if (lista.value.length === 0) {
+                  <p class="aviso">Esta compañía todavía no tiene planos. Dibuja el primero abajo.</p>
+                } @else {
+                  <ul class="planos">
+                    @for (p of lista.value; track p.MapId) {
+                      <li class="plano" role="button" tabindex="0" [attr.aria-label]="'Ver el plano ' + p.Name"
+                          (click)="abrirPlano(p)" (keydown.enter)="abrirPlano(p)" (keydown.space)="$event.preventDefault(); abrirPlano(p)">
+                        <div class="plano__nombre">
+                          <strong>{{ p.Name }}</strong>
+                          <span class="insignia insignia--info">v{{ p.Version }}</span>
+                        </div>
+                        <span class="dato">
+                          {{ p.Aisles }} pasillos · {{ p.Racks }} estanterías · {{ p.Zones.length }}
+                          {{ p.Zones.length === 1 ? 'zona con geocerca' : 'zonas con geocerca' }}
+                        </span>
+                        <span class="dato">Versión del {{ p.CreatedAt | date: 'mediumDate' }}</span>
+                        <span class="plano__ver">Ver plano →</span>
+                      </li>
+                    }
+                  </ul>
+                  <p class="campo__ayuda">
+                    Cada vez que se guarda una geocerca nace una versión nueva del plano. Un inventario se queda con la
+                    versión con la que se creó.
+                  </p>
+                }
+              </div>
+            }
+          }
+        }
+      }
+
+      @if (dibujando()) {
+        <div class="tarjeta">
+          <app-warehouse-map [embebido]="true" />
+        </div>
+      }
+    }
+  } @else {
+    <kibot-zones [embebido]="true" [pestana]="pestanaDeZonas()" />
+  }
+</section>
+
+<!-- La ventana con el plano elegido -->
+<kibot-modal
+  [abierto]="planoAbierto() !== null"
+  [titulo]="planoAbierto()?.Name ?? 'Plano'"
+  [subtitulo]="planoAbierto() ? 'Versión ' + planoAbierto()!.Version + ' · ' + planoAbierto()!.Aisles + ' pasillos · ' + planoAbierto()!.Racks + ' estanterías' : null"
+  (cerrar)="cerrarPlano()"
+>
+  @switch (planoCargado().status) {
+    @case ('loading') {
+      <kibot-loading-indicator label="Cargando el plano" />
+    }
+    @case ('error') {
+      @if (planoCargado(); as e) {
+        @if (e.status === 'error') {
+          <kibot-error-state [message]="e.message" [details]="e.details" [showRetry]="false" />
+        }
+      }
+    }
+    @case ('ready') {
+      @if (planoCargado(); as p) {
+        @if (p.status === 'ready') {
+          @if (zonasPintadas().length > 0) {
+            <div class="leyenda">
+              <span class="campo__etiqueta">Zonas con geocerca (toca una para verla en el plano)</span>
+              <div class="chips">
+                @for (z of zonasPintadas(); track z.idZone) {
+                  <button type="button" class="chip" [class.chip--activo]="zonaResaltada() === z.idZone"
+                          [attr.aria-pressed]="zonaResaltada() === z.idZone" (click)="alternarZona(z.idZone)">
+                    <span [class]="'muestra muestra--c' + z.color" aria-hidden="true"></span>
+                    {{ z.nombre }}
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="aviso">Este plano todavía no tiene zonas con geocerca.</p>
+          }
+          @if (rejilla(); as r) {
+            <div class="lienzo">
+              <plan-canvas [map]="p.value" [rejilla]="r" [editable]="false" [resaltadas]="caras()" [zonas]="zonasPintadas()" />
+            </div>
+          }
+        }
+      }
+    }
+  }
+</kibot-modal>

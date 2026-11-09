@@ -44,6 +44,10 @@ export interface RobotRun {
 /** El avance mientras el robot recorre: lecturas y caras terminadas, nunca conteo de cajas. */
 export interface RobotProgress {
   IdInventory: string;
+  /** La zona pedida con `?zone=`; nulo o ausente si es todo el inventario. */
+  IdZone?: number | null;
+  /** El recorrido del que es este avance (el de la zona, o el más reciente). Nulo si no hubo. */
+  RunId?: string | null;
   TotalSides: number;
   CoveredSides: number;
   Readings: number;
@@ -556,4 +560,44 @@ const ESTADOS_DE_BUSQUEDA: Record<RobotSearchStatus, string> = {
 
 export function textoDeBusqueda(estado: RobotSearchStatus): string {
   return ESTADOS_DE_BUSQUEDA[estado] ?? estado;
+}
+
+// --- Ocupación (GET inventory/{id}/robot/occupancy) --------------------------------------------
+
+/** Lo calculado del último recorrido consolidado. */
+export interface RobotRunSummary {
+  RunEventId: string;
+  IdDevice: number;
+  Reason: string | null;
+  Complete: boolean;
+  CoveredSides: number;
+  TotalSides: number;
+  /** Cajas distintas leídas. */
+  Epcs: number;
+  EpcsWithZone: number;
+  Ambiguous: number;
+  OverCapacitySides: number;
+  RacksUnknownToMap: string[];
+  ConsolidatedAt: string | null;
+}
+
+/** Una cara de estantería con lo que el robot dejó en ella. */
+export interface RobotRackOccupancy {
+  RackId: string;
+  Side: string;
+  AisleId: string | null;
+  IdZone: number | null;
+  Capacity: number;
+  Boxes: number;
+  OccupancyPct: number | null;
+  Covered: boolean;
+  Anomaly: boolean;
+}
+
+export interface RobotOccupancy {
+  IdInventory: string;
+  MapId: string | null;
+  MapVersion: number | null;
+  Run: RobotRunSummary | null;
+  Racks: RobotRackOccupancy[];
 }

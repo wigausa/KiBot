@@ -11,6 +11,7 @@ import {
   ManualZoneDraft,
   MapSaveResult,
   MapSummary,
+  ZonaEnUso,
   ZoneOption
 } from './zones.models';
 
@@ -84,6 +85,14 @@ export class ZonesApiService {
    */
   planoVigente(mapId: string): Promise<WarehouseMap> {
     return firstValueFrom(this.http.get<WarehouseMap>(`${this.baseUrl}/warehouseMap/${mapId}`));
+  }
+
+  /**
+   * Las zonas del plano que algún inventario (abierto o cerrado) ya usó, con sus nombres. Su
+   * geocerca está fija: el backend da 409 si una versión nueva la mueve o la quita.
+   */
+  zonasEnUso(mapId: string): Promise<ZonaEnUso[]> {
+    return firstValueFrom(this.http.get<ZonaEnUso[]>(`${this.baseUrl}/warehouseMap/${mapId}/zonesInUse`));
   }
 
   /**

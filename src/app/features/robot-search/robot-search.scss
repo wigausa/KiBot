@@ -9,6 +9,14 @@
   gap: var(--kibot-spacing-6);
 }
 
+// Dentro de Buscar (pestaña): sin márgenes propios, los pone la página que lo contiene.
+.buscar-robot--embebido {
+  min-height: 0;
+  padding: 0;
+  max-width: none;
+}
+
+
 .buscar-robot__cabecera h1 {
   margin: 0;
   font-size: var(--kibot-font-size-heading3);
@@ -30,7 +38,6 @@
   border: var(--kibot-stroke-0) solid var(--kibot-line);
   border-radius: var(--kibot-radius-6);
   background: var(--kibot-surface);
-  max-width: 56rem;
 }
 
 .fila {
@@ -39,37 +46,8 @@
   gap: var(--kibot-spacing-4);
 }
 
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-2);
-}
 
-.campo__etiqueta {
-  font-size: var(--kibot-font-size-subtitle);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg-muted);
-}
 
-.campo__control {
-  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
-  color: var(--kibot-fg);
-  font: inherit;
-  font-size: var(--kibot-font-size-body);
-
-  &:focus-visible {
-    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
-    outline-offset: var(--kibot-spacing-0);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
 
 .codigos {
   resize: vertical;
@@ -87,7 +65,7 @@
 .rechazo__motivo {
   margin: 0;
   font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-error-strong);
+  color: var(--kibot-error-text);
 }
 
 .vista {
@@ -112,7 +90,7 @@
 }
 
 .resultado__estado--vivo {
-  color: var(--kibot-success-strong);
+  color: var(--kibot-success-text);
 }
 
 .contador {
@@ -163,5 +141,5 @@
 .aviso {
   margin: 0;
   font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-warning-strong);
+  color: var(--kibot-warning-text);
 }

@@ -1,120 +1,38 @@
-<section class="inventarios">
-  <header class="inventarios__cabecera">
-    <h1>Inventarios</h1>
-    <p class="inventarios__nota">
-      Un inventario del robot lleva un plano, las zonas que se van a contar y los robots que las recorren. Las zonas
-      tienen que tener su geocerca en ese plano (en Zonas).
-    </p>
+<section class="pagina">
+  <header class="pagina__cabecera">
+    <div>
+      <p class="pagina__antetitulo">Inventarios</p>
+      <h1>Inventarios</h1>
+      <p class="pagina__nota">
+        Un inventario del robot lleva un plano, las zonas que se van a contar y el robot que las recorre. Las zonas
+        necesitan su geocerca en ese plano (en Planos y zonas).
+      </p>
+    </div>
+    @if (store.companiaId() !== null) {
+      <kibot-button size="large" (pressed)="abrirCreacion()">Nuevo inventario</kibot-button>
+    }
   </header>
 
-  <kibot-company-picker />
+  <div class="compania">
+    <kibot-company-picker />
+  </div>
 
   @if (store.companiaId() !== null) {
-    <!-- ===================== CREAR ===================== -->
-    <div class="tarjeta">
-      <h2 class="tarjeta__titulo">Nuevo inventario</h2>
-
-      <div class="fila">
-        <label class="campo campo--ancho">
-          <span class="campo__etiqueta">Nombre</span>
-          <input class="campo__control" [value]="store.nombre()" (input)="store.nombre.set(valor($event))" />
-        </label>
-        <label class="campo campo--ancho">
-          <span class="campo__etiqueta">Plano</span>
-          <select class="campo__control" (change)="alElegirPlano($event)">
-            <option value="" [selected]="store.planoId() === null">
-              {{ store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano' }}
-            </option>
-            @for (p of store.planosElegibles(); track p.id) {
-              <option [value]="p.id" [selected]="p.id === store.planoId()" [disabled]="p.ocupadoPor !== null">
-                {{ p.nombre }}{{ p.ocupadoPor ? ' — en «' + p.ocupadoPor + '»' : '' }}
-              </option>
-            }
-          </select>
-        </label>
-      </div>
-      @if (store.planos(); as p) {
-        @if (p.status === 'error') {
-          <kibot-error-state [message]="p.message" [details]="p.details" (retry)="store.cargar()" />
-        }
-        @if (p.status === 'ready' && p.value.length === 0) {
-          <p class="aviso">La compañía no tiene planos. Se crean en Mapa.</p>
-        }
+    @if (store.cierre(); as c) {
+      @if (c.status === 'error') {
+        <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
+      } @else if (c.status === 'ready') {
+        <p class="hecho" role="status">{{ c.value }}</p>
       }
-
-      @if (store.planoId() !== null) {
-        <fieldset class="opciones">
-          <legend class="campo__etiqueta">Zonas</legend>
-          @if (store.zonasElegibles().length === 0) {
-            <p class="aviso">Este plano no tiene ninguna zona con geocerca. Sitúalas en Zonas → Geocercas.</p>
-          }
-          @for (z of store.zonasElegibles(); track z.id) {
-            <label class="opcion" [class.opcion--ocupada]="z.ocupadoPor !== null">
-              <input
-                type="checkbox"
-                [disabled]="z.ocupadoPor !== null"
-                [checked]="store.zonasMarcadas().has(+z.id)"
-                (change)="store.alternarZona(+z.id)"
-              />
-              <span>{{ z.nombre }}</span>
-              @if (z.ocupadoPor) {
-                <span class="dato">en «{{ z.ocupadoPor }}»</span>
-              }
-            </label>
-          }
-        </fieldset>
+    }
+    @if (store.creacion(); as c) {
+      @if (c.status === 'ready' && !creando()) {
+        <p class="hecho" role="status">
+          «{{ c.value.Name }}» creado. <a routerLink="/control">Ir a Control</a> para iniciar el recorrido.
+        </p>
       }
+    }
 
-      <fieldset class="opciones">
-        <legend class="campo__etiqueta">Robots</legend>
-        @switch (store.robotsCargados().status) {
-          @case ('loading') {
-            <kibot-loading-indicator [size]="32" label="Cargando robots" />
-          }
-          @case ('error') {
-            @if (store.robotsCargados(); as e) {
-              @if (e.status === 'error') {
-                <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
-              }
-            }
-          }
-          @case ('ready') {
-            @if (store.robotsElegibles().length === 0) {
-              <p class="aviso">La compañía no tiene robots dados de alta.</p>
-            }
-            @for (r of store.robotsElegibles(); track r.id) {
-              <label class="opcion" [class.opcion--ocupada]="r.ocupadoPor !== null">
-                <input
-                  type="checkbox"
-                  [disabled]="r.ocupadoPor !== null"
-                  [checked]="store.robotsMarcados().has(+r.id)"
-                  (change)="store.alternarRobot(+r.id)"
-                />
-                <span>{{ r.nombre }}</span>
-                @if (r.ocupadoPor) {
-                  <span class="dato">en «{{ r.ocupadoPor }}»</span>
-                }
-              </label>
-            }
-          }
-        }
-      </fieldset>
-
-      <div class="acciones">
-        <kibot-button [disabled]="!store.puedeCrear()" [busy]="store.creacion().status === 'loading'" (pressed)="store.crear()">
-          Crear inventario
-        </kibot-button>
-      </div>
-      @if (store.creacion(); as c) {
-        @if (c.status === 'error') {
-          <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
-        } @else if (c.status === 'ready') {
-          <p class="hecho" role="status">«{{ c.value.Name }}» creado. El recorrido se inicia desde Control.</p>
-        }
-      }
-    </div>
-
-    <!-- ===================== LISTA ===================== -->
     @switch (store.inventarios().status) {
       @case ('loading') {
         <kibot-loading-indicator [size]="40" label="Cargando inventarios" />
@@ -127,53 +45,34 @@
         }
       }
       @case ('ready') {
-        <h2 class="seccion">Abiertos</h2>
+        <!-- ===================== ABIERTOS ===================== -->
+        <h2 class="seccion">Abiertos <span class="insignia">{{ store.abiertos().length }}</span></h2>
         @if (store.abiertos().length === 0) {
-          <p class="aviso">No hay inventarios abiertos.</p>
+          <div class="vacio">
+            <span class="vacio__icono" aria-hidden="true">📋</span>
+            <h2>No hay inventarios abiertos con robot</h2>
+            <p>Crea uno para elegir el plano, las zonas y el robot que las va a recorrer.</p>
+            <kibot-button (pressed)="abrirCreacion()">Nuevo inventario</kibot-button>
+          </div>
         } @else {
-          <ul class="lista">
+          <ul class="tarjetas">
             @for (i of store.abiertos(); track i._id) {
-              <li class="lista__fila">
-                <span class="lista__nombre">{{ i.Name }}</span>
-                <span class="dato">desde {{ i.StartDate | date: 'short' }}</span>
-                <span class="dato">{{ cuantos((i.Zones ?? []).length, 'zona', 'zonas') }} · {{ cuantos((i.Devices ?? []).length, 'dispositivo', 'dispositivos') }}</span>
-                <span class="lista__acciones">
-                  @if (store.confirmandoCierre() === i._id) {
-                    <span class="dato">No se puede reabrir.</span>
-                    <kibot-button size="small" variant="outline" (pressed)="store.confirmandoCierre.set(null)">Cancelar</kibot-button>
-                  }
-                  <kibot-button
-                    size="small"
-                    variant="outline"
-                    tone="error"
-                    [busy]="store.cierre().status === 'loading' && store.confirmandoCierre() === i._id"
-                    (pressed)="store.cerrar(i)"
-                  >
-                    {{ store.confirmandoCierre() === i._id ? 'Confirmar cierre' : 'Cerrar' }}
-                  </kibot-button>
-                </span>
+              <li>
+                <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: i }" />
               </li>
             }
           </ul>
         }
-        @if (store.cierre(); as c) {
-          @if (c.status === 'error') {
-            <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
-          } @else if (c.status === 'ready') {
-            <p class="hecho" role="status">{{ c.value }}</p>
-          }
-        }
 
-        <h2 class="seccion">Cerrados</h2>
+        <!-- ===================== CERRADOS ===================== -->
+        <h2 class="seccion">Cerrados <span class="insignia">{{ store.cerrados().length }}</span></h2>
         @if (store.cerrados().length === 0) {
-          <p class="aviso">Todavía no hay inventarios cerrados.</p>
+          <p class="aviso">Todavía no hay inventarios cerrados con robot.</p>
         } @else {
-          <ul class="lista">
+          <ul class="tarjetas">
             @for (i of store.cerrados(); track i._id) {
-              <li class="lista__fila">
-                <span class="lista__nombre">{{ i.Name }}</span>
-                <span class="dato">{{ i.StartDate | date: 'shortDate' }} — {{ i.EndDate | date: 'shortDate' }}</span>
-                <span class="dato">{{ cuantos((i.Zones ?? []).length, 'zona', 'zonas') }}</span>
+              <li>
+                <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: i }" />
               </li>
             }
           </ul>
@@ -182,3 +81,238 @@
     }
   }
 </section>
+
+<!-- Una tarjeta de inventario: toda ella abre el detalle. -->
+<ng-template #tarjeta let-i>
+  <article
+    class="tarjeta inventario"
+    [class.inventario--cerrado]="!!i.EndDate"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'Ver el recorrido de ' + i.Name"
+    (click)="verDetalle(i)"
+    (keydown.enter)="verDetalle(i)"
+    (keydown.space)="$event.preventDefault(); verDetalle(i)"
+  >
+    <div class="tarjeta__cabecera">
+      <h3 class="inventario__nombre">{{ i.Name }}</h3>
+      <span class="insignia" [class.insignia--activa]="!i.EndDate">{{ i.EndDate ? 'Cerrado' : 'Abierto' }}</span>
+    </div>
+    <dl class="inventario__datos">
+      <div>
+        <dt>{{ i.EndDate ? 'Fechas' : 'Desde' }}</dt>
+        <dd>
+          {{ i.StartDate | date: 'shortDate' }}{{ i.EndDate ? ' — ' + (i.EndDate | date: 'shortDate') : ' · ' + (i.StartDate | date: 'shortTime') }}
+        </dd>
+      </div>
+      <div>
+        <dt>Robot</dt>
+        <dd>{{ robotsDe(i) }}</dd>
+      </div>
+      <div class="inventario__ancho">
+        <dt>{{ cuantos((i.Zones ?? []).length, 'Zona', 'Zonas') }}</dt>
+        <dd>{{ zonasDe(i) }}</dd>
+      </div>
+    </dl>
+    <span class="inventario__ver">Ver recorrido →</span>
+  </article>
+</ng-template>
+
+<!-- ===================== DETALLE (panel) ===================== -->
+<kibot-drawer
+  [abierto]="detalle() !== null"
+  [ancho]="true"
+  [titulo]="detalle()?.Name ?? 'Inventario'"
+  [subtitulo]="detalle()?.EndDate ? 'Lo que se obtuvo del recorrido' : 'Lo que va del recorrido, al día'"
+  (cerrar)="detalle.set(null)"
+>
+  <kibot-inventory-detail
+    [inventario]="detalle()"
+    (verEnControl)="irAControl($event)"
+    (buscar)="irABuscar($event)"
+    (editar)="editarDesdeDetalle($event)"
+    (cerrar)="cerrarDesdeDetalle($event)"
+  />
+</kibot-drawer>
+
+<!-- ===================== CREAR (panel) ===================== -->
+<kibot-drawer
+  [abierto]="creando()"
+  titulo="Nuevo inventario"
+  subtitulo="Configúralo antes de iniciar el recorrido"
+  (cerrar)="cerrarCreacion()"
+>
+  <label class="campo">
+    <span class="campo__etiqueta">Nombre del inventario</span>
+    <input
+      class="campo__control"
+      placeholder="Ej. Inventario Cooler 2 · noviembre"
+      [value]="store.nombre()"
+      (input)="store.nombre.set(valor($event))"
+    />
+  </label>
+
+  <div class="campo">
+    <span class="campo__etiqueta">Plano</span>
+    <kibot-select
+      etiqueta="Plano"
+      [placeholder]="store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano'"
+      vacio="La compañía no tiene planos."
+      [opciones]="opcionesDePlano()"
+      [seleccionada]="store.planoId()"
+      (cambia)="store.elegirPlano($any($event))"
+    />
+    <span class="campo__ayuda">Un plano solo puede estar en un inventario abierto a la vez.</span>
+  </div>
+  @if (store.planos(); as p) {
+    @if (p.status === 'error') {
+      <kibot-error-state [message]="p.message" [details]="p.details" (retry)="store.cargar()" />
+    }
+    @if (p.status === 'ready' && p.value.length === 0) {
+      <p class="aviso">La compañía no tiene planos. <a routerLink="/planos">Créalo en Planos y zonas</a>.</p>
+    }
+  }
+
+  @if (store.planoId() !== null) {
+    <fieldset class="campo">
+      <legend class="campo__etiqueta">Zonas a inventariar</legend>
+      @if (store.zonasElegibles().length === 0) {
+        <p class="aviso">
+          Este plano no tiene ninguna zona con geocerca. <a routerLink="/planos" [queryParams]="{ tab: 'geocercas' }">Sitúalas en Geocercas</a>.
+        </p>
+      }
+      @if (store.zonasElegibles().length > 0) {
+        <kibot-multiselect
+          etiqueta="Zonas a inventariar"
+          placeholder="Elige las zonas"
+          [opciones]="opcionesDeZonas()"
+          [seleccionadas]="zonasElegidas()"
+          (cambia)="store.fijarZonas(numeros($event))"
+        />
+      }
+    </fieldset>
+  }
+
+  <fieldset class="campo">
+    <legend class="campo__etiqueta">Robot</legend>
+    @switch (store.robotsCargados().status) {
+      @case ('loading') {
+        <kibot-loading-indicator [size]="32" label="Cargando robots" />
+      }
+      @case ('error') {
+        @if (store.robotsCargados(); as e) {
+          @if (e.status === 'error') {
+            <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
+          }
+        }
+      }
+      @case ('ready') {
+        @if (store.robotsElegibles().length === 0) {
+          <p class="aviso">La compañía no tiene robots dados de alta.</p>
+        }
+        @if (store.robotsElegibles().length > 0) {
+          <kibot-multiselect
+            etiqueta="Robot"
+            placeholder="Elige el robot"
+            [opciones]="opcionesDeRobots()"
+            [seleccionadas]="robotsElegidos()"
+            (cambia)="store.fijarRobots(numeros($event))"
+          />
+        }
+        <span class="campo__ayuda">El plano y el robot no se pueden cambiar después; el nombre y las zonas, sí.</span>
+      }
+    }
+  </fieldset>
+
+  @if (store.creacion(); as c) {
+    @if (c.status === 'error') {
+      <kibot-error-state [message]="c.message" [details]="c.details" [showRetry]="false" />
+    }
+  }
+
+  <ng-container drawer-pie>
+    <kibot-button variant="outline" (pressed)="cerrarCreacion()">Cancelar</kibot-button>
+    <kibot-button [disabled]="!store.puedeCrear()" [busy]="store.creacion().status === 'loading'" (pressed)="crear()">
+      Crear inventario
+    </kibot-button>
+  </ng-container>
+</kibot-drawer>
+
+<!-- ===================== EDITAR (panel) ===================== -->
+<kibot-drawer
+  [abierto]="store.editandoId() !== null"
+  titulo="Editar inventario"
+  [subtitulo]="store.editado()?.Name ?? null"
+  (cerrar)="store.cerrarEdicion()"
+>
+  @if (store.editado(); as inv) {
+    <label class="campo">
+      <span class="campo__etiqueta">Nombre del inventario</span>
+      <input class="campo__control" [value]="store.editNombre()" (input)="store.editNombre.set(valor($event))" />
+    </label>
+
+    <div class="bloqueado">
+      <div class="campo">
+        <span class="campo__etiqueta">Plano</span>
+        <input class="campo__control" disabled [value]="'Versión ' + (inv.MapVersion ?? '—')" />
+      </div>
+      <div class="campo">
+        <span class="campo__etiqueta">Robot</span>
+        <input class="campo__control" disabled [value]="robotsDe(inv)" />
+      </div>
+      <p class="campo__ayuda">
+        🔒 El plano y el robot no se cambian: las lecturas del robot apuntan a las estanterías de ese plano. Para
+        usar otro, cierra este inventario y crea uno nuevo.
+      </p>
+    </div>
+
+    <fieldset class="campo">
+      <legend class="campo__etiqueta">Zonas a inventariar</legend>
+      <span class="campo__ayuda">
+        Las que tienen geocerca en la versión {{ inv.MapVersion }} del plano. Una zona dibujada después solo entra en
+        un inventario nuevo.
+      </span>
+      @switch (store.mapaCongelado().status) {
+        @case ('loading') {
+          <kibot-loading-indicator [size]="32" label="Cargando el plano del inventario" />
+        }
+        @case ('error') {
+          @if (store.mapaCongelado(); as e) {
+            @if (e.status === 'error') {
+              <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.abrirEdicion(inv)" />
+            }
+          }
+        }
+        @case ('ready') {
+          <kibot-multiselect
+            etiqueta="Zonas a inventariar"
+            placeholder="Elige las zonas"
+            [opciones]="opcionesDeEdicion()"
+            [seleccionadas]="store.editZonas()"
+            (cambia)="store.fijarZonasEditadas(numeros($event))"
+          />
+          @if (store.editZonas().length === 0) {
+            <p class="aviso aviso--error">El inventario necesita al menos una zona.</p>
+          }
+        }
+      }
+    </fieldset>
+
+    @if (store.edicion(); as e) {
+      @if (e.status === 'error') {
+        <kibot-error-state [message]="e.message" [details]="e.details" [showRetry]="false" />
+      }
+    }
+  }
+
+  <ng-container drawer-pie>
+    <kibot-button variant="outline" (pressed)="store.cerrarEdicion()">Cancelar</kibot-button>
+    <kibot-button
+      [disabled]="!store.puedeGuardarEdicion()"
+      [busy]="store.edicion().status === 'loading'"
+      (pressed)="guardarEdicion()"
+    >
+      Guardar cambios
+    </kibot-button>
+  </ng-container>
+</kibot-drawer>

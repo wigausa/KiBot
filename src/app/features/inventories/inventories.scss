@@ -1,118 +1,102 @@
-// Solo tokens de KiBot (src/styles/tokens): nada de colores, tamanos ni radios sueltos.
+// Solo tokens de KiBot (src/styles/tokens): nada de colores, tamaños ni radios sueltos.
+// Página, tarjeta, campos, chips e insignias son las compartidas (src/styles/_ui.scss).
 
-.inventarios {
-  min-height: 100%;
-  padding-inline: var(--kibot-spacing-7);
-  padding-block: var(--kibot-spacing-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-6);
-  max-width: 56rem;
+.compania {
+  max-width: 24rem;
 }
 
-.inventarios__cabecera h1 {
-  margin: 0;
-  font-size: var(--kibot-font-size-heading3);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg);
-}
-
-.inventarios__nota {
-  margin: var(--kibot-spacing-1) 0 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg-muted);
-}
-
-.tarjeta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-5);
-  padding: var(--kibot-spacing-6);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
-}
-
-.tarjeta__titulo,
 .seccion {
+  display: flex;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
   margin: 0;
   font-size: var(--kibot-font-size-heading4);
   font-weight: var(--kibot-font-weight-bold);
   color: var(--kibot-fg);
 }
 
-.fila {
-  display: flex;
-  flex-wrap: wrap;
+// --- Abiertos: una tarjeta por inventario ---------------------------------------
+
+.tarjetas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
   gap: var(--kibot-spacing-4);
 }
 
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-2);
-}
-
-.campo--ancho {
-  flex: 1 1 16rem;
-}
-
-.campo__etiqueta {
-  font-size: var(--kibot-font-size-subtitle);
+.inventario__nombre {
+  margin: 0;
+  font-size: var(--kibot-font-size-heading4);
   font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg-muted);
 }
 
-.campo__control {
-  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
-  color: var(--kibot-fg);
-  font: inherit;
-  font-size: var(--kibot-font-size-body);
+.inventario__datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kibot-spacing-3);
+
+  dt {
+    font-size: var(--kibot-font-size-subtitle);
+    color: var(--kibot-fg-muted);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--kibot-fg);
+  }
+}
+
+.inventario__ancho {
+  grid-column: 1 / -1;
+}
+
+.inventario {
+  height: 100%;
+  cursor: pointer;
+  transition:
+    border-color var(--kibot-motion-fast) var(--kibot-ease-standard),
+    transform var(--kibot-motion-fast) var(--kibot-ease-standard);
+
+  &:hover {
+    border-color: var(--kibot-accent);
+    transform: translateY(-2px);
+  }
 
   &:focus-visible {
-    outline: var(--kibot-stroke-0) solid var(--kibot-accent-strong);
-    outline-offset: var(--kibot-spacing-0);
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
   }
 }
 
-.opciones {
-  margin: 0;
-  padding: 0;
-  border: none;
+.inventario--cerrado {
+  background: var(--kibot-surface-variant);
+}
+
+.inventario__ver {
+  margin-top: auto;
+  color: var(--kibot-accent-strong);
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.tarjetas > li {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--kibot-spacing-3) var(--kibot-spacing-6);
-
-  legend {
-    margin-bottom: var(--kibot-spacing-2);
-    padding: 0;
-  }
 }
 
-.opcion {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kibot-spacing-2);
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg);
+// --- Cerrados: plegados, para no tapar lo que importa ---------------------------
+
+.cerrados summary {
   cursor: pointer;
+  list-style-position: inside;
+  margin-bottom: var(--kibot-spacing-3);
 
-  input {
-    accent-color: var(--kibot-accent-strong);
+  &:focus-visible {
+    outline: 2px solid var(--kibot-accent);
+    outline-offset: 2px;
   }
-}
-
-.opcion--ocupada {
-  color: var(--kibot-fg-muted);
-  cursor: not-allowed;
-}
-
-.acciones {
-  display: flex;
-  gap: var(--kibot-spacing-3);
 }
 
 .lista {
@@ -139,31 +123,51 @@
 }
 
 .lista__nombre {
-  font-size: var(--kibot-font-size-body);
   font-weight: var(--kibot-font-weight-bold);
   color: var(--kibot-fg);
 }
 
-.lista__acciones {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--kibot-spacing-2);
-}
-
-.dato {
-  font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-fg-muted);
-}
-
-.aviso {
-  margin: 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg-muted);
-}
-
 .hecho {
   margin: 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-success-strong);
+  color: var(--kibot-success-text);
+
+  a {
+    color: var(--kibot-accent-strong);
+    font-weight: var(--kibot-font-weight-bold);
+  }
+}
+
+// --- Panel de edición: lo que no se puede cambiar ---------------------------------
+
+fieldset.campo {
+  margin: 0;
+  padding: 0;
+  border: none;
+
+  legend {
+    margin-bottom: var(--kibot-spacing-2);
+    padding: 0;
+  }
+}
+
+.bloqueado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--kibot-spacing-3);
+  padding: var(--kibot-spacing-4);
+  border-radius: var(--kibot-radius-6);
+  background: var(--kibot-surface-variant);
+
+  .campo__ayuda {
+    grid-column: 1 / -1;
+  }
+
+  .campo__control {
+    min-width: 0;
+  }
+}
+
+.aviso a {
+  color: var(--kibot-accent-strong);
+  font-weight: var(--kibot-font-weight-bold);
 }

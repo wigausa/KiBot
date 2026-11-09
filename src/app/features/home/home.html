@@ -1,12 +1,66 @@
-<section class="home" [class.home--revealed]="revealed()">
-  <div class="home__halo" aria-hidden="true"></div>
+<section class="pagina home" [class.home--revealed]="revealed()">
+  <!-- Saludo y el robot de un vistazo (como el hero del mockup). -->
+  <header class="hero">
+    <div class="hero__halo" aria-hidden="true"></div>
+    <div class="hero__texto">
+      <p class="hero__eyebrow">KiBot · Plataforma de administración del robot</p>
+      <h1 class="hero__saludo">{{ saludo() }}</h1>
+      <p class="hero__sub">¿Qué quieres hacer? Cada módulo dice abajo para qué sirve.</p>
+    </div>
 
-  <div class="home__content">
-    <p class="home__eyebrow">WIGA · WITAG ROBOT AUTÓNOMO</p>
-    <witag-logo class="home__logo" variant="full" [width]="380" [priority]="true" alt="Witag" />
-    <h1 class="home__title">KiBot</h1>
-    <p class="home__subtitle">Plataforma de administración del robot</p>
-  </div>
+    <div class="hero__estado" aria-live="polite">
+      @if (contexto.robot(); as robot) {
+        <span class="hero__robot">
+          <span class="punto" [class.punto--ok]="conSenal()" aria-hidden="true"></span>
+          {{ robot.Name }}
+        </span>
+        <span class="hero__dato">{{ estadoDelRobot() }}</span>
+        @if (bateria() !== null) {
+          <span class="hero__dato">🔋 {{ bateria() }} %</span>
+        }
+      } @else {
+        <span class="hero__dato">Elige un inventario y su robot en Control para verlo aquí.</span>
+      }
+    </div>
+  </header>
+
+  <!-- El recorrido en curso, si lo hay. -->
+  @if (contexto.enMarcha()) {
+    <a class="tarjeta en-curso" routerLink="/control">
+      <div class="en-curso__cabecera">
+        <span class="insignia" [class.insignia--activa]="!contexto.enPausa()" [class.insignia--aviso]="contexto.enPausa()">
+          {{ contexto.enPausa() ? 'En pausa' : 'Recorriendo' }}
+        </span>
+        @if (contexto.zonaEnCurso(); as z) {
+          <span class="en-curso__zona">Zona {{ z.numero }} de {{ z.total }} · {{ z.nombre }}</span>
+        }
+        <span class="en-curso__porcentaje">{{ contexto.avance() | number: '1.0-0' }} %</span>
+      </div>
+      <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+           [attr.aria-valuenow]="contexto.avance() | number: '1.0-0'" aria-label="Avance del recorrido">
+        <div class="barra__relleno" [style.width.%]="contexto.avance()"></div>
+      </div>
+      <span class="en-curso__ir">Ver control →</span>
+    </a>
+  }
+
+  <!-- Los módulos, con qué se hace en cada uno. -->
+  <nav aria-label="Módulos">
+    <ul class="modulos">
+      @for (m of modulos; track m.path; let i = $index) {
+        <li [style.--i]="i">
+          <a class="modulo" [routerLink]="'/' + m.path">
+            <span class="modulo__icono" aria-hidden="true"><kibot-icon [name]="m.icon" /></span>
+            <span class="modulo__texto">
+              <span class="modulo__titulo">{{ m.titulo }}</span>
+              <span class="modulo__descripcion">{{ m.descripcion }}</span>
+            </span>
+            <kibot-icon class="modulo__flecha" name="chevron-right" />
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
 </section>
 
 @if (booting()) {

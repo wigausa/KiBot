@@ -1,15 +1,22 @@
-<section class="zonas">
-  <header class="zonas__cabecera">
-    <h1>Zonas</h1>
-    <p class="zonas__nota">
-      Las zonas de la compañía y dónde está cada una en el plano. El robot atribuye cada caja a la zona cuya geocerca
-      contiene su estantería.
-    </p>
-  </header>
+<section class="zonas" [class.zonas--embebido]="embebido()">
+  @if (!embebido()) {
+    <header class="zonas__cabecera">
+      <h1>Zonas</h1>
+      <p class="zonas__nota">
+        Las zonas de la compañía y dónde está cada una en el plano. El robot atribuye cada caja a la zona cuya geocerca
+        contiene su estantería.
+      </p>
+    </header>
 
-  <kibot-company-picker />
+    <kibot-company-picker />
+  }
+
+  @if (store.companiaId() === null && embebido()) {
+    <p class="aviso">Elige arriba la compañía.</p>
+  }
 
   @if (store.companiaId() !== null) {
+    @if (!embebido()) {
     <div class="pestanas" role="tablist" aria-label="Zonas">
       @for (p of pestanas; track p.id) {
         <button
@@ -24,6 +31,7 @@
         </button>
       }
     </div>
+    }
 
     @switch (store.pestana()) {
       <!-- ===================== ZONAS MANUALES ===================== -->
@@ -234,21 +242,16 @@
           </p>
 
           <div class="fila">
-            <label class="campo campo--ancho">
+            <div class="campo campo--ancho">
               <span class="campo__etiqueta">Plano</span>
-              <select class="campo__control" (change)="alElegirPlano($event)">
-                <option value="" [selected]="store.planoId() === null">
-                  {{ store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano' }}
-                </option>
-                @if (store.planos(); as l) {
-                  @if (l.status === 'ready') {
-                    @for (p of l.value; track p.MapId) {
-                      <option [value]="p.MapId" [selected]="p.MapId === store.planoId()">{{ p.Name }} (v{{ p.Version }})</option>
-                    }
-                  }
-                }
-              </select>
-            </label>
+              <kibot-select
+                etiqueta="Plano"
+                [placeholder]="store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano'"
+                [opciones]="opcionesDePlano()"
+                [seleccionada]="store.planoId()"
+                (cambia)="store.elegirPlano($any($event))"
+              />
+            </div>
           </div>
 
           @if (store.planos(); as l) {
@@ -273,30 +276,36 @@
               <div class="tarjeta">
                 @if (store.geocercasDelPlano().length > 0) {
                   <h2 class="tarjeta__titulo">Geocercas de este plano</h2>
+                  <p class="dato">
+                    Cada zona se ve en el plano con su color. Lo pintado ya está ocupado: una geocerca nueva no puede
+                    pisarlo. Las <strong>fijas</strong> ya se usaron en un inventario y no se mueven.
+                  </p>
                   <ul class="lista">
                     @for (g of store.geocercasDelPlano(); track g.idZone) {
                       <li class="lista__fila">
+                        <span class="muestra" [class]="'muestra muestra--c' + (g.color ?? 0)" aria-hidden="true"></span>
                         <span class="lista__nombre">{{ g.nombre }}</span>
                         <span class="dato">{{ g.anclas }} · {{ g.racks }} estanterías</span>
+                        @if (g.fija) {
+                          <span class="insignia" title="Ya la usó un inventario: su geocerca no se mueve">Fija</span>
+                        }
                       </li>
                     }
                   </ul>
                 }
 
                 <h2 class="tarjeta__titulo">Situar una zona</h2>
-                <label class="campo">
+                <div class="campo">
                   <span class="campo__etiqueta">Zona</span>
-                  <select class="campo__control" (change)="alElegirZona($event)">
-                    <option value="" [selected]="store.zonaId() === null">Elige una zona</option>
-                    @if (store.zonas(); as z) {
-                      @if (z.status === 'ready') {
-                        @for (zona of z.value; track zona.ID) {
-                          <option [value]="zona.ID" [selected]="zona.ID === store.zonaId()">{{ zona.NAME }}</option>
-                        }
-                      }
-                    }
-                  </select>
-                </label>
+                  <kibot-select
+                    etiqueta="Zona"
+                    placeholder="Elige una zona"
+                    vacio="La compañía no tiene zonas."
+                    [opciones]="opcionesDeZona()"
+                    [seleccionada]="store.zonaId()"
+                    (cambia)="store.elegirZona($any($event))"
+                  />
+                </div>
                 @if (store.zonas(); as z) {
                   @if (z.status === 'ready' && z.value.length === 0) {
                     <p class="aviso">La compañía no tiene zonas: créalas antes en «Zonas manuales» o configura su API.</p>
@@ -306,7 +315,15 @@
                   }
                 }
 
-                @if (store.zonaId() !== null) {
+                @if (store.zonaFija(); as inventarios) {
+                  <p class="aviso aviso--alerta">
+                    Esta zona ya se usó en {{ inventarios.length === 1 ? 'el inventario' : 'los inventarios' }}
+                    @for (n of inventarios; track $index; let ultimo = $last) {
+                      <strong>«{{ n }}»</strong>{{ ultimo ? ':' : ', ' }}
+                    } su geocerca queda fija para que esos inventarios y los siguientes cuenten la misma superficie.
+                    Para cubrir otra, crea una zona nueva en «Zonas» y sitúala aquí.
+                  </p>
+                } @else if (store.zonaId() !== null) {
                   @if (store.anclas().length === 0) {
                     <p class="aviso">Este plano no tiene pasillos numerados: no hay anclas que elegir.</p>
                   } @else {
@@ -382,7 +399,8 @@
                     [rejilla]="r"
                     [editable]="false"
                     [resaltadas]="store.resaltadas()"
-                    [geocerca]="store.zonaId() !== null ? { desde: store.desde(), hasta: store.hasta() } : null"
+                    [zonas]="store.zonasPintadas()"
+                    [geocerca]="store.zonaId() !== null && !store.zonaFija() ? { desde: store.desde(), hasta: store.hasta() } : null"
                     (geocercaCambia)="alCambiarGeocerca($event)"
                   />
                 </div>

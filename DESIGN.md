@@ -87,10 +87,10 @@ Escala base 4/8 con dos pasos extra pequeños. Usar SIEMPRE `var(--kibot-spacing
 
 | Variante | HEX | Variable CSS |
 |---|---|---|
-| Base | `#E190FF` | `--kibot-color-primary-base` |
+| Base | `#D974FF` | `--kibot-color-primary-base` |
 | 50 (alpha) | `#D974FF` @ 50% opacidad *(ver nota)* | `--kibot-color-primary-alpha-50` |
-| 100 | `#E8ACFF` | `--kibot-color-primary-100` |
-| 200 | `#D974FF` | `--kibot-color-primary-200` |
+| 100 | `#D974FF` | `--kibot-color-primary-100` |
+| 200 | `#E190FF` | `--kibot-color-primary-200` |
 | 400 | `#AE5DCC` | `--kibot-color-primary-400` |
 | 500 | `#824699` | `--kibot-color-primary-500` |
 
@@ -98,6 +98,11 @@ Escala base 4/8 con dos pasos extra pequeños. Usar SIEMPRE `var(--kibot-spacing
 > `217,116,255 @ 50%`, que en realidad corresponde a `#D974FF` al 50%. Es una inconsistencia
 > del archivo original (idéntica en Android y aquí). **Usar `#D974FF` al 50% de opacidad**
 > como `primary.alpha50`.
+
+> **Actualizado 2026-11-06 (sistema de diseño Witag, «Sistema_diseño_Witag 3»):** Primary =
+> Primary 100 = `#D974FF`; 200 = `#E190FF` (más claro: estado *active*); 400 = `#AE5DCC`
+> (*hover*); 500 = `#824699`. Antes la base era `#E190FF` y la 100 `#E8ACFF`, que no está en la
+> paleta: se retiró.
 
 ### Secondary (Azul)
 
@@ -206,7 +211,7 @@ Estos son los tokens que **sí** deben usarse directamente en pantallas y compon
 | `--kibot-surface-variant` | `#F2F2F2` | `#140E40` | superficie secundaria/anidada |
 | `--kibot-line` | `#E3E3E3` | `White @ 10%` | dividers, bordes |
 | `--kibot-fg` (foreground/texto) | `#03030B` | `#FFFFFF` | texto principal |
-| `--kibot-accent` | `#E190FF` | `#E8ACFF` | acento de marca, links, iconos activos |
+| `--kibot-accent` | `#D974FF` | `#D974FF` | acento de marca: CTA, activo, foco |
 
 ### 6.1 Extensiones añadidas en KiBot
 
@@ -217,7 +222,13 @@ se construyen sobre la paleta cruda o se derivan de un token existente.
 | Token | Claro | Oscuro | Uso |
 |---|---|---|---|
 | `--kibot-fg-muted` | `fg @ 62%` sobre surface | `White @ 60%` | texto secundario. `neutral-400` no llega a AA sobre blanco |
-| `--kibot-accent-strong` | `#824699` (Primary 500) | `#E8ACFF` (Primary 100) | acento como **texto/ícono**: `--kibot-accent` en claro da 2.18:1 y falla AA |
+| `--kibot-accent-strong` | `#824699` (Primary 500) | `#E190FF` (Primary 200) | acento como **texto/ícono**: `--kibot-accent` en claro no llega a AA |
+| `--kibot-accent-hover` / `-active` | `#AE5DCC` / `#E190FF` | igual | estados del botón principal |
+| `--kibot-accent-wash` | Primary @ 14% | igual | fondo de lo seleccionado (chip, pestaña, ítem del riel) |
+| `--kibot-on-accent` | `#1B1451` | igual | texto sobre un relleno Primary o Secondary (blanco no llega a AA) |
+| `--kibot-secondary` (+ `-hover`, `-active`, `-strong`) | `#29ABE2` / `#2189B5` / `#54BCE8` / `#196788` | igual | acciones secundarias |
+| `--kibot-rail` (+ `-hover`, `--kibot-on-rail`, `-muted`) | `#1B1451` | `#140E40` | el riel de navegación y el mini-reproductor (navy, como el mockup) |
+| `--kibot-error-text` / `-success-text` / `-warning-text` | tono 200 | tono 100 | un estado como **texto** sobre la superficie, legible en los dos modos |
 | `--kibot-brand-ink` | `#1B1451` | `#FFFFFF` | trazo del logo/spinner de marca |
 | `--kibot-brand-magenta` | `#D974FF` | igual | arco medio del spinner |
 | `--kibot-brand-aqua` | `#29ABE2` | igual | arco interno del spinner |
@@ -233,14 +244,26 @@ contraste de texto sobre ellos según fondo.
 
 ---
 
+### 6.2 Piezas compartidas (2026-11)
+
+`src/styles/_ui.scss` tiene UNA versión de lo que antes cada pantalla redeclaraba: `.pagina`
+(+ `__cabecera`, `__antetitulo`, `__nota`), `.tarjeta`, `.campo` (+ `__etiqueta`, `__control`,
+`__ayuda`), `.chips`/`.chip` (con casilla dentro y `__orden`), `.insignia` (`--activa`, `--aviso`,
+`--error`, `--info`), `.aviso`, `.vacio`, `.cifras`, `.barra`, `.enlace`. Una pantalla solo añade lo
+suyo. Componentes con comportamiento en `shared/ui/`: `kibot-tabs`, `kibot-drawer` (panel lateral)
+y `kibot-confirm` (en vez del `confirm()` del navegador).
+
+---
+
 ## 7. Botones
 
 - **Radio:** `radius.6` (`--kibot-radius-6`, 12px) en todos los tamaños.
 - **Outline:** borde `stroke.0` (`--kibot-stroke-0`, 1px) solid.
 - **Variantes de color:** cada paleta (Primary/Secondary/etc.) expone 3 tonos utilizables en
   botones: `Base`, `400`, `200` — tanto en fill como en outline.
-- **Fill:** fondo = color de paleta, texto = `neutral.white` (o `--kibot-fg` invertido según
-  contraste).
+- **Fill:** fondo = color de paleta, texto = `--kibot-on-accent` (navy): blanco sobre `#D974FF`
+  o `#29ABE2` no llega a AA. *Hover* = tono 400 (texto blanco), *active* = tono 200.
+- **Deshabilitado:** 40 % de opacidad y cursor `not-allowed`. **Foco:** contorno de 2 px en Primary.
 - **Outline:** fondo transparente, borde y texto = color de paleta.
 
 ### Tamaños

@@ -60,7 +60,7 @@ export class RobotSearchStore implements OnDestroy {
   /** Solo los inventarios abiertos: a un inventario cerrado no se le manda el robot. */
   readonly abiertos = computed(() => {
     const lista = this._inventarios();
-    return lista.status === 'ready' ? lista.value.filter((i) => i.EndDate === null) : [];
+    return lista.status === 'ready' ? lista.value.filter((i) => !i.EndDate) : [];
   });
 
   readonly inventario = computed(() => this.abiertos().find((i) => i._id === this.inventarioId()) ?? null);

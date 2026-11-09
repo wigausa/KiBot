@@ -1,10 +1,16 @@
-<section class="recorrido">
-  <header class="recorrido__cabecera">
-    <h1>Recorrido</h1>
-    <p class="recorrido__nota">
+<section class="recorrido" [class.recorrido--embebido]="embebido()">
+  @if (!embebido()) {
+    <header class="recorrido__cabecera">
+      <h1>Recorrido</h1>
+      <p class="recorrido__nota">
+        Por dónde va el robot sobre el plano, con lo que manda en sus latidos. Cuando el recorrido termina, se puede repetir.
+      </p>
+    </header>
+  } @else {
+    <p class="campo__ayuda">
       Por dónde va el robot sobre el plano, con lo que manda en sus latidos. Cuando el recorrido termina, se puede repetir.
     </p>
-  </header>
+  }
 
   @switch (store.inventarios().status) {
     @case ('loading') {
@@ -18,6 +24,7 @@
       }
     }
     @case ('ready') {
+      @if (!embebido()) {
       <div class="tarjeta elegir">
         <label class="campo">
           <span class="campo__etiqueta">Inventario</span>
@@ -48,6 +55,7 @@
           }
         }
       </div>
+      }
 
       @if (store.recorrido(); as r) {
         @if (r.status === 'loading') {
