@@ -42,6 +42,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/search/search').then((m) => m.Search)
       },
       {
+        path: 'buscar-robot',
+        title: 'Buscar con el robot · KiBot',
+        loadComponent: () => import('./features/robot-search/robot-search').then((m) => m.RobotSearchPage)
+      },
+      {
         path: 'estado',
         title: 'Estado del equipo y alertas · KiBot',
         loadComponent: () => import('./features/robot-status/robot-status').then((m) => m.RobotStatus)
@@ -53,7 +58,6 @@ export const routes: Routes = [
       },
 
       // Rutas de antes de noviembre de 2026: ahora son pestañas.
-      { path: 'buscar-robot', redirectTo: aPestana('buscar', 'robot') },
       { path: 'ubicacion', redirectTo: aPestana('control', 'ubicacion') },
       { path: 'recorrido', redirectTo: aPestana('control', 'recorrido') },
       { path: 'zonas', redirectTo: aPestana('planos', 'zonas') },

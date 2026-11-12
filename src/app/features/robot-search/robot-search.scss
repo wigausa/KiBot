@@ -1,53 +1,21 @@
 // Solo tokens de KiBot (src/styles/tokens): nada de colores, tamanos ni radios sueltos.
+// `.pagina`, `.tarjeta`, `.campo`, `.insignia`, `.barra` y `.dato` vienen de `_ui.scss`.
 
 .buscar-robot {
-  min-height: 100%;
-  padding-inline: var(--kibot-spacing-7);
-  padding-block: var(--kibot-spacing-6);
   display: flex;
   flex-direction: column;
   gap: var(--kibot-spacing-6);
 }
 
-// Dentro de Buscar (pestaña): sin márgenes propios, los pone la página que lo contiene.
-.buscar-robot--embebido {
-  min-height: 0;
-  padding: 0;
-  max-width: none;
-}
-
-
-.buscar-robot__cabecera h1 {
-  margin: 0;
-  font-size: var(--kibot-font-size-heading3);
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg);
-}
-
-.buscar-robot__nota {
-  margin: var(--kibot-spacing-1) 0 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg-muted);
-}
-
-.tarjeta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-4);
-  padding: var(--kibot-spacing-6);
-  border: var(--kibot-stroke-0) solid var(--kibot-line);
-  border-radius: var(--kibot-radius-6);
-  background: var(--kibot-surface);
+.compania {
+  max-width: 24rem;
 }
 
 .fila {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--kibot-spacing-4);
 }
-
-
-
 
 .codigos {
   resize: vertical;
@@ -62,84 +30,205 @@
   gap: var(--kibot-spacing-3);
 }
 
+.por-que {
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+.por-que--alerta {
+  color: var(--kibot-warning-text);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
 .rechazo__motivo {
   margin: 0;
   font-weight: var(--kibot-font-weight-bold);
   color: var(--kibot-error-text);
 }
 
-.vista {
-  display: grid;
-  grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
-  gap: var(--kibot-spacing-5);
-  align-items: start;
-
-  @media (max-width: 64rem) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.plano {
-  max-width: none;
-}
-
-.resultado__estado {
-  margin: 0;
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg-muted);
-}
-
-.resultado__estado--vivo {
-  color: var(--kibot-success-text);
-}
-
-.contador {
-  margin: 0;
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg);
-}
-
-.cajas {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cajas__fila {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kibot-spacing-1);
-  padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
-  border-left: var(--kibot-stroke-2) solid var(--kibot-line);
-  font-size: var(--kibot-font-size-body);
-  color: var(--kibot-fg-muted);
-}
-
-.cajas__fila--encontrada {
-  border-left-color: var(--kibot-success);
-  color: var(--kibot-fg);
-}
-
-.cajas__fila--perdida {
-  border-left-color: var(--kibot-warning);
-}
-
-.cajas__codigo {
-  font-weight: var(--kibot-font-weight-bold);
-  color: var(--kibot-fg);
-}
-
-.dato {
-  margin: 0;
-  font-size: var(--kibot-font-size-subtitle);
-  color: var(--kibot-fg-muted);
-}
-
 .aviso {
   margin: 0;
   font-size: var(--kibot-font-size-subtitle);
   color: var(--kibot-warning-text);
+}
+
+// --- avance ----------------------------------------------------------------------------------
+
+.avance__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+}
+
+.avance__estado {
+  margin: 0;
+  font-size: var(--kibot-font-size-heading4);
+  font-weight: var(--kibot-font-weight-bold);
+  color: var(--kibot-fg);
+}
+
+.avance__estado--vivo {
+  color: var(--kibot-success-text);
+}
+
+.medida {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kibot-spacing-2);
+}
+
+.medida__texto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg-muted);
+
+  strong {
+    color: var(--kibot-fg);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.barra--grande {
+  height: 1rem;
+}
+
+.barra--cajas .barra__relleno {
+  background: var(--kibot-success);
+}
+
+// --- resultado: plano y tabla ----------------------------------------------------------------
+
+.resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kibot-spacing-5);
+  align-items: start;
+}
+
+.resultado--con-tabla {
+  @media (min-width: 90rem) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kibot-spacing-2);
+  margin: 0;
+  font-size: var(--kibot-font-size-subtitle);
+  color: var(--kibot-fg-muted);
+}
+
+.leyenda__punto {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--kibot-radius-full);
+  margin-left: var(--kibot-spacing-2);
+}
+
+.leyenda__punto--alta,
+.numero--alta {
+  background: var(--kibot-success);
+}
+
+.leyenda__punto--media,
+.numero--media {
+  background: var(--kibot-warning);
+}
+
+.leyenda__punto--baja,
+.numero--baja {
+  background: var(--kibot-error);
+}
+
+.tabla-resultado__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kibot-spacing-3);
+}
+
+.resumen {
+  margin: 0;
+  font-size: var(--kibot-font-size-body);
+  color: var(--kibot-fg);
+}
+
+.tabla-envoltura {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--kibot-font-size-subtitle);
+
+  th,
+  td {
+    padding: var(--kibot-spacing-2) var(--kibot-spacing-3);
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: var(--kibot-stroke-0) solid var(--kibot-line);
+  }
+
+  th {
+    font-weight: var(--kibot-font-weight-bold);
+    color: var(--kibot-fg-muted);
+    background: var(--kibot-surface-variant);
+  }
+
+  td {
+    color: var(--kibot-fg);
+  }
+}
+
+.tabla__numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla__fila--pulsable {
+  cursor: pointer;
+
+  &:hover td {
+    background: var(--kibot-surface-variant);
+  }
+}
+
+.tabla__fila--elegida td {
+  background: var(--kibot-surface-variant);
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--kibot-radius-full);
+  color: var(--kibot-surface);
+  font-weight: var(--kibot-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.codigo {
+  display: block;
+  font-weight: var(--kibot-font-weight-bold);
+}
+
+.epc {
+  display: block;
+  font-size: var(--kibot-font-size-subtitle);
+  font-weight: var(--kibot-font-weight-regular);
+  color: var(--kibot-fg-muted);
+  font-variant-numeric: tabular-nums;
 }

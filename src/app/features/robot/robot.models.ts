@@ -389,6 +389,30 @@ export function ubicacionDe(pose: RobotStatusPose | null | undefined): string {
 }
 
 /** Cuánto hace del último latido, en palabras cortas. */
+/**
+ * Dónde está el robot ahora en el plano del inventario (`GET inventory/{id}/robot/{dev}/position`).
+ * `X`/`Y` en metros de NUESTRO plano; nulos si no se pudo situar (`Reason` dice por qué).
+ */
+export interface RobotPosition {
+  IdDevice: number;
+  MapId: string;
+  MapVersion: number;
+  Signal: 'OK' | 'NO_SIGNAL';
+  ReceivedAt: string;
+  State: string | null;
+  Activity: string | null;
+  Zone: string | null;
+  Aisle: number | null;
+  Tramo: string | null;
+  Segment: number | null;
+  X: number | null;
+  Y: number | null;
+  Heading: number | null;
+  /** `triangle`/`affine` (por su x/y) o `address` (centro del segmento que dice). */
+  Method: string | null;
+  Reason: string | null;
+}
+
 export function haceCuanto(segundos: number): string {
   if (segundos < 60) return `hace ${Math.round(segundos)} s`;
   if (segundos < 3600) return `hace ${Math.floor(segundos / 60)} min`;
@@ -485,7 +509,10 @@ export interface RobotSearchTarget {
   Epc: string;
 }
 
-/** Dónde se vio una caja buscada: la cara desde la que más se la leyó. */
+/**
+ * Dónde se vio una caja buscada. En vivo, la cara desde la que más se la leyó; al terminar, la que
+ * decide el resolver del inventario, con su confianza.
+ */
 export interface RobotSearchFound {
   Code: string;
   Epc: string;
@@ -500,11 +527,18 @@ export interface RobotSearchFound {
   MeanRssi: number;
   FirstSeenAt: string;
   LastSeenAt: string;
+  /** De 0 a 1, al terminar. Nula en vivo. */
+  Confidence?: number | null;
+  /** `Resolved` o `Ambiguous` al terminar; nulo en vivo. */
+  Status?: 'Resolved' | 'Ambiguous' | null;
 }
 
 export type RobotSearchStatus = 'Running' | 'Done' | 'Stopped' | 'Rejected';
 
-/** Cómo va una búsqueda (`GET inventory/{id}/robot/search/{searchId}`). */
+/**
+ * Cómo va una búsqueda (`GET robot/search/{searchId}`). No pertenece a ningún inventario:
+ * `IdInventory` es su propio ámbito (`search:{id}`).
+ */
 export interface RobotSearch {
   SearchId: string;
   IdInventory: string;
@@ -512,6 +546,12 @@ export interface RobotSearch {
   IdZone: number;
   ZoneName: string | null;
   Geofence: { Name: string; From: string; To: string } | null;
+  MapId?: string | null;
+  MapVersion?: number | null;
+  /** Tramos de la zona que el robot ya terminó. */
+  TramosDone?: number;
+  /** Tramos de la zona; nulo hasta que el robot acepta la orden. */
+  TramosTotal?: number | null;
   Status: RobotSearchStatus;
   EndReason: string | null;
   StartedAt: string;
@@ -560,6 +600,55 @@ const ESTADOS_DE_BUSQUEDA: Record<RobotSearchStatus, string> = {
 
 export function textoDeBusqueda(estado: RobotSearchStatus): string {
   return ESTADOS_DE_BUSQUEDA[estado] ?? estado;
+}
+
+/**
+ * El lado de una cara como lo dice el operador: `left` → «Izquierda», `right` → «Derecha». Es el
+ * lado de la estantería en el plano, no la A/B del robot.
+ */
+export function ladoTexto(rackSide: string | null | undefined): string {
+  switch ((rackSide ?? '').toLowerCase()) {
+    case 'left':
+      return 'Izquierda';
+    case 'right':
+      return 'Derecha';
+    default:
+      return '—';
+  }
+}
+
+/** El pasillo como número a secas: `20`, no `P20`. */
+export function pasilloTexto(aisleNumber: number | null | undefined, aisleId?: string | null): string {
+  if (aisleNumber !== null && aisleNumber !== undefined) return String(aisleNumber);
+  const n = (aisleId ?? '').replace(/^P/i, '');
+  return n === '' ? '—' : n;
+}
+
+/** El tramo legible: «Inferior», «Superior». */
+export function tramoTexto(tramo: string | null | undefined): string {
+  if (!tramo) return '—';
+  return tramo.charAt(0).toUpperCase() + tramo.slice(1).toLowerCase();
+}
+
+export type NivelDeConfianza = 'alta' | 'media' | 'baja';
+
+/**
+ * Lo seguro que está el sitio de una caja encontrada. Ambigua es baja; sin confianza (en vivo) es
+ * media. Los umbrales siguen al resolver: decidida sale con ⅔ o más.
+ */
+export function nivelDeConfianza(f: Pick<RobotSearchFound, 'Confidence' | 'Status'>): NivelDeConfianza {
+  if (f.Status === 'Ambiguous') return 'baja';
+  if (f.Confidence === null || f.Confidence === undefined) return 'media';
+  if (f.Confidence >= 0.85) return 'alta';
+  if (f.Confidence >= 0.66) return 'media';
+  return 'baja';
+}
+
+const NIVELES: Record<NivelDeConfianza, string> = { alta: 'Alta', media: 'Media', baja: 'Baja' };
+
+export function textoDeConfianza(f: Pick<RobotSearchFound, 'Confidence' | 'Status'>): string {
+  if (f.Confidence === null || f.Confidence === undefined) return f.Status === 'Ambiguous' ? 'Ambigua' : '—';
+  return `${NIVELES[nivelDeConfianza(f)]} · ${Math.round(f.Confidence * 100)} %`;
 }
 
 // --- Ocupación (GET inventory/{id}/robot/occupancy) --------------------------------------------

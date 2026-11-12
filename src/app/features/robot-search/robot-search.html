@@ -1,173 +1,267 @@
-<section class="buscar-robot" [class.buscar-robot--embebido]="embebido()">
-  @if (!embebido()) {
-    <header class="buscar-robot__cabecera">
-      <h1>Buscar con el robot</h1>
-      <p class="buscar-robot__nota">
-        Manda el robot a una zona a buscar cajas concretas. Se ve en vivo lo que va encontrando. No cambia el inventario.
+<section class="pagina buscar-robot">
+  <header class="pagina__cabecera">
+    <div>
+      <p class="pagina__antetitulo">Buscar con el robot</p>
+      <h1>Mandar al robot a buscar cajas</h1>
+      <p class="pagina__nota">
+        Elige el plano y la zona, el robot y las cajas. El robot recorre la zona y se ve en vivo lo que encuentra. No
+        pertenece a ningún inventario ni lo cambia.
       </p>
-    </header>
-  }
+    </div>
+  </header>
 
-  @switch (store.inventarios().status) {
-    @case ('loading') {
-      <kibot-loading-indicator label="Cargando inventarios" />
-    }
-    @case ('error') {
-      @if (store.inventarios(); as e) {
-        @if (e.status === 'error') {
-          <kibot-error-state [message]="e.message" [details]="e.details" (retry)="store.cargar()" />
-        }
+  <div class="compania">
+    <kibot-company-picker />
+  </div>
+
+  <form class="tarjeta" (submit)="alBuscar($event)">
+    <div class="fila">
+      <div class="campo">
+        <span class="campo__etiqueta">Plano</span>
+        <kibot-select
+          etiqueta="Plano"
+          [placeholder]="store.planos().status === 'loading' ? 'Cargando planos…' : 'Elige un plano'"
+          vacio="La compañía no tiene planos."
+          [opciones]="opcionesDePlano()"
+          [seleccionada]="store.planoId()"
+          [deshabilitado]="store.enMarcha()"
+          (cambia)="store.elegirPlano($any($event))"
+        />
+      </div>
+
+      <div class="campo">
+        <span class="campo__etiqueta">Zona</span>
+        <kibot-select
+          etiqueta="Zona"
+          [placeholder]="store.planoId() === null ? 'Elige antes el plano' : 'Elige una zona'"
+          vacio="Este plano no tiene zonas."
+          [opciones]="opcionesDeZona()"
+          [seleccionada]="store.zonaId()"
+          [deshabilitado]="store.enMarcha() || store.planoId() === null"
+          (cambia)="store.elegirZona($any($event))"
+        />
+      </div>
+
+      <div class="campo">
+        <span class="campo__etiqueta">Robot</span>
+        <kibot-select
+          etiqueta="Robot"
+          placeholder="Elige un robot"
+          vacio="La compañía no tiene robots."
+          [opciones]="opcionesDeRobot()"
+          [seleccionada]="store.robotId()"
+          [deshabilitado]="store.enMarcha()"
+          (cambia)="store.elegirRobot($any($event))"
+        />
+      </div>
+    </div>
+
+    @if (store.planos(); as p) {
+      @if (p.status === 'error') {
+        <kibot-error-state [message]="p.message" [details]="p.details" (retry)="store.cargar()" />
       }
     }
-    @case ('ready') {
-      <form class="tarjeta" (submit)="alBuscar($event)">
-        <div class="fila">
-          @if (!embebido()) {
-          <label class="campo">
-            <span class="campo__etiqueta">Inventario</span>
-            <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirInventario($event)">
-              <option value="" [selected]="store.inventarioId() === null">Elige un inventario abierto</option>
-              @for (inv of store.abiertos(); track inv._id) {
-                <option [value]="inv._id" [selected]="inv._id === store.inventarioId()">{{ inv.Name }}</option>
-              }
-            </select>
-          </label>
 
-          }
+    <label class="campo">
+      <span class="campo__etiqueta">Cajas a buscar (USDA o EPC, una por línea)</span>
+      <textarea
+        class="campo__control codigos"
+        rows="4"
+        spellcheck="false"
+        placeholder="MT9K2N&#10;JPLSGF"
+        [value]="store.texto()"
+        [disabled]="store.enMarcha()"
+        (input)="alEscribir($event)"
+      ></textarea>
+    </label>
+    @if (store.invalidos().length > 0) {
+      <p class="aviso" role="alert">No son ni un USDA ni un EPC: {{ store.invalidos().join(', ') }}</p>
+    } @else if (store.codigos().length > 0) {
+      <p class="dato">{{ store.codigos().length }} {{ store.codigos().length === 1 ? 'caja' : 'cajas' }}</p>
+    }
 
-          @if (store.inventarioId() !== null) {
-            @if (!embebido()) {
-            <label class="campo">
-              <span class="campo__etiqueta">Robot</span>
-              <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirRobot($event)">
-                <option value="" [selected]="store.robotId() === null">Elige un robot</option>
-                @for (r of store.robots(); track r.IdDevice) {
-                  <option [value]="r.IdDevice" [selected]="r.IdDevice === store.robotId()">{{ r.Name }}</option>
-                }
-              </select>
-            </label>
-            }
+    <div class="acciones">
+      <kibot-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.ocupado() && !store.enMarcha()">
+        <kibot-icon name="search" /> Buscar
+      </kibot-button>
+      @if (store.terminada()) {
+        <kibot-button variant="outline" (pressed)="store.nueva()">Nueva búsqueda</kibot-button>
+      }
+      @if (store.faltaParaBuscar(); as falta) {
+        <span class="por-que" [class.por-que--alerta]="store.motivoDelRobot() !== null">{{ falta }}</span>
+      }
+    </div>
 
-            @if (!embebido()) {
-            <label class="campo">
-              <span class="campo__etiqueta">Zona</span>
-              <select class="campo__control" [disabled]="store.enMarcha()" (change)="alElegirZona($event)">
-                <option value="" [selected]="store.zonaId() === null">Elige una zona</option>
-                @for (z of store.zonas(); track z.IdZone) {
-                  <option [value]="z.IdZone" [selected]="z.IdZone === store.zonaId()">{{ z.Name }}</option>
-                }
-              </select>
-            </label>
-            }
+    @if (store.envio(); as e) {
+      @if (e.status === 'error') {
+        <div class="rechazo" role="alert">
+          <p class="rechazo__motivo">{{ e.message }}</p>
+          @for (d of e.details; track d) {
+            <p class="dato">{{ d }}</p>
           }
         </div>
+      }
+    }
+  </form>
 
-        @if (store.abiertos().length === 0) {
-          <p class="dato">No hay inventarios abiertos: el robot solo busca dentro de uno abierto.</p>
-        } @else if (embebido() && store.inventarioId() === null) {
-          <p class="aviso">Elige arriba un inventario abierto y su robot: el robot solo busca dentro de uno abierto.</p>
-        }
+  @if (store.busqueda(); as b) {
+    <div class="tarjeta avance" aria-live="polite">
+      <div class="avance__cabecera">
+        <p class="avance__estado" [class.avance__estado--vivo]="b.Status === 'Running'">
+          {{ store.textoDeAvance() }}
+          @if (b.EndReason && b.Status !== 'Running' && b.EndReason !== 'COMPLETED') {
+            <span class="dato">· {{ fin(b.EndReason) }}</span>
+          }
+        </p>
+        <span class="dato">{{ b.ZoneName }} · empezó {{ b.StartedAt | date: 'HH:mm' }}</span>
+      </div>
 
-        <label class="campo">
-          <span class="campo__etiqueta">Cajas a buscar (USDA o EPC, una por línea)</span>
-          <textarea
-            class="campo__control codigos"
-            rows="4"
-            spellcheck="false"
-            placeholder="MT9K2N&#10;JPLSGF"
-            [value]="store.texto()"
-            [disabled]="store.enMarcha()"
-            (input)="alEscribir($event)"
-          ></textarea>
-        </label>
-        @if (store.invalidos().length > 0) {
-          <p class="aviso" role="alert">No son ni un USDA ni un EPC: {{ store.invalidos().join(', ') }}</p>
-        } @else if (store.codigos().length > 0) {
-          <p class="dato">{{ store.codigos().length }} {{ store.codigos().length === 1 ? 'caja' : 'cajas' }}</p>
-        }
+      <div class="medida">
+        <div class="medida__texto">
+          <span>Recorrido de la zona</span>
+          <strong>
+            @if (store.tramosTotales(); as total) {
+              {{ store.tramosHechos() }} de {{ total }} tramos · {{ store.avanceDelRecorrido() }} %
+            } @else {
+              Esperando al robot…
+            }
+          </strong>
+        </div>
+        <div class="barra barra--grande" role="progressbar" aria-label="Recorrido de la zona"
+          [attr.aria-valuenow]="store.avanceDelRecorrido()" aria-valuemin="0" aria-valuemax="100">
+          <div class="barra__relleno" [style.width.%]="store.avanceDelRecorrido()"></div>
+        </div>
+      </div>
 
+      <div class="medida">
+        <div class="medida__texto">
+          <span>Cajas encontradas</span>
+          <strong>{{ b.Found.length }} de {{ b.Total }}</strong>
+        </div>
+        <div class="barra barra--grande barra--cajas" role="progressbar" aria-label="Cajas encontradas"
+          [attr.aria-valuenow]="store.avanceDeCajas()" aria-valuemin="0" aria-valuemax="100">
+          <div class="barra__relleno" [style.width.%]="store.avanceDeCajas()"></div>
+        </div>
+      </div>
+
+      @if (store.enMarcha()) {
         <div class="acciones">
-          <kibot-button type="submit" [disabled]="!store.puedeBuscar()" [busy]="store.ocupado() && !store.enMarcha()">
-            Buscar
+          <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
+            (pressed)="confirmar('¿Pausar la búsqueda?', store.pausar.bind(store), 'Pausar')">
+            <kibot-icon name="pause" /> Pausar
           </kibot-button>
-          @if (store.enMarcha()) {
-            <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Pausar la búsqueda? Después solo se podrá cancelar o volver al dock.', store.pausar.bind(store), 'Pausar')">
-              Pausar
-            </kibot-button>
-            <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Cancelar la búsqueda?', store.cancelar.bind(store), 'Cancelar búsqueda', true)">
-              Cancelar
-            </kibot-button>
-            <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
-              (pressed)="confirmar('¿Mandar el robot al dock?', store.volverAlDock.bind(store), 'Volver al dock')">
-              Volver al dock
-            </kibot-button>
-          }
+          <kibot-button variant="outline" size="small" [disabled]="store.ocupado()" (pressed)="store.reanudar()">
+            <kibot-icon name="play" /> Reanudar
+          </kibot-button>
+          <kibot-button variant="outline" size="small" tone="error" [disabled]="store.ocupado()"
+            (pressed)="confirmar('¿Cancelar la búsqueda?', store.cancelar.bind(store), 'Cancelar búsqueda', true)">
+            <kibot-icon name="stop" /> Cancelar
+          </kibot-button>
+          <kibot-button variant="outline" size="small" [disabled]="store.ocupado()"
+            (pressed)="confirmar('¿Mandar el robot al dock?', store.volverAlDock.bind(store), 'Volver al dock')">
+            <kibot-icon name="dock" /> Volver al dock
+          </kibot-button>
         </div>
+      }
+    </div>
+  }
 
-        @if (store.envio(); as e) {
-          @if (e.status === 'error') {
-            <div class="rechazo" role="alert">
-              <p class="rechazo__motivo">{{ e.message }}</p>
-              @for (d of e.details; track d) {
-                <p class="dato">{{ d }}</p>
-              }
-            </div>
-          }
-        }
-      </form>
-
-      @if (store.busqueda(); as b) {
-        <div class="vista">
-          <div class="tarjeta resultado" aria-live="polite">
-            <p class="resultado__estado" [class.resultado__estado--vivo]="b.Status === 'Running'">
-              {{ textoDeEstado(b.Status) }}
-              @if (b.EndReason && b.Status !== 'Running') {
-                <span class="dato">· {{ fin(b.EndReason) }}</span>
-              }
+  <div class="resultado" [class.resultado--con-tabla]="store.busqueda() !== null">
+    @if (store.mapa(); as m) {
+      @if (m.status === 'loading') {
+        <kibot-loading-indicator [size]="32" label="Cargando el plano" />
+      }
+      @if (m.status === 'ready' && rejilla(); as rejilla) {
+        <div class="tarjeta plano">
+          <plan-canvas
+            [map]="m.value"
+            [rejilla]="rejilla"
+            [editable]="false"
+            [zonas]="store.zonaPintada()"
+            [marcadores]="store.marcadores()"
+            [ruta]="store.ruta()"
+            [robot]="store.robot()"
+            (marcadorPulsado)="alPulsarMarca($event)"
+          />
+          @if (store.terminada() && store.marcadores().length > 0) {
+            <p class="leyenda">
+              <span class="leyenda__punto leyenda__punto--alta"></span> Confianza alta
+              <span class="leyenda__punto leyenda__punto--media"></span> Media
+              <span class="leyenda__punto leyenda__punto--baja"></span> Baja o ambigua
             </p>
-            <p class="contador">
-              Encontradas <strong>{{ b.Found.length }}</strong> de {{ b.Total }}
-              <span class="dato">· {{ b.ZoneName }} ({{ b.Geofence?.From }} → {{ b.Geofence?.To }})</span>
-            </p>
-
-            <ul class="cajas">
-              @for (f of b.Found; track f.Epc) {
-                <li class="cajas__fila cajas__fila--encontrada">
-                  <span class="cajas__codigo">{{ f.Code }}</span>
-                  <span>{{ donde(f) }}</span>
-                  <span class="dato">{{ f.Readings }} lecturas · {{ f.FirstSeenAt | date: 'HH:mm:ss' }}</span>
-                </li>
-              }
-              @for (m of b.Missing; track m.Epc) {
-                <li class="cajas__fila" [class.cajas__fila--perdida]="b.Status !== 'Running'">
-                  <span class="cajas__codigo">{{ m.Code }}</span>
-                  <span>{{ b.Status === 'Running' ? 'Buscando…' : 'No encontrada en la zona' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-
-          @if (store.mapa(); as m) {
-            @if (m.status === 'loading') {
-              <kibot-loading-indicator [size]="32" label="Cargando el plano" />
-            }
-            @if (m.status === 'ready' && rejilla(); as rejilla) {
-              <div class="tarjeta plano">
-                <plan-canvas
-                  [map]="m.value"
-                  [rejilla]="rejilla"
-                  [editable]="false"
-                  [resaltadas]="store.resaltadas()"
-                  [ruta]="store.ruta()"
-                  [robot]="store.robot()"
-                />
-              </div>
-            }
           }
         </div>
       }
     }
-  }
+
+    @if (store.busqueda() && store.resumen(); as r) {
+      <div class="tarjeta tabla-resultado">
+        <div class="tabla-resultado__cabecera">
+          <p class="resumen">
+            <strong>{{ r.encontradas }}</strong> {{ r.encontradas === 1 ? 'encontrada' : 'encontradas' }} ·
+            <strong>{{ r.ambiguas }}</strong> {{ r.ambiguas === 1 ? 'ambigua' : 'ambiguas' }} ·
+            <strong>{{ r.faltan }}</strong> {{ store.enMarcha() ? 'por encontrar' : r.faltan === 1 ? 'no encontrada' : 'no encontradas' }}
+            <span class="dato">de {{ r.total }}</span>
+          </p>
+          @if (store.terminada()) {
+            <kibot-button variant="outline" size="small" (pressed)="descargarCsv()">Descargar CSV</kibot-button>
+          }
+        </div>
+
+        <div class="tabla-envoltura">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">N.º</th>
+                <th scope="col">Código</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Pasillo</th>
+                <th scope="col">Lado</th>
+                <th scope="col">Tramo</th>
+                <th scope="col">Segmento</th>
+                <th scope="col">Estantería</th>
+                <th scope="col" class="tabla__numero">Lecturas</th>
+                <th scope="col" class="tabla__numero">Señal</th>
+                <th scope="col">Confianza</th>
+                <th scope="col">Visto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of store.filas(); track f.epc) {
+                <tr
+                  [id]="f.numero !== null ? 'fila-' + f.numero : null"
+                  [class.tabla__fila--elegida]="f.numero !== null && f.numero === store.elegida()"
+                  [class.tabla__fila--pulsable]="f.numero !== null"
+                  (click)="elegirFila(f.numero)"
+                >
+                  <td>
+                    @if (f.numero !== null) {
+                      <span class="numero" [class]="'numero numero--' + f.nivel">{{ f.numero }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="codigo">{{ f.codigo }}</span>
+                    <span class="epc">{{ f.epc }}</span>
+                  </td>
+                  <td>
+                    <span class="insignia" [class.insignia--ok]="f.estado === 'Encontrada'"
+                      [class.insignia--aviso]="f.estado === 'Ambigua' || f.estado === 'No encontrada'">{{ f.estado }}</span>
+                  </td>
+                  <td>{{ f.pasillo }}</td>
+                  <td>{{ f.lado }}</td>
+                  <td>{{ f.tramo }}</td>
+                  <td>{{ f.segmento }}</td>
+                  <td>{{ f.estanteria }}</td>
+                  <td class="tabla__numero">{{ f.lecturas ?? '—' }}</td>
+                  <td class="tabla__numero">{{ f.senal }}</td>
+                  <td>{{ f.confianza }}</td>
+                  <td>{{ f.visto ? (f.visto | date: 'HH:mm:ss') : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
 </section>

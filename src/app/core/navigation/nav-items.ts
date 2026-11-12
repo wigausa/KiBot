@@ -15,8 +15,9 @@ export interface KiBotNavItem {
  * Los módulos de KiBot. Una entrada aquí = una ruta lazy en `app.routes.ts`; el mismo arreglo pinta
  * el riel y las tarjetas del Inicio, así que no hay otra fuente de verdad.
  *
- * <p>Seis desde noviembre de 2026: «Buscar con el robot» entró en Buscar; «Ubicación» y «Recorrido»
- * en Control; «Zonas» y «Mapa» en Planos y zonas. Las rutas viejas redirigen (`app.routes.ts`).</p>
+ * <p>Desde noviembre de 2026: «Ubicación» y «Recorrido» entraron en Control; «Zonas» y «Mapa» en
+ * Planos y zonas. Las rutas viejas redirigen (`app.routes.ts`). «Buscar con el robot» volvió a ser un
+ * módulo propio el 2026-11-12: ya no depende de un inventario.</p>
  */
 export const KIBOT_NAV_ITEMS: readonly KiBotNavItem[] = [
   {
@@ -44,8 +45,15 @@ export const KIBOT_NAV_ITEMS: readonly KiBotNavItem[] = [
     path: 'buscar',
     label: 'Buscar',
     titulo: 'Buscar cajas',
-    descripcion: 'Encuentra dónde quedó una caja según el último recorrido, o manda al robot a buscarla.',
+    descripcion: 'Encuentra dónde quedó una caja según el último recorrido de un inventario.',
     icon: 'search'
+  },
+  {
+    path: 'buscar-robot',
+    label: 'Buscar con el robot',
+    titulo: 'Buscar con el robot',
+    descripcion: 'Manda al robot a una zona de un plano a buscar cajas concretas, sin inventario, y mira dónde las encontró.',
+    icon: 'robot'
   },
   {
     path: 'estado',

@@ -67,7 +67,7 @@
                   <kibot-button variant="outline" size="small" (pressed)="store.consultarEstado()">
                     Comprobar de nuevo
                   </kibot-button>
-                  <a class="atajo" routerLink="/buscar" [queryParams]="{ tab: 'robot', inv: store.inventarioId(), code: store.codigo() || null }">
+                  <a class="atajo" routerLink="/buscar-robot" [queryParams]="{ map: store.inventario()?.MapId ?? null, zone: store.zonaId(), code: store.codigo() || null }">
                     Mandar al robot a buscarla
                   </a>
                 </div>
@@ -109,13 +109,13 @@
 
             @if (r.value.Locations.length === 0) {
               <p class="sin-ver">El robot no leyó esta caja en este inventario.</p>
-              <a class="atajo" routerLink="/buscar" [queryParams]="{ tab: 'robot', inv: store.inventarioId(), code: r.value.Usda ?? r.value.Code }">
+              <a class="atajo" routerLink="/buscar-robot" [queryParams]="{ map: store.inventario()?.MapId ?? null, zone: store.zonaId(), code: r.value.Usda ?? r.value.Code }">
                 Mandar al robot a buscarla
               </a>
             }
             @for (s of r.value.SearchSightings ?? []; track s.SearchId + s.SeenAt) {
               <p class="avistamiento">
-                Vista en una búsqueda el {{ s.SeenAt | date: 'short' }}: pasillo {{ s.AisleNumber }}, lado {{ s.Side }},
+                Vista en una búsqueda el {{ s.SeenAt | date: 'short' }}: pasillo {{ s.AisleNumber }}, lado {{ lado(s.RackSide) }},
                 tramo {{ minusculas(s.Tramo) }}, segmento {{ s.Segment }}
                 <span class="dato">({{ s.Readings }} lecturas; no cambia el inventario)</span>
               </p>

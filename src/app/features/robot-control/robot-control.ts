@@ -24,6 +24,7 @@ import { RobotContextBar } from '../robot/robot-context-bar';
 import { RobotContextStore } from '../robot/robot-context.store';
 import { avanceDe, textoDeEstadoDeZona, textoDeFinDeZona, textoDeRechazo } from '../robot/robot.models';
 import { RobotLocation } from '../robot-status/robot-location';
+import { RobotPositionMap } from '../robot-status/robot-position-map';
 import { RobotTrack } from '../robot-track/robot-track';
 import { RobotControlStore } from './robot-control.store';
 
@@ -37,7 +38,7 @@ const GENERAL = 'general';
  * <ul>
  *   <li><b>Pestañas de arriba:</b> «General» —un recorrido de varias zonas en orden, una tanda— y una
  *       por zona del inventario, que inicia solo esa zona.</li>
- *   <li><b>Dentro de cada una, tres vistas:</b> En curso (avance y órdenes), Ubicación (dónde está
+ *   <li><b>Dentro de cada una, sus vistas:</b> En curso (avance y órdenes), Ubicación —solo en General, con el robot en el plano— (dónde está
  *       el robot) y Recorrido en el plano.</li>
  *   <li><b>Los cuatro botones</b> —Iniciar, Pausar, Detener, Volver a casa— están siempre; los que no
  *       aplican salen apagados con el porqué (`RobotControlStore.botones`).</li>
@@ -57,6 +58,7 @@ const GENERAL = 'general';
     KiBotTabs,
     RobotContextBar,
     RobotLocation,
+    RobotPositionMap,
     RobotTrack,
     DatePipe,
     DecimalPipe
@@ -73,16 +75,32 @@ export class RobotControl implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
-  protected readonly vista = toSignal(
+  private readonly vistaPedida = toSignal(
     this.ruta.queryParamMap.pipe(map((p) => vistaDe(p.get('tab')))),
     { initialValue: vistaDe(this.ruta.snapshot.queryParamMap.get('tab')) }
   );
 
-  protected readonly vistas: readonly KiBotTab[] = [
-    { id: 'curso', label: 'En curso' },
-    { id: 'ubicacion', label: 'Ubicación' },
-    { id: 'recorrido', label: 'Recorrido en el plano' }
-  ];
+  /**
+   * La vista que se enseña. Ubicación es del robot y no de una zona: solo existe en General. En la
+   * pestaña de una zona, `?tab=ubicacion` cae en En curso.
+   */
+  protected readonly vista = computed<VistaDeControl>(() => {
+    const v = this.vistaPedida();
+    return v === 'ubicacion' && this.store.zonaVista() !== null ? 'curso' : v;
+  });
+
+  protected readonly vistas = computed<readonly KiBotTab[]>(() =>
+    this.store.zonaVista() === null
+      ? [
+          { id: 'curso', label: 'En curso' },
+          { id: 'ubicacion', label: 'Ubicación' },
+          { id: 'recorrido', label: 'Recorrido en el plano' }
+        ]
+      : [
+          { id: 'curso', label: 'En curso' },
+          { id: 'recorrido', label: 'Recorrido en el plano' }
+        ]
+  );
 
   /** General y una pestaña por zona; un punto en la que el robot recorre ahora. */
   protected readonly pestanasDeZona = computed<KiBotTab[]>(() => {

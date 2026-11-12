@@ -7,6 +7,7 @@ import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-s
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
 import { PlanCanvas, RejillaDelPlano } from '../warehouse-map/plan-canvas/plan-canvas';
 import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
+import { ladoTexto } from '../robot/robot.models';
 import { BoxSearchStore } from './box-search.store';
 
 /**
@@ -42,6 +43,9 @@ export function rejillaDelMapa(mapa: WarehouseMap): RejillaDelPlano {
 })
 export class BoxSearch implements OnInit {
   protected readonly store = inject(BoxSearchStore);
+
+  /** El lado como lo dice el operador: Izquierda o Derecha. */
+  protected readonly lado = ladoTexto;
 
   readonly inventarioId = input<string | null>(null);
   /** Embebido: la zona elegida arriba. La búsqueda va filtrada por ella. */

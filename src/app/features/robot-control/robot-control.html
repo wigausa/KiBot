@@ -53,7 +53,7 @@
         <div class="tarjeta panel-zona">
           <div class="panel-zona__cabecera">
             <h2>{{ store.zonaVista() === null ? 'Recorrido general' : nombreDeZona() }}</h2>
-            <kibot-tabs label="Vistas" [tabs]="vistas" [activa]="vista()" (cambia)="irAVista($event)" />
+            <kibot-tabs label="Vistas" [tabs]="vistas()" [activa]="vista()" (cambia)="irAVista($event)" />
           </div>
 
           @if (store.parteDeGeneral(); as g) {
@@ -69,6 +69,9 @@
                 <p class="aviso">{{ texto }}</p>
               }
               @if (store.robotId(); as robot) {
+                @if (store.inventarioId(); as inv) {
+                  <kibot-robot-position-map [inventarioId]="inv" [robotId]="robot" />
+                }
                 <kibot-robot-location [robotId]="robot" [embebido]="true" />
               }
             }
