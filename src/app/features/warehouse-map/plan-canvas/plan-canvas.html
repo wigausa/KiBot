@@ -328,6 +328,29 @@
     @if (ruta().length > 1) {
       <polyline class="ruta" [attr.points]="puntosDeRuta()" [attr.stroke-width]="trazo() * 6" />
     }
+    @for (m of marcasDibujadas(); track m.etiqueta) {
+      <g
+        class="marca"
+        [class.marca--alta]="m.tono === 'alta'"
+        [class.marca--media]="m.tono === 'media'"
+        [class.marca--baja]="m.tono === 'baja'"
+        [class.marca--activa]="m.activo"
+        (click)="marcadorPulsado.emit(m.etiqueta)"
+      >
+        <title>Caja {{ m.etiqueta }}</title>
+        <circle [attr.cx]="m.cx" [attr.cy]="m.cy" [attr.r]="tamanoDeNumero() * (m.activo ? 1.1 : 0.8)" [attr.stroke-width]="trazo() * 3" />
+        <text
+          class="marca__numero"
+          [attr.x]="m.cx"
+          [attr.y]="m.cy"
+          [attr.transform]="derecho(m.cx)"
+          [attr.font-size]="tamanoDeNumero() * (m.activo ? 1 : 0.8)"
+          text-anchor="middle"
+          dominant-baseline="central"
+        >{{ m.etiqueta }}</text>
+      </g>
+    }
+
     @if (flechaDelRobot(); as f) {
       <g class="robot">
         <circle class="robot__halo" [attr.cx]="f.cx" [attr.cy]="f.cy" [attr.r]="trazo() * 22" />

@@ -6,6 +6,7 @@ import { ApiFailure, apiFailure } from '../../core/http/api-error';
 import { API_BASE_URL } from '../../core/http/api.config';
 import { WarehouseMap } from '../warehouse-map/warehouse-map.models';
 import {
+  RobotPosition,
   BoxSearchResult,
   BoxSearchStatus,
   RobotBatchView,
@@ -167,23 +168,45 @@ export class RobotApiService {
   }
 
   /**
-   * Manda al robot a buscar unas cajas (USDA o EPC) en una zona. El rechazo (409/400) trae
-   * `{ Reason, Detail, Search }`: se lee con `falloDeOrden`.
+   * Manda al robot a buscar unas cajas (USDA o EPC) en una zona de un plano, sin inventario. El
+   * rechazo (409/400) trae `{ Reason, Detail, Search }`: se lee con `falloDeOrden`.
    */
-  iniciarBusqueda(idInventory: string, idDevice: number, zona: number, codigos: readonly string[]): Promise<RobotSearch> {
+  iniciarBusqueda(idDevice: number, mapId: string, zona: number, codigos: readonly string[]): Promise<RobotSearch> {
     return firstValueFrom(
-      this.http.post<RobotSearch>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/search`, {
+      this.http.post<RobotSearch>(`${this.baseUrl}/robot/${idDevice}/search`, {
+        MapId: mapId,
         Zone: zona,
         Codes: codigos
       })
     );
   }
 
-  /** Cómo va una búsqueda: lo encontrado (en vivo mientras corre) y lo que falta. */
-  busqueda(idInventory: string, searchId: string): Promise<RobotSearch> {
-    return firstValueFrom(
-      this.http.get<RobotSearch>(`${this.baseUrl}/inventory/${idInventory}/robot/search/${searchId}`)
-    );
+  /** Dónde está el robot ahora en el plano del inventario, por su último latido. Null si no hay. */
+  async posicion(idInventory: string, idDevice: number): Promise<RobotPosition | null> {
+    try {
+      return await firstValueFrom(
+        this.http.get<RobotPosition>(`${this.baseUrl}/inventory/${idInventory}/robot/${idDevice}/position`)
+      );
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 404) return null;
+      throw error;
+    }
+  }
+
+  /** Cómo va una búsqueda: avance por tramos, lo encontrado (en vivo mientras corre) y lo que falta. */
+  busqueda(searchId: string): Promise<RobotSearch> {
+    return firstValueFrom(this.http.get<RobotSearch>(`${this.baseUrl}/robot/search/${searchId}`));
+  }
+
+  /** Por dónde va (o fue) el robot en una búsqueda, en el plano de la búsqueda. */
+  recorridoDeBusqueda(searchId: string, since?: string | null): Promise<RobotTrack> {
+    const params: Record<string, string> = since ? { since } : {};
+    return firstValueFrom(this.http.get<RobotTrack>(`${this.baseUrl}/robot/search/${searchId}/track`, { params }));
+  }
+
+  /** Pausar, Reanudar, Cancelar o Volver al dock de una búsqueda. */
+  ordenDeBusqueda(searchId: string, accion: 'pause' | 'resume' | 'cancel' | 'rth'): Promise<RobotSearch> {
+    return firstValueFrom(this.http.post<RobotSearch>(`${this.baseUrl}/robot/search/${searchId}/${accion}`, {}));
   }
 
   /**

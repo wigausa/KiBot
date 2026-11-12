@@ -1,26 +1,30 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
+import { CompanyPicker } from '../../core/company/company-picker';
+import { CompanyStore } from '../../core/company/company.store';
 import { KiBotButton } from '../../shared/ui/kibot-button/kibot-button';
 import { KiBotConfirm } from '../../shared/ui/kibot-confirm/kibot-confirm';
 import { KiBotErrorState } from '../../shared/ui/kibot-error-state/kibot-error-state';
+import { KiBotIcon } from '../../shared/ui/kibot-icon/kibot-icon';
 import { KiBotLoadingIndicator } from '../../shared/ui/kibot-loading-indicator/kibot-loading-indicator';
+import { KiBotSelect, KiBotSelectOpcion } from '../../shared/ui/kibot-select/kibot-select';
 import { rejillaDelMapa } from '../box-search/box-search';
-import { RobotSearchFound, textoDeBusqueda, textoDeFinDeZona } from '../robot/robot.models';
+import { textoDeFinDeZona } from '../robot/robot.models';
 import { PlanCanvas } from '../warehouse-map/plan-canvas/plan-canvas';
 import { RobotSearchStore } from './robot-search.store';
 
 /**
- * Buscar con el robot: mandarlo a buscar unas cajas concretas en una zona y ver en vivo cuáles
- * encuentra. No toca el inventario.
+ * Buscar con el robot: mandarlo a buscar unas cajas concretas en una zona de un plano y ver en vivo
+ * cuáles encuentra. <b>No pertenece a ningún inventario</b> ni toca ninguno.
  *
- * <p>Desde noviembre de 2026 es la pestaña «Con el robot» de Buscar: con `embebido`, el inventario y
- * el robot llegan por `input` (los elegidos arriba). La zona y las cajas se eligen aquí.</p>
+ * <p>Plano → zona → robot → códigos. Mientras busca: el avance del recorrido de la zona y de las
+ * cajas, y el robot en el plano. Al terminar: el plano con una marca numerada por caja y la tabla.</p>
  */
 @Component({
   selector: 'kibot-robot-search',
-  imports: [KiBotButton, KiBotErrorState, KiBotLoadingIndicator, PlanCanvas, DatePipe],
+  imports: [CompanyPicker, KiBotButton, KiBotErrorState, KiBotIcon, KiBotLoadingIndicator, KiBotSelect, PlanCanvas, DatePipe],
   providers: [RobotSearchStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './robot-search.html',
@@ -30,36 +34,15 @@ export class RobotSearchPage implements OnInit {
   protected readonly store = inject(RobotSearchStore);
   private readonly ruta = inject(ActivatedRoute);
   private readonly confirmador = inject(KiBotConfirm);
-
-  readonly inventarioId = input<string | null>(null);
-  readonly robotId = input<number | null>(null);
-  /** Embebido: la zona elegida arriba (el robot busca en una sola zona). */
-  readonly zonaId = input<number | null>(null);
-  readonly embebido = input(false);
+  private readonly compania = inject(CompanyStore);
+  private iniciado = false;
 
   constructor() {
+    // Los planos son de la compañía elegida, que puede llegar o cambiar con la pantalla abierta.
     effect(() => {
-      const inv = this.inventarioId();
-      const robot = this.robotId();
-      const listo = this.store.inventarios().status === 'ready';
-      if (!this.embebido() || !listo) return;
+      this.compania.companiaId();
       untracked(() => {
-        if (this.store.enMarcha()) return; // con una búsqueda andando no se cambia de inventario
-        const abierto = this.store.abiertos().some((i) => i._id === inv) ? inv : null;
-        if (abierto !== this.store.inventarioId()) this.store.elegirInventario(abierto);
-        if (robot !== null && this.store.robots().some((r) => r.IdDevice === robot)) this.store.robotId.set(robot);
-      });
-    });
-
-    effect(() => {
-      const zona = this.zonaId();
-      const listo = this.store.inventarios().status === 'ready';
-      const inv = this.store.inventarioId();
-      if (!this.embebido() || !listo || inv === null) return;
-      untracked(() => {
-        if (this.store.enMarcha()) return;
-        const valida = this.store.zonas().some((z) => z.IdZone === zona) ? zona : null;
-        if (valida !== this.store.zonaId()) this.store.zonaId.set(valida);
+        if (this.iniciado) void this.store.alCambiarDeCompania();
       });
     });
   }
@@ -69,27 +52,25 @@ export class RobotSearchPage implements OnInit {
     return m.status === 'ready' ? rejillaDelMapa(m.value) : null;
   });
 
-  protected readonly textoDeEstado = textoDeBusqueda;
+  protected readonly opcionesDePlano = computed<KiBotSelectOpcion[]>(() => {
+    const p = this.store.planos();
+    return p.status === 'ready' ? p.value.map((m) => ({ id: m.MapId, nombre: m.Name, detalle: `v${m.Version}` })) : [];
+  });
+
+  protected readonly opcionesDeZona = computed<KiBotSelectOpcion[]>(() =>
+    this.store.zonas().map((z) => ({ id: z.IdZone, nombre: z.Name }))
+  );
+
+  protected readonly opcionesDeRobot = computed<KiBotSelectOpcion[]>(() =>
+    this.store.robots().map((r) => ({ id: r.id, nombre: r.nombre }))
+  );
 
   async ngOnInit(): Promise<void> {
     await this.store.cargar();
+    this.iniciado = true;
     const q = this.ruta.snapshot.queryParamMap;
-    this.store.prellenar(q.get('inv'), q.get('code'));
-  }
-
-  protected alElegirInventario(evento: Event): void {
-    const valor = (evento.target as HTMLSelectElement).value;
-    this.store.elegirInventario(valor === '' ? null : valor);
-  }
-
-  protected alElegirRobot(evento: Event): void {
-    const valor = (evento.target as HTMLSelectElement).value;
-    this.store.robotId.set(valor === '' ? null : Number(valor));
-  }
-
-  protected alElegirZona(evento: Event): void {
-    const valor = (evento.target as HTMLSelectElement).value;
-    this.store.zonaId.set(valor === '' ? null : Number(valor));
+    const zona = Number(q.get('zone'));
+    this.store.prellenar(q.get('map'), Number.isFinite(zona) && zona > 0 ? zona : null, q.get('code'));
   }
 
   protected alEscribir(evento: Event): void {
@@ -105,15 +86,26 @@ export class RobotSearchPage implements OnInit {
     if (await this.confirmador.preguntar({ titulo: pregunta, mensaje: '', aceptar, peligro })) await accion();
   }
 
-  /** «Pasillo 28 · lado B · inferior · segmento 6». */
-  protected donde(f: RobotSearchFound): string {
-    const partes = [
-      f.AisleNumber !== null ? `Pasillo ${f.AisleNumber}` : null,
-      f.Side ? `lado ${f.Side}` : null,
-      f.Tramo ? f.Tramo.toLowerCase() : null,
-      f.Segment !== null ? `segmento ${f.Segment}` : null
-    ];
-    return partes.filter((p) => p !== null).join(' · ') || 'Vista, sin poder situarla';
+  protected elegirFila(numero: number | null): void {
+    if (numero === null) return;
+    this.store.elegida.set(this.store.elegida() === numero ? null : numero);
+  }
+
+  protected alPulsarMarca(etiqueta: string): void {
+    const n = Number(etiqueta);
+    this.store.elegida.set(Number.isFinite(n) ? n : null);
+    document.getElementById(`fila-${etiqueta}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  protected descargarCsv(): void {
+    const b = this.store.busqueda();
+    const blob = new Blob(['﻿' + this.store.csv()], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `busqueda-${(b?.ZoneName ?? 'robot').replace(/\s+/g, '-').toLowerCase()}-${(b?.StartedAt ?? '').slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   protected fin(motivo: string | null): string {

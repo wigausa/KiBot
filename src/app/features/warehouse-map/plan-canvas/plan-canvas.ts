@@ -76,6 +76,20 @@ export interface CaraResaltada {
 }
 
 /**
+ * Una marca numerada sobre una cara: dónde se encontró una caja buscada. El número es el de su fila
+ * en la tabla; el tono, lo seguro que está el sitio.
+ */
+export interface MarcadorEnElPlano {
+  readonly rackId: string;
+  /** `left` o `right`, como en el mapa. */
+  readonly side: string;
+  readonly etiqueta: string;
+  readonly tono: 'alta' | 'media' | 'baja';
+  /** El que está elegido en la tabla: se dibuja más grande. */
+  readonly activo?: boolean;
+}
+
+/**
  * Una zona que ya tiene geocerca en el plano, pintada con su color para ver qué está ocupado y no
  * dibujar otra encima (las geocercas no pueden solaparse).
  */
@@ -273,6 +287,38 @@ export class PlanCanvas {
 
   /** Los tramos del recorrido, coloreados sobre el eje de su pasillo según cómo quedaron. */
   readonly tramos = input<readonly TramoDelRecorrido[]>([]);
+
+  /** Marcas numeradas sobre caras (las cajas que encontró una búsqueda). */
+  readonly marcadores = input<readonly MarcadorEnElPlano[]>([]);
+
+  /** Se pulsó una marca: devuelve su etiqueta, para elegir su fila en la tabla. */
+  readonly marcadorPulsado = output<string>();
+
+  /**
+   * Cada marca en el centro de su celda. Si varias caen en la misma celda, se reparten a lo largo de
+   * la cara para que se lean todas.
+   */
+  protected readonly marcasDibujadas = computed(() => {
+    const unidades = new Map(this.map().ShelvingUnits.map((u) => [u.RackId, u]));
+    const ancho = this.anchoBloque() / 2;
+    const porCelda = new Map<string, number>();
+    const lista = this.marcadores();
+    const totales = new Map<string, number>();
+    for (const m of lista) totales.set(`${m.rackId}-${m.side}`, (totales.get(`${m.rackId}-${m.side}`) ?? 0) + 1);
+
+    return lista.flatMap((m) => {
+      const u = unidades.get(m.rackId);
+      if (!u) return [];
+      const clave = `${m.rackId}-${m.side}`;
+      const orden = porCelda.get(clave) ?? 0;
+      porCelda.set(clave, orden + 1);
+      const total = totales.get(clave) ?? 1;
+      const paso = u.Length / (total + 1);
+      const cx = (m.side === 'left' ? u.CenterX - ancho : u.CenterX) + ancho / 2;
+      const y = u.CenterY - u.Length / 2 + paso * (orden + 1);
+      return [{ ...m, cx, cy: this.yDe(y) }];
+    });
+  });
 
   protected readonly puntosDeRuta = computed(() =>
     this.ruta()

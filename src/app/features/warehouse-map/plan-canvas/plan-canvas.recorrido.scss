@@ -38,6 +38,39 @@
   pointer-events: none;
 }
 
+// --- marcas de cajas encontradas -------------------------------------------------------------
+
+.marca {
+  cursor: pointer;
+
+  circle {
+    fill: var(--marca, var(--kibot-success));
+    stroke: var(--kibot-surface);
+  }
+}
+
+.marca--alta {
+  --marca: var(--kibot-success);
+}
+
+.marca--media {
+  --marca: var(--kibot-warning);
+}
+
+.marca--baja {
+  --marca: var(--kibot-error);
+}
+
+.marca--activa circle {
+  stroke: var(--kibot-fg);
+}
+
+.marca__numero {
+  fill: var(--kibot-surface);
+  font-weight: 700;
+  pointer-events: none;
+}
+
 .robot__halo {
   fill: var(--kibot-error);
   fill-opacity: 0.25;
